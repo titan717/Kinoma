@@ -93,7 +93,7 @@ export function ModernHero({ items }: ModernHeroProps) {
             <div className="flex items-center gap-3 pt-1.5 sm:pt-2">
               
               {/* Play Button (White pill, black play icon & black text) */}
-              <Link href={`/watch/${currentItem.id}?ep=1`}>
+              <Link href={`/watch/${currentItem.id}?ep=1&fs=1`}>
                 <motion.button
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.96 }}

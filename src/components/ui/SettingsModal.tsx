@@ -14,9 +14,14 @@ import {
   Check, 
   Sliders,
   CheckCircle2,
-  Trash2
+  Trash2,
+  Download,
+  QrCode,
+  Gamepad2
 } from 'lucide-react';
 import { useAppearance, ThemeMode } from '../../lib/AppearanceContext';
+import { useTVMode } from '../../lib/TVModeContext';
+import { usePWAInstall } from '../../lib/usePWAInstall';
 import { historyUtil } from '../../lib/history';
 import { libraryManager } from '../../lib/library';
 
@@ -32,6 +37,9 @@ export function SettingsModal() {
     activeSettingsTab,
     setActiveSettingsTab
   } = useAppearance();
+
+  const { openAndroidTVModal, isTVMode, toggleTVMode, isAndroidTVDetected } = useTVMode();
+  const { isInstallable, isInstalled, install } = usePWAInstall();
 
   if (!isSettingsModalOpen) return null;
 
@@ -120,6 +128,22 @@ export function SettingsModal() {
             <Database className="w-3.5 h-3.5 text-[#c084fc]" />
             <span>Storage & Data</span>
             {activeSettingsTab === 'library' && (
+              <motion.div 
+                layoutId="settingsTabIndicator" 
+                className="absolute bottom-0 inset-x-0 h-0.5 bg-[#c084fc] rounded-full" 
+              />
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveSettingsTab('androidtv')}
+            className={`flex items-center gap-2 pb-3 px-1 text-xs font-bold transition-colors relative ${
+              activeSettingsTab === 'androidtv' ? 'text-white' : 'text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            <Tv className="w-3.5 h-3.5 text-[#c084fc]" />
+            <span>Android TV</span>
+            {activeSettingsTab === 'androidtv' && (
               <motion.div 
                 layoutId="settingsTabIndicator" 
                 className="absolute bottom-0 inset-x-0 h-0.5 bg-[#c084fc] rounded-full" 
@@ -269,6 +293,28 @@ export function SettingsModal() {
                   className="px-3.5 py-1.5 rounded-full bg-white text-black font-bold text-xs hover:bg-gray-200 transition-all shrink-0 cursor-pointer shadow-md"
                 >
                   Play Intro
+                </button>
+              </div>
+
+              {/* Android TV & Big Screen App Card */}
+              <div className="p-4 bg-gradient-to-r from-[#1c162b] to-[#12131c] border border-purple-500/30 rounded-xl flex items-center justify-between gap-4">
+                <div>
+                  <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <Tv className="w-3.5 h-3.5 text-[#c084fc]" />
+                    <span>Android TV & Big Screen App</span>
+                  </h4>
+                  <p className="text-[11px] text-gray-400 mt-0.5">
+                    Install Kinoma as an app on your Android TV or toggle 10-foot remote navigation.
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    closeSettingsModal();
+                    setTimeout(() => openAndroidTVModal(), 150);
+                  }}
+                  className="px-3.5 py-1.5 rounded-full bg-[#9333ea] hover:bg-[#a855f7] text-white font-bold text-xs transition-all shrink-0 cursor-pointer shadow-md"
+                >
+                  TV Guide & App
                 </button>
               </div>
             </div>
@@ -448,6 +494,79 @@ export function SettingsModal() {
                     <Trash2 className="w-3.5 h-3.5" />
                     <span>Clear</span>
                   </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ANDROID TV TAB */}
+          {activeSettingsTab === 'androidtv' && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Android TV & Big Screen Experience</h3>
+                <p className="text-xs text-gray-400">
+                  Install Kinoma as an app on your Android TV, Google TV, or Fire TV for leanback 10-foot remote browsing and 4K playback.
+                </p>
+              </div>
+
+              {/* Direct TV Guide & Action Modal Button */}
+              <div className="p-4 bg-gradient-to-r from-purple-950/40 via-[#181926] to-[#12131c] border border-purple-500/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-[#c084fc] shrink-0">
+                    <Tv className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">Full TV Setup & QR Code</h4>
+                    <p className="text-[11px] text-gray-400">
+                      Step-by-step guides for TV Bro, Downloader app, and Chromecast.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    closeSettingsModal();
+                    setTimeout(() => openAndroidTVModal(), 150);
+                  }}
+                  className="w-full sm:w-auto px-4 py-2 rounded-xl bg-white hover:bg-gray-100 text-black font-bold text-xs transition-all cursor-pointer shadow-md shrink-0 text-center"
+                >
+                  Open TV Hub
+                </button>
+              </div>
+
+              {/* TV Remote 10-Foot Mode Toggle */}
+              <div className="flex items-center justify-between p-4 bg-[#13141c] border border-[#222230] rounded-xl">
+                <div className="flex items-center gap-3">
+                  <Gamepad2 className="w-5 h-5 text-[#c084fc]" />
+                  <div>
+                    <h4 className="text-xs font-bold text-white">TV 10-Foot Navigation Mode</h4>
+                    <p className="text-[11px] text-gray-400">
+                      Enlarges card scales and enables D-Pad arrow remote navigation.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={toggleTVMode}
+                  className={`px-3.5 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                    isTVMode
+                      ? 'bg-[#22c55e] text-black shadow-lg shadow-green-500/20'
+                      : 'bg-white/10 hover:bg-white/20 text-white'
+                  }`}
+                >
+                  {isTVMode ? 'Active' : 'Enable'}
+                </button>
+              </div>
+
+              {/* Quick Remote Key Reference */}
+              <div className="p-3.5 bg-[#101117] border border-white/5 rounded-xl text-[11px] space-y-2">
+                <h5 className="font-bold text-white flex items-center gap-1.5">
+                  <span>Remote Shortcuts</span>
+                </h5>
+                <div className="grid grid-cols-2 gap-2 text-gray-400">
+                  <div><span className="text-gray-200 font-semibold">Arrows:</span> Move focus</div>
+                  <div><span className="text-gray-200 font-semibold">Enter/OK:</span> Select / Play</div>
+                  <div><span className="text-gray-200 font-semibold">Back/Esc:</span> Go Back</div>
+                  <div><span className="text-gray-200 font-semibold">F Key:</span> TV Fullscreen</div>
                 </div>
               </div>
             </div>

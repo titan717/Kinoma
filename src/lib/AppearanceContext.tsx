@@ -11,6 +11,8 @@ export interface PlayerSettings {
   preferredAudio: 'sub' | 'dub';
 }
 
+export type SettingsTab = 'appearance' | 'player' | 'library' | 'androidtv';
+
 interface AppearanceContextType {
   themeMode: ThemeMode;
   resolvedTheme: ResolvedTheme;
@@ -18,10 +20,10 @@ interface AppearanceContextType {
   playerSettings: PlayerSettings;
   updatePlayerSetting: <K extends keyof PlayerSettings>(key: K, value: PlayerSettings[K]) => void;
   isSettingsModalOpen: boolean;
-  openSettingsModal: (tab?: 'appearance' | 'player' | 'library') => void;
+  openSettingsModal: (tab?: SettingsTab) => void;
   closeSettingsModal: () => void;
-  activeSettingsTab: 'appearance' | 'player' | 'library';
-  setActiveSettingsTab: (tab: 'appearance' | 'player' | 'library') => void;
+  activeSettingsTab: SettingsTab;
+  setActiveSettingsTab: (tab: SettingsTab) => void;
 }
 
 const DEFAULT_PLAYER_SETTINGS: PlayerSettings = {
@@ -70,7 +72,7 @@ export function AppearanceProvider({ children }: { children: React.ReactNode }) 
 
   // Settings modal visibility
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const [activeSettingsTab, setActiveSettingsTab] = useState<'appearance' | 'player' | 'library'>('appearance');
+  const [activeSettingsTab, setActiveSettingsTab] = useState<SettingsTab>('appearance');
 
   // React to themeMode changes
   useEffect(() => {
@@ -106,7 +108,7 @@ export function AppearanceProvider({ children }: { children: React.ReactNode }) 
     });
   }, []);
 
-  const openSettingsModal = useCallback((tab: 'appearance' | 'player' | 'library' = 'appearance') => {
+  const openSettingsModal = useCallback((tab: SettingsTab = 'appearance') => {
     setActiveSettingsTab(tab);
     setIsSettingsModalOpen(true);
   }, []);

@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRoute, Link, useLocation } from 'wouter';
 import useSWR from 'swr';
 import { api } from '../lib/api';
 import { animeApi } from '../services/animeApi';
-import { Play, ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Bookmark, Heart, Layers, Radio } from 'lucide-react';
+import { Play, ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Bookmark, Heart, Layers, Radio, Maximize, Minimize, Tv } from 'lucide-react';
 import { motion } from 'motion/react';
 import { historyUtil, parseSeasonNumber } from '../lib/history';
 import { libraryManager } from '../lib/library';
@@ -13,6 +13,8 @@ import { DEFAULT_POSTER } from '../types';
 export function Watch() {
   const [isMatch, params] = useRoute<{id: string}>('/watch/:id');
   const [, setLocation] = useLocation();
+  const playerContainerRef = useRef<HTMLDivElement | null>(null);
+  const [isCinemaFullscreen, setIsCinemaFullscreen] = useState(false);
   
   // Robust URL decoding - handles encoded characters like %7C for pipe
   const rawId = decodeURIComponent((isMatch && params) ? params.id : '');
@@ -157,13 +159,70 @@ export function Watch() {
     }
   }, [currentEpIndex]);
 
+  // Default to fullscreen when requested or coming from "Watch Now" / TV mode
+  useEffect(() => {
+    const query = new URLSearchParams(window.location.search);
+    const hasFsParam = query.get('fs') === '1' || query.get('fullscreen') === 'true';
+    const hasSessionFs = sessionStorage.getItem('kinoma_auto_fullscreen') === '1';
+    const isTV = document.documentElement.classList.contains('tv-mode');
+
+    if (hasFsParam || hasSessionFs || isTV) {
+      setIsCinemaFullscreen(true);
+      try {
+        sessionStorage.removeItem('kinoma_auto_fullscreen');
+      } catch {}
+
+      // Attempt native DOM fullscreen if allowed by user gesture
+      if (playerContainerRef.current && !document.fullscreenElement) {
+        playerContainerRef.current.requestFullscreen?.().catch(() => {
+          // Native fullscreen requires direct click gesture in some browsers;
+          // isCinemaFullscreen handles true edge-to-edge 100vw x 100vh cinema fallback smoothly!
+        });
+      }
+    }
+  }, []);
+
+  // Listen to Escape / 'f' key for fullscreen toggle
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'f' || e.key === 'F') {
+        toggleFullscreen();
+      } else if (e.key === 'Escape' && isCinemaFullscreen) {
+        setIsCinemaFullscreen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isCinemaFullscreen]);
+
+  const toggleFullscreen = () => {
+    if (!isCinemaFullscreen) {
+      setIsCinemaFullscreen(true);
+      if (playerContainerRef.current && !document.fullscreenElement) {
+        playerContainerRef.current.requestFullscreen?.().catch(() => {});
+      }
+    } else {
+      setIsCinemaFullscreen(false);
+      if (document.fullscreenElement) {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+  };
+
   return (
     <div className="w-full bg-[#08090d] min-h-screen pb-20 text-white font-sans">
       
       {/* VIDEO PLAYER CONTAINER */}
-      <div className="w-full bg-[#050508] border-b border-[#1c1c26]">
-        <div className="w-full max-w-6xl mx-auto px-0 sm:px-4 sm:py-4">
-          <div className="w-full aspect-video bg-black sm:rounded-2xl overflow-hidden relative shadow-[0_12px_40px_rgba(0,0,0,0.8)] border border-[#1a1a24]">
+      <div className={`w-full bg-[#050508] border-b border-[#1c1c26] transition-all duration-300 ${
+        isCinemaFullscreen ? 'fixed inset-0 z-50 bg-black flex flex-col justify-center' : ''
+      }`}>
+        <div className={`w-full mx-auto ${isCinemaFullscreen ? 'h-full max-w-none p-0 flex flex-col' : 'max-w-6xl px-0 sm:px-4 sm:py-4'}`}>
+          <div 
+            ref={playerContainerRef}
+            className={`w-full bg-black overflow-hidden relative shadow-[0_12px_40px_rgba(0,0,0,0.8)] border border-[#1a1a24] ${
+              isCinemaFullscreen ? 'flex-1 h-full w-full rounded-none border-none' : 'aspect-video sm:rounded-2xl'
+            }`}
+          >
             {streamUrl ? (
               <iframe 
                 key={streamUrl}
@@ -180,10 +239,24 @@ export function Watch() {
                 <p className="text-gray-500 text-xs mt-1">Episode {epNum} • {selectedServer} • {selectedType.toUpperCase()}</p>
               </div>
             )}
+
+            {/* Quick Fullscreen Close Floating Button when Cinema is active */}
+            {isCinemaFullscreen && (
+              <button
+                onClick={toggleFullscreen}
+                className="absolute top-4 right-4 z-40 px-3 py-1.5 rounded-xl bg-black/70 hover:bg-black/90 border border-white/20 text-xs font-bold text-white flex items-center gap-1.5 backdrop-blur-md transition-all active:scale-95 cursor-pointer shadow-lg"
+                title="Exit Fullscreen (Esc)"
+              >
+                <Minimize className="w-3.5 h-3.5" />
+                <span>Exit Fullscreen</span>
+              </button>
+            )}
           </div>
 
           {/* Minimalist Player Controls Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-[#0e0f15] sm:rounded-xl border border-[#1c1c26] mt-3">
+          <div className={`flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-[#0e0f15] border border-[#1c1c26] ${
+            isCinemaFullscreen ? 'rounded-none border-x-0 border-b-0 shrink-0' : 'sm:rounded-xl mt-3'
+          }`}>
             
             {/* Server and Audio Track Selectors */}
             <div className="flex flex-wrap items-center gap-2">
@@ -217,10 +290,19 @@ export function Watch() {
               )}
             </div>
 
-            {/* Episode Quick Switcher Buttons */}
+            {/* Episode Quick Switcher Buttons & Fullscreen Action */}
             <div className="flex items-center gap-2 ml-auto">
+              <button
+                onClick={toggleFullscreen}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#14141d] hover:bg-[#1f1f2c] text-gray-300 hover:text-white text-xs font-bold border border-[#222230] transition-colors cursor-pointer"
+                title={isCinemaFullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen (F)'}
+              >
+                {isCinemaFullscreen ? <Minimize className="w-3.5 h-3.5" /> : <Maximize className="w-3.5 h-3.5 text-[#c084fc]" />}
+                <span>{isCinemaFullscreen ? 'Collapse' : 'Fullscreen'}</span>
+              </button>
+
               {prevEp && (
-                <Link href={`/watch/${encodeURIComponent(prevEp.id)}`}>
+                <Link href={`/watch/${encodeURIComponent(prevEp.id)}?fs=1`}>
                   <button className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#14141d] hover:bg-[#1f1f2c] text-gray-300 hover:text-white text-xs font-bold border border-[#222230] transition-colors">
                     <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Prev</span>
@@ -229,7 +311,7 @@ export function Watch() {
               )}
 
               {nextEp && (
-                <Link href={`/watch/${encodeURIComponent(nextEp.id)}`}>
+                <Link href={`/watch/${encodeURIComponent(nextEp.id)}?fs=1`}>
                   <button className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-[#7b1fa2] hover:bg-[#9c27b0] text-white text-xs font-bold shadow-[0_2px_12px_rgba(123,31,162,0.4)] transition-all">
                     <span>Next Ep {nextEp.number}</span>
                     <ArrowRight className="w-3.5 h-3.5" />

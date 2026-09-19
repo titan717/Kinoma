@@ -17,27 +17,27 @@ export function KinomaLogo({
   const sizeMap = {
     sm: {
       mark: 'w-6 h-6',
-      markInner: 'w-2 h-2',
       text: 'text-lg',
-      subText: 'text-[9px]'
+      kWidth: '22',
+      kHeight: '22',
     },
     md: {
       mark: 'w-8 h-8',
-      markInner: 'w-2.5 h-2.5',
       text: 'text-2xl',
-      subText: 'text-[10px]'
+      kWidth: '28',
+      kHeight: '28',
     },
     lg: {
-      mark: 'w-11 h-11',
-      markInner: 'w-3.5 h-3.5',
+      mark: 'w-10 h-10',
       text: 'text-3xl sm:text-4xl',
-      subText: 'text-xs'
+      kWidth: '36',
+      kHeight: '36',
     },
     xl: {
       mark: 'w-16 h-16',
-      markInner: 'w-5 h-5',
       text: 'text-5xl sm:text-6xl',
-      subText: 'text-sm'
+      kWidth: '56',
+      kHeight: '56',
     }
   };
 
@@ -48,24 +48,52 @@ export function KinomaLogo({
       className={`inline-flex items-center gap-2.5 select-none cursor-pointer group ${className}`}
       onClick={onClick}
     >
-      {/* 1. Sleek Distinctive Ring Glyph (matching the reference image) */}
+      {/* 1. Sleek Sculpted Streaming Ribbon 'K' Lettermark (No circle) */}
       {(variant === 'full' || variant === 'mark') && (
-        <div 
-          className={`relative ${currentSize.mark} rounded-full bg-gradient-to-tr from-[#7b1fa2] via-[#9c27b0] to-[#f472b6] p-[2px] shadow-[0_0_20px_rgba(156,39,176,0.55)] group-hover:scale-105 group-hover:shadow-[0_0_25px_rgba(232,121,249,0.7)] transition-all duration-300 shrink-0`}
-        >
-          {/* Dark inner disc */}
-          <div className="w-full h-full rounded-full bg-[#0a0b10] flex items-center justify-center relative overflow-hidden">
-            {/* Ambient inner sheen */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/40" />
-            {/* Glowing core dot */}
-            <div 
-              className={`${currentSize.markInner} rounded-full bg-gradient-to-tr from-[#c084fc] via-[#e879f9] to-white shadow-[0_0_10px_rgba(192,132,252,0.9)]`} 
+        <div className={`relative ${currentSize.mark} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-300`}>
+          <svg 
+            width={currentSize.kWidth} 
+            height={currentSize.kHeight} 
+            viewBox="0 0 36 36" 
+            fill="none" 
+            xmlns="http://www.w3.org/2000/svg"
+            className="drop-shadow-[0_0_14px_rgba(168,85,247,0.6)]"
+          >
+            <defs>
+              <linearGradient id="kStem" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#f3e8ff" />
+                <stop offset="60%" stopColor="#c084fc" />
+                <stop offset="100%" stopColor="#9333ea" />
+              </linearGradient>
+              <linearGradient id="kUpper" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#ffffff" />
+                <stop offset="100%" stopColor="#e879f9" />
+              </linearGradient>
+              <linearGradient id="kLower" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#d8b4fe" />
+                <stop offset="100%" stopColor="#7e22ce" />
+              </linearGradient>
+            </defs>
+            {/* Architectural streaming vertical ribbon */}
+            <path 
+              d="M5 4C5 2.89543 5.89543 2 7 2H11C12.1046 2 13 2.89543 13 4V32C13 33.1046 12.1046 34 11 34H7C5.89543 34 5 33.1046 5 32V4Z" 
+              fill="url(#kStem)" 
             />
-          </div>
+            {/* Sculpted upper angular wing */}
+            <path 
+              d="M14.5 19L27.8 4.7C28.6 3.8 30 4.4 30 5.6V11.2C30 12.2 29.5 13.1 28.7 13.7L19.2 21.2L14.5 19Z" 
+              fill="url(#kUpper)" 
+            />
+            {/* Sculpted lower power wing */}
+            <path 
+              d="M17.8 17.5L28.6 30.6C29.4 31.5 28.8 33 27.6 33H22C21.1 33 20.2 32.5 19.6 31.8L13 23L17.8 17.5Z" 
+              fill="url(#kLower)" 
+            />
+          </svg>
         </div>
       )}
 
-      {/* 2. Custom Font-Styled Typographic Logo */}
+      {/* 2. Custom Sleek Typographic Wordmark (No full stop) */}
       {(variant === 'full' || variant === 'typography') && (
         <div className="flex items-baseline tracking-[-0.04em]">
           <span 
@@ -75,13 +103,11 @@ export function KinomaLogo({
             kino
           </span>
           <span 
-            className={`${currentSize.text} font-black bg-gradient-to-r from-[#d8b4fe] via-[#c084fc] to-[#f472b6] bg-clip-text text-transparent group-hover:brightness-110 transition-all font-['Outfit']`}
+            className={`${currentSize.text} font-black bg-gradient-to-r from-[#d8b4fe] via-[#c084fc] to-[#e879f9] bg-clip-text text-transparent group-hover:brightness-110 transition-all font-['Outfit']`}
             style={{ letterSpacing: '-0.04em' }}
           >
             ma
           </span>
-          {/* Subtle brand dot */}
-          <span className="w-1.5 h-1.5 rounded-full bg-[#c084fc] ml-0.5 shadow-[0_0_8px_rgba(192,132,252,0.8)] self-end mb-1" />
         </div>
       )}
     </div>

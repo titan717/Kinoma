@@ -1,6 +1,6 @@
 {
   "name": "Kinoma",
-  "description": "Unified anime and manga discovery, streaming, and reading platform powered by Aniwatch API (codex0555/Aniwatch-Api), MangaDex Direct HD Reader, AniList GraphQL metadata, and multi-server video playback.",
+  "description": "Unified anime discovery and streaming platform with modern layout, Netflix-style cinematic intro, and Android TV / PWA big-screen app support.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

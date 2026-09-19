@@ -71,53 +71,75 @@ export function IntroSplash({ forceShow = false, onComplete }: IntroSplashProps)
           className="fixed inset-0 z-[100] bg-[#06070a] flex flex-col items-center justify-center overflow-hidden select-none cursor-pointer"
           onClick={handleScreenClick}
         >
-          {/* Ambient Cinematic Vignette & Flare */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(156,39,176,0.18)_0%,rgba(6,7,10,0.95)_75%)] pointer-events-none" />
+          {/* Ambient Cinematic Deep Obsidian Space */}
+          <div className="absolute inset-0 bg-[#050608] pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(147,51,234,0.18)_0%,rgba(5,6,8,0.98)_80%)] pointer-events-none" />
 
-          {/* Expanding Light Rays / Horizontal Anamorphic Flare */}
+          {/* Anamorphic Horizontal Laser Beam (Netflix / Disney flare) */}
           <motion.div
             initial={{ scaleX: 0, opacity: 0 }}
             animate={{ 
-              scaleX: [0, 1.4, 2], 
-              opacity: [0, 0.8, 0],
-              transition: { duration: 2.2, ease: 'easeOut' } 
+              scaleX: [0, 0.4, 1.8, 2.2], 
+              opacity: [0, 0.9, 0.6, 0],
+              transition: { duration: 2.2, times: [0, 0.25, 0.7, 1], ease: [0.16, 1, 0.3, 1] } 
             }}
-            className="absolute w-full h-[3px] bg-gradient-to-r from-transparent via-[#c084fc] to-transparent shadow-[0_0_35px_#e879f9] pointer-events-none"
+            className="absolute w-full h-[2px] bg-gradient-to-r from-transparent via-[#e879f9] to-transparent shadow-[0_0_40px_#c084fc] pointer-events-none"
           />
 
-          {/* Central Logo Bloom Container */}
+          {/* Subtle Vertical Prism Streaks */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden opacity-40">
+            {[-120, -60, 0, 60, 120].map((offset, i) => (
+              <motion.div
+                key={i}
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ 
+                  height: ['0%', '100%', '100%'], 
+                  opacity: [0, 0.6, 0],
+                  transition: { duration: 1.8, delay: 0.15 + i * 0.05, ease: 'easeOut' }
+                }}
+                className="w-[1px] bg-gradient-to-b from-transparent via-purple-400 to-transparent absolute"
+                style={{ transform: `translateX(${offset}px)` }}
+              />
+            ))}
+          </div>
+
+          {/* Central Streaming Wordmark & Ribbon Hero */}
           <motion.div
-            initial={{ scale: 0.82, opacity: 0, filter: 'blur(10px)' }}
+            initial={{ scale: 0.88, opacity: 0, filter: 'blur(12px)' }}
             animate={{ 
-              scale: [0.82, 1.05, 1.15], 
+              scale: [0.88, 1.0, 1.08], 
               opacity: [0, 1, 1],
-              filter: ['blur(10px)', 'blur(0px)', 'blur(0px)'],
-              transition: { duration: 2.4, times: [0, 0.45, 1], ease: [0.16, 1, 0.3, 1] } 
+              filter: ['blur(12px)', 'blur(0px)', 'blur(0px)'],
+              transition: { duration: 2.4, times: [0, 0.4, 1], ease: [0.16, 1, 0.3, 1] } 
             }}
             className="relative z-10 flex flex-col items-center justify-center text-center px-4"
           >
-            {/* Glowing Ring & Typographic Logo */}
-            <KinomaLogo size="xl" variant="full" className="pointer-events-none drop-shadow-[0_0_40px_rgba(192,132,252,0.6)]" />
+            {/* Gloss / Light reflection sweep over the logo */}
+            <div className="relative overflow-hidden py-4 px-6 rounded-2xl">
+              <KinomaLogo size="xl" variant="full" className="pointer-events-none drop-shadow-[0_0_50px_rgba(192,132,252,0.65)]" />
 
-            {/* Tagline / Subtitle */}
-            <motion.p
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: [0, 0.85, 1], y: [12, 0, -2], transition: { delay: 0.5, duration: 1.2 } }}
-              className="mt-4 text-xs sm:text-sm font-semibold tracking-[0.25em] uppercase text-gray-400 font-mono"
-            >
-              Anime &middot; Manga &middot; Cinematic
-            </motion.p>
+              {/* Shimmer line passing through */}
+              <motion.div 
+                initial={{ x: '-150%', opacity: 0 }}
+                animate={{ 
+                  x: ['-150%', '150%'], 
+                  opacity: [0, 0.8, 0],
+                  transition: { duration: 1.2, delay: 0.45, ease: 'easeInOut' }
+                }}
+                className="absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-25 pointer-events-none"
+              />
+            </div>
           </motion.div>
 
-          {/* Skip Intro Button */}
+          {/* Minimalist Studio Skip Button */}
           <button
             onClick={(e) => {
               e.stopPropagation();
               completeIntro();
             }}
-            className="absolute bottom-8 sm:bottom-12 right-6 sm:right-12 z-20 px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-semibold text-gray-300 hover:text-white backdrop-blur-md transition-all"
+            className="absolute bottom-8 sm:bottom-10 right-6 sm:right-10 z-20 px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 text-[11px] font-medium tracking-wider uppercase text-gray-300 hover:text-white backdrop-blur-md transition-all active:scale-95"
           >
-            Skip Intro &rarr;
+            Skip &rarr;
           </button>
         </motion.div>
       )}

@@ -5,6 +5,7 @@ import { api } from '../lib/api';
 import { Play, Bookmark, Heart, Plus, Star, Film, Globe, RotateCcw, Check, Sparkles, ChevronRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Skeleton } from '../components/ui/Skeleton';
+import { AnimeLoader } from '../components/ui/AnimeLoader';
 import { historyUtil, HistoryItem, formatPlaybackTimestamp, parseSeasonNumber, WatchCTAInfo } from '../lib/history';
 import { libraryManager } from '../lib/library';
 import { DEFAULT_POSTER, DEFAULT_BANNER, AnimeDetails } from '../types';
@@ -173,17 +174,8 @@ export function Details() {
 
   if (isLoading) {
     return (
-      <div className="w-full min-h-screen bg-[#0e0f11] text-white">
-        <Skeleton className="w-full h-[50vh] min-h-[350px]" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6">
-          <Skeleton className="w-1/3 h-10" />
-          <Skeleton className="w-full h-32" />
-          <div className="flex flex-col gap-3 mt-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="w-full h-24 rounded-xl" />
-            ))}
-          </div>
-        </div>
+      <div className="w-full min-h-screen bg-[#0e0f11] text-white flex flex-col items-center justify-center p-8">
+        <AnimeLoader text="Summoning Anime Episodes..." size="lg" />
       </div>
     );
   }
@@ -274,7 +266,7 @@ export function Details() {
               
               {/* 1. NEVER WATCHED: Watch Now */}
               {watchCTA.type === 'watch_now' && (
-                <Link href={`/watch/${encodeURIComponent(watchCTA.episode?.id || firstEp?.id || '')}?t=0`}>
+                <Link href={`/watch/${encodeURIComponent(watchCTA.episode?.id || firstEp?.id || '')}?t=0&fs=1`}>
                   <motion.button 
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
@@ -289,7 +281,7 @@ export function Details() {
               {/* 2. PARTIALLY WATCHED: Continue Watching (e.g. Continue Watching · S2 E7 — 14:32) */}
               {watchCTA.type === 'continue_watching' && watchCTA.episode && (
                 <>
-                  <Link href={`/watch/${encodeURIComponent(watchCTA.episode.id)}?t=${Math.floor(watchCTA.playbackTimestamp)}`}>
+                  <Link href={`/watch/${encodeURIComponent(watchCTA.episode.id)}?t=${Math.floor(watchCTA.playbackTimestamp)}&fs=1`}>
                     <motion.button 
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
@@ -307,7 +299,7 @@ export function Details() {
 
                   {/* Secondary Play Ep 1 restart button if not on episode 1 */}
                   {firstEp && firstEp.id !== watchCTA.episode.id && (
-                    <Link href={`/watch/${encodeURIComponent(firstEp.id)}?t=0`}>
+                    <Link href={`/watch/${encodeURIComponent(firstEp.id)}?t=0&fs=1`}>
                       <motion.button 
                         whileHover={{ scale: 1.03 }}
                         whileTap={{ scale: 0.97 }}

@@ -63,6 +63,37 @@ async function startServer() {
   // Schedule
   app.get(['/api/schedule', '/schedule'], (req, res) => proxyHandler('/schedule', req, res));
 
+  // Android TV Self-Update JSON endpoint
+  app.get('/tv/update.json', (req, res) => {
+    const protocol = req.headers['x-forwarded-proto'] || 'https';
+    const host = req.get('host') || 'ais-dev-ldac4dfys5uh24kepg3akw-880382000432.asia-east1.run.app';
+    res.json({
+      latestVersionCode: 1,
+      latestVersionName: '1.0.0',
+      apkUrl: `${protocol}://${host}/downloads/Kinoma-TV.apk`,
+      releaseNotes: 'Initial release of Kinoma Native Android TV App with ExoPlayer and Leanback support.',
+      mandatory: false
+    });
+  });
+
+  // Explicit Android TV APK download endpoint with correct mime type and headers
+  app.get('/downloads/Kinoma-TV.apk', (req, res) => {
+    const filePath = path.join(process.cwd(), 'public', 'downloads', 'Kinoma-TV.apk');
+    res.download(filePath, 'Kinoma-TV.apk', {
+      headers: {
+        'Content-Type': 'application/vnd.android.package-archive',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
+      }
+    }, (err) => {
+      if (err && !res.headersSent) {
+        res.status(404).send('APK file not found');
+      }
+    });
+  });
+
+  // Serve downloads statically as fallback
+  app.use('/downloads', express.static(path.join(process.cwd(), 'public', 'downloads')));
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({

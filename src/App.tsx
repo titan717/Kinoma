@@ -12,8 +12,11 @@ import { Library } from './pages/Library';
 import { AuthProvider } from './lib/AuthContext';
 import { AuthModal } from './components/ui/AuthModal';
 import { AppearanceProvider } from './lib/AppearanceContext';
+import { TVModeProvider, useTVMode } from './lib/TVModeContext';
 import { SettingsModal } from './components/ui/SettingsModal';
+import { AndroidTVModal } from './components/ui/AndroidTVModal';
 import { IntroSplash } from './components/ui/IntroSplash';
+import { TVApp } from './pages/TVApp';
 
 function AnimatedRoutes() {
   const [location] = useLocation();
@@ -34,6 +37,7 @@ function AnimatedRoutes() {
       >
         <Switch location={location}>
           <Route path="/" component={Home} />
+          <Route path="/tv" component={TVApp} />
           <Route path="/search" component={Search} />
           <Route path="/details/:id" component={Details} />
           <Route path="/watch/:id" component={Watch} />
@@ -49,6 +53,29 @@ function AnimatedRoutes() {
   );
 }
 
+function MainAppShell() {
+  const { isTVMode } = useTVMode();
+  const [location] = useLocation();
+
+  // If in TV Mode or on /tv, render the dedicated 10-foot Android TV layout
+  if (isTVMode || location === '/tv') {
+    if (location.startsWith('/watch/')) {
+      return (
+        <div className="w-full min-h-screen bg-black">
+          <Watch />
+        </div>
+      );
+    }
+    return <TVApp />;
+  }
+
+  return (
+    <Layout>
+      <AnimatedRoutes />
+    </Layout>
+  );
+}
+
 export default function App() {
   return (
     <SWRConfig 
@@ -61,12 +88,13 @@ export default function App() {
     >
       <AuthProvider>
         <AppearanceProvider>
-          <IntroSplash />
-          <Layout>
-            <AnimatedRoutes />
-          </Layout>
-          <AuthModal />
-          <SettingsModal />
+          <TVModeProvider>
+            <IntroSplash />
+            <MainAppShell />
+            <AuthModal />
+            <SettingsModal />
+            <AndroidTVModal />
+          </TVModeProvider>
         </AppearanceProvider>
       </AuthProvider>
     </SWRConfig>

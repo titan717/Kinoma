@@ -15,6 +15,7 @@ import { SearchBar } from './ui/SearchBar';
 import { Footer } from './ui/Footer';
 import { useAuth } from '../lib/AuthContext';
 import { useAppearance } from '../lib/AppearanceContext';
+import { useTVMode } from '../lib/TVModeContext';
 import { ModernNavbar } from './ui/modern/ModernNavbar';
 import { KinomaLogo } from './ui/KinomaLogo';
 import { AnimatePresence, motion } from 'motion/react';
@@ -23,6 +24,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const { user, openAuthModal, signOut } = useAuth();
   const { resolvedTheme, setThemeMode, openSettingsModal } = useAppearance();
+  const { openAndroidTVModal } = useTVMode();
   const [showUserDropdown, setShowUserDropdown] = useState(false);
 
   const handleRandom = async () => {
@@ -109,6 +111,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <SettingsIcon className="w-4 h-4" />
                 </button>
 
+                <button
+                  onClick={() => openAndroidTVModal()}
+                  className="hidden sm:flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-gray-300 hover:text-white transition-all bg-[#14141c] hover:bg-[#1d1d28] hover:border-purple-500/50 px-3 py-2 rounded-xl border border-[#232330] active:scale-95 cursor-pointer"
+                  title="Add to Android TV / Big Screen App"
+                >
+                  <Tv className="h-4 w-4 text-[#c084fc]" />
+                  <span>Android TV</span>
+                </button>
+
                 <Link href="/library">
                   <button className="hidden sm:flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-gray-300 hover:text-white transition-all bg-[#14141c] hover:bg-[#1d1d28] hover:border-[#7b1fa2]/50 px-3.5 py-2 rounded-xl border border-[#232330] active:scale-95 cursor-pointer">
                     <Bookmark className="h-4 w-4 text-[#c084fc]" />
@@ -181,6 +192,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
                             >
                               <Sliders className="w-3.5 h-3.5 text-[#c084fc]" />
                               <span>Appearance & Settings</span>
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                setShowUserDropdown(false);
+                                openAndroidTVModal();
+                              }}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors text-left cursor-pointer"
+                            >
+                              <Tv className="w-3.5 h-3.5 text-[#c084fc]" />
+                              <span>Add to Android TV</span>
                             </button>
 
                             <button 
