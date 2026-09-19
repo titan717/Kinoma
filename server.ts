@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 
 const RAILWAY_API = "https://reanimeto-api-production-46bf.up.railway.app";
@@ -77,18 +78,47 @@ async function startServer() {
   });
 
   // Explicit Android TV APK download endpoint with correct mime type and headers
-  app.get('/downloads/Kinoma-TV.apk', (req, res) => {
+  app.get('/downloads/Kinoma-TV.apk', async (req, res) => {
     const filePath = path.join(process.cwd(), 'public', 'downloads', 'Kinoma-TV.apk');
-    res.download(filePath, 'Kinoma-TV.apk', {
-      headers: {
-        'Content-Type': 'application/vnd.android.package-archive',
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
+    
+    // Check if local file exists in repo code
+    if (fs.existsSync(filePath)) {
+      return res.download(filePath, 'Kinoma-TV.apk', {
+        headers: {
+          'Content-Type': 'application/vnd.android.package-archive',
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
+        }
+      }, (err) => {
+        if (err && !res.headersSent) {
+          res.status(404).send('APK file not found');
+        }
+      });
+    }
+
+    // Fallback to external URL if configured
+    const externalUrl = process.env.APK_DOWNLOAD_URL;
+    if (externalUrl) {
+      try {
+        const response = await fetch(externalUrl);
+        if (response.ok && response.body) {
+          res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+          res.setHeader('Content-Disposition', 'attachment; filename="Kinoma-TV.apk"');
+          res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+          const reader = response.body.getReader();
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            res.write(value);
+          }
+          res.end();
+          return;
+        }
+      } catch (e) {
+        // Ignore error
       }
-    }, (err) => {
-      if (err && !res.headersSent) {
-        res.status(404).send('APK file not found');
-      }
-    });
+    }
+
+    res.status(404).send('Kinoma-TV.apk not found in repository or external source');
   });
 
   // Serve downloads statically as fallback

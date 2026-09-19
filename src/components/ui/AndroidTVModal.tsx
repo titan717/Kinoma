@@ -137,30 +137,40 @@ export function AndroidTVModal() {
           {/* Content Area with Scrollable Tabs */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             
-            {/* Direct APK Download Banner */}
-            <div className="bg-gradient-to-r from-purple-900/40 via-[#161726] to-[#12131c] border border-purple-500/30 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+            {/* Direct APK Download / GitHub Actions Banner */}
+            <div className="bg-gradient-to-r from-purple-900/40 via-[#161726] to-[#12131c] border border-purple-500/30 rounded-2xl p-4 sm:p-5 flex flex-col gap-4 shadow-xl">
               <div className="flex items-center gap-3.5">
                 <div className="w-12 h-12 rounded-2xl bg-purple-600/30 border border-purple-400/40 flex items-center justify-center shrink-0">
                   <Download className="w-6 h-6 text-[#c084fc]" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black text-white">Download Native Kinoma-TV.apk</h3>
+                  <h3 className="text-sm font-black text-white">GitHub Actions Cloud APK Builder</h3>
                   <p className="text-xs text-gray-300 mt-0.5">
-                    Hosted live on web server for Android TV / Fire TV sideloading (v1.0.0).
+                    Push this project to GitHub! Our included workflow (<code className="text-[#c084fc]">.github/workflows/build-apk.yml</code>) automatically builds <code className="text-white font-bold">Kinoma-TV.apk</code> in the cloud.
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2.5 w-full sm:w-auto">
+
+              <div className="flex flex-wrap items-center gap-2.5 pt-1">
                 <a
-                  href="/downloads/Kinoma-TV.apk"
-                  download="Kinoma-TV.apk"
+                  href="https://github.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-xs font-black shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2 transition-all hover:scale-105 cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-2 transition-all cursor-pointer"
                 >
-                  <Download className="w-4 h-4" />
-                  <span>Download APK</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Open GitHub Repo</span>
                 </a>
+                <button
+                  onClick={() => {
+                    setTVMode(true);
+                    closeAndroidTVModal();
+                  }}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-xs font-black shadow-lg shadow-purple-600/30 flex items-center gap-2 transition-all cursor-pointer"
+                >
+                  <Tv className="w-3.5 h-3.5" />
+                  <span>Launch Web TV Mode</span>
+                </button>
               </div>
             </div>
 
