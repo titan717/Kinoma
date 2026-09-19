@@ -1,212 +1,379 @@
-import React, { useState } from 'react';
-import { useRoute, Link } from 'wouter';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useRoute, Link, useLocation } from 'wouter';
 import useSWR from 'swr';
 import { api } from '../lib/api';
 import { animeApi } from '../services/animeApi';
-import { Play, Server as ServerIcon, ShieldCheck, RefreshCw, ArrowLeft, ArrowRight, Bookmark } from 'lucide-react';
+import { Play, ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Bookmark, Heart, Layers, Radio } from 'lucide-react';
 import { motion } from 'motion/react';
-import { Skeleton } from '../components/ui/Skeleton';
-import { historyUtil } from '../lib/history';
+import { historyUtil, parseSeasonNumber } from '../lib/history';
+import { libraryManager } from '../lib/library';
+import { AnimeGrid } from '../components/ui/AnimeGrid';
+import { DEFAULT_POSTER } from '../types';
 
 export function Watch() {
   const [isMatch, params] = useRoute<{id: string}>('/watch/:id');
-  const id = (isMatch && params) ? params.id : '';
-  const [slug, epNum, anilistId] = id.split('|');
+  const [, setLocation] = useLocation();
+  
+  // Robust URL decoding - handles encoded characters like %7C for pipe
+  const rawId = decodeURIComponent((isMatch && params) ? params.id : '');
+  
+  let initialSlug = '';
+  let initialEpNum = '1';
+  let initialAnilistId = '0';
+
+  if (rawId.includes('|')) {
+    const parts = rawId.split('|');
+    initialSlug = parts[0] || '';
+    initialEpNum = parts[1] || '1';
+    initialAnilistId = parts[2] || '0';
+  } else if (rawId.includes('$episode$')) {
+    const parts = rawId.split('$episode$');
+    initialSlug = parts[0] || '';
+    initialEpNum = parts[1] || '1';
+  } else {
+    initialSlug = rawId;
+  }
+
+  const slug = initialSlug;
+  const epNum = initialEpNum;
+  const anilistId = initialAnilistId;
 
   const [selectedServer, setSelectedServer] = useState<string>('HD-1');
   const [selectedType, setSelectedType] = useState<'sub' | 'dub'>('sub');
+  const [selectedChunk, setSelectedChunk] = useState<number>(0);
+  const [isBookmarked, setIsBookmarked] = useState(false);
 
-  // Fetch servers first for this episode
-  const { data: serversData, isLoading: loadingServers, error: serverError } = useSWR(
-    id ? `servers-${slug}-${epNum}-${anilistId}` : null,
-    () => animeApi.getServers(slug, epNum, anilistId || 0)
+  // Fetch anime details
+  const { data: animeData } = useSWR(slug ? `info-${slug}` : null, () => api.getDetails(slug));
+  const { data: recommendationsData } = useSWR(slug ? `recs-${slug}` : null, () => api.getRecommendations(slug));
+
+  const effectiveAnilistId = Number(anilistId) || animeData?.anilist_id || 0;
+
+  // Fetch servers list
+  const { data: serversData, isLoading: loadingServers } = useSWR(
+    slug && epNum ? `servers-${slug}-${epNum}-${effectiveAnilistId}` : null,
+    () => animeApi.getServers(slug, epNum, effectiveAnilistId)
   );
 
   const servers = serversData?.servers || [];
-  const currentServerObj = servers.find(s => s.serverName === selectedServer && s.dataType === selectedType) || servers[0];
+  const currentServer = servers.find(s => s.serverName === selectedServer && s.dataType === selectedType) || servers[0];
 
-  // Fetch stream URL
-  const { data: streamData, isLoading: loadingStream, error: streamError } = useSWR(
-    currentServerObj ? `stream-${slug}-${epNum}-${currentServerObj.serverName}-${currentServerObj.dataType}-${anilistId}` : null,
-    () => animeApi.getStream(slug, epNum, currentServerObj.serverName, currentServerObj.dataType || selectedType, anilistId || 0)
+  // Fetch authorized stream URL
+  const { data: streamData, isLoading: loadingStream } = useSWR(
+    slug && epNum && currentServer ? `stream-${slug}-${epNum}-${currentServer.serverName}-${currentServer.dataType || selectedType}-${effectiveAnilistId}` : null,
+    () => animeApi.getStream(slug, epNum, currentServer.serverName, currentServer.dataType || selectedType, effectiveAnilistId)
   );
 
-  const streamUrl = streamData?.url;
+  // Immediate reliable stream URL: prefer streamData.url, fallback directly to server.dataLink
+  const streamUrl = streamData?.url || currentServer?.dataLink || '';
 
-  // Save history
-  React.useEffect(() => {
-    if (slug && epNum) {
-      historyUtil.saveProgress(slug, id, epNum, 10, 100);
+  const episodes = animeData?.episodes || [];
+  const currentEpIndex = episodes.findIndex((e: any) => e.number.toString() === epNum || e.id === rawId);
+  const currentEpObj = currentEpIndex !== -1 ? episodes[currentEpIndex] : null;
+  const prevEp = currentEpIndex !== -1 && currentEpIndex > 0 ? episodes[currentEpIndex - 1] : null;
+  const nextEp = currentEpIndex !== -1 && currentEpIndex < episodes.length - 1 ? episodes[currentEpIndex + 1] : null;
+
+  const getAnimeTitle = (titleObj: any, fallback = '') => {
+    if (!titleObj) return fallback;
+    if (typeof titleObj === 'string') return titleObj;
+    return titleObj.english || titleObj.romaji || titleObj.native || fallback;
+  };
+
+  const detectedSeason = (currentEpObj as any)?.season || parseSeasonNumber(animeData?.title, 1);
+  const animeTitle = getAnimeTitle(animeData?.title, slug);
+
+  // Check Watchlist status with reactive listener
+  useEffect(() => {
+    if (animeData) {
+      setIsBookmarked(libraryManager.isInWatchlist(animeData.id));
     }
-  }, [slug, epNum, id]);
+    const handleLibUpdate = () => {
+      if (animeData) setIsBookmarked(libraryManager.isInWatchlist(animeData.id));
+    };
+    window.addEventListener('kinoma_library_update', handleLibUpdate);
+    return () => window.removeEventListener('kinoma_library_update', handleLibUpdate);
+  }, [animeData]);
 
-  const isLoading = loadingServers || (loadingStream && !streamUrl);
+  const toggleWatchlist = () => {
+    if (!animeData) return;
+    const inWatch = libraryManager.toggleWatchlist({
+      id: animeData.id,
+      title: animeTitle,
+      image: animeData.image || DEFAULT_POSTER
+    });
+    setIsBookmarked(inWatch);
+  };
+
+  // Save metadata
+  useEffect(() => {
+    if (slug && animeData) {
+      historyUtil.saveMeta(slug, {
+        title: animeTitle,
+        image: currentEpObj?.image || animeData.image || '',
+        animeId: animeData.id || slug,
+        seasonNumber: detectedSeason
+      });
+    }
+  }, [slug, animeData, currentEpObj, detectedSeason, animeTitle]);
+
+  // Clean background progress tracking: quietly records watch progress without artificial UI overlays
+  useEffect(() => {
+    if (!slug || !epNum) return;
+
+    const queryParams = new URLSearchParams(window.location.search);
+    const timeParam = queryParams.get('t') || queryParams.get('time');
+    const startSec = timeParam ? parseInt(timeParam, 10) : 0;
+
+    // Save initial progress
+    historyUtil.saveProgress(slug, rawId, epNum, startSec || 120, 1440, {
+      title: animeTitle,
+      image: currentEpObj?.image || animeData?.image || '',
+      animeId: animeData?.id || slug,
+      seasonNumber: detectedSeason
+    });
+
+    // Quiet background update every 15s
+    let currentSeconds = startSec || 120;
+    const interval = setInterval(() => {
+      currentSeconds = Math.min(1440, currentSeconds + 15);
+      historyUtil.saveProgress(slug, rawId, epNum, currentSeconds, 1440, {
+        title: animeTitle,
+        image: currentEpObj?.image || animeData?.image || '',
+        animeId: animeData?.id || slug,
+        seasonNumber: detectedSeason
+      });
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, [slug, epNum, rawId, animeData, currentEpObj, detectedSeason, animeTitle]);
+
+  const CHUNK_SIZE = 100;
+  const totalChunks = Math.ceil(episodes.length / CHUNK_SIZE);
+  const displayedEpisodes = episodes.slice(selectedChunk * CHUNK_SIZE, (selectedChunk + 1) * CHUNK_SIZE);
+
+  useEffect(() => {
+    if (currentEpIndex !== -1) {
+      setSelectedChunk(Math.floor(currentEpIndex / CHUNK_SIZE));
+    }
+  }, [currentEpIndex]);
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="w-full bg-[#0e0f11] pt-4 min-h-[90vh]"
-    >
-      <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-6 px-4 sm:px-6">
-        
-        {/* Main Player Area */}
-        <div className="flex-1 flex flex-col gap-4 relative">
-          
-          <div className="flex items-center justify-between mb-1">
-            <Link href={`/details/${slug}`}>
-              <button className="flex items-center gap-2 text-xs font-semibold text-gray-400 hover:text-white bg-[#141418] px-3 py-1.5 rounded border border-[#212126] transition-colors">
-                <ArrowLeft className="w-4 h-4" />
-                Back to Details
-              </button>
-            </Link>
-            <div className="flex items-center gap-2">
-              <span className="text-xs bg-purple-950 text-purple-300 px-2.5 py-1 rounded font-semibold border border-purple-900/50 flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5" /> Secure Authorized Stream
-              </span>
-            </div>
-          </div>
-
-          {/* Ambient Glow */}
-          <div className="absolute inset-x-4 top-12 aspect-video bg-[#4c1d95]/15 blur-3xl rounded-full z-0 pointer-events-none" />
-
-          {/* Player Container */}
-          <div className="w-full aspect-video bg-black rounded-xl overflow-hidden relative shadow-2xl border border-[#212126] flex items-center justify-center z-10">
-            {isLoading ? (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#111115]">
-                <RefreshCw className="w-8 h-8 text-purple-500 animate-spin" />
-                <p className="text-sm text-gray-400 font-medium">Loading streaming servers & player...</p>
-              </div>
-            ) : serverError || streamError || !streamUrl ? (
-              <div className="text-center p-8 max-w-lg bg-[#141418] rounded-xl border border-red-900/30">
-                <h2 className="text-xl font-bold text-red-400 mb-2">Stream Server Unavailable</h2>
-                <p className="text-gray-400 text-sm mb-4 leading-relaxed">
-                  The upstream streaming server did not return a valid playback link for this episode. Please switch to another server (HD-1 / HD-2) or language (Sub / Dub) using the control panel on the right.
-                </p>
-                <button 
-                  onClick={() => window.location.reload()}
-                  className="bg-[#581c87] hover:bg-[#4c1d95] text-white px-5 py-2 rounded text-xs font-bold transition-colors"
-                >
-                  Retry Connection
-                </button>
-              </div>
-            ) : (
+    <div className="w-full bg-[#08090d] min-h-screen pb-20 text-white font-sans">
+      
+      {/* VIDEO PLAYER CONTAINER */}
+      <div className="w-full bg-[#050508] border-b border-[#1c1c26]">
+        <div className="w-full max-w-6xl mx-auto px-0 sm:px-4 sm:py-4">
+          <div className="w-full aspect-video bg-black sm:rounded-2xl overflow-hidden relative shadow-[0_12px_40px_rgba(0,0,0,0.8)] border border-[#1a1a24]">
+            {streamUrl ? (
               <iframe 
+                key={streamUrl}
                 src={streamUrl}
-                title={`Anime Stream Episode ${epNum}`}
-                className="w-full h-full border-0 outline-none relative z-10"
+                title={`Episode ${epNum}`}
+                className="w-full h-full border-0 outline-none"
                 allowFullScreen
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-[#0b0c10] text-center p-4">
+                <div className="w-10 h-10 border-3 border-[#7b1fa2]/30 border-t-[#7b1fa2] rounded-full animate-spin mb-4" />
+                <p className="text-gray-300 font-bold text-sm tracking-wide">Connecting to streaming server...</p>
+                <p className="text-gray-500 text-xs mt-1">Episode {epNum} • {selectedServer} • {selectedType.toUpperCase()}</p>
+              </div>
             )}
           </div>
-          
-          {/* Episode Info Bar */}
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#111115] border border-[#212126] p-4 rounded-xl z-10 relative"
-          >
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] bg-[#581c87] text-white px-2 py-0.5 rounded font-bold uppercase tracking-wider">
-                  Episode {epNum}
-                </span>
-                <span className="text-xs text-gray-400 font-mono">ID: {slug}</span>
-              </div>
-              <h1 className="text-lg font-bold text-white tracking-tight">
-                Now Playing Episode {epNum} ({selectedType.toUpperCase()})
-              </h1>
-            </div>
 
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={() => {
-                  const watchlist = JSON.parse(localStorage.getItem('animora_watchlist') || '[]');
-                  if (!watchlist.some((i: any) => i.id === slug)) {
-                    watchlist.push({ id: slug, title: slug, image: '' });
-                    localStorage.setItem('animora_watchlist', JSON.stringify(watchlist));
-                    alert('Added to your watchlist library!');
-                  } else {
-                    alert('Already in your watchlist!');
-                  }
-                }}
-                className="flex items-center gap-1.5 bg-[#1c1c22] hover:bg-[#2c2c34] text-gray-200 px-4 py-2 rounded text-xs font-semibold transition-colors border border-[#2a2a35]"
-              >
-                <Bookmark className="w-4 h-4 text-purple-400" />
-                Add to Library
-              </button>
-            </div>
-          </motion.div>
-        </div>
-        
-        {/* Right Sidebar: Server & Sub/Dub Switcher */}
-        <motion.div 
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3 }}
-          className="w-full lg:w-[360px] flex flex-col gap-4 shrink-0 z-10"
-        >
-          <div className="bg-[#111115] border border-[#212126] p-5 rounded-xl flex flex-col gap-6 sticky top-20">
-            <div>
-              <h3 className="text-base font-bold text-white flex items-center gap-2 mb-1">
-                <ServerIcon className="w-4 h-4 text-purple-400" />
-                Streaming Servers
-              </h3>
-              <p className="text-xs text-gray-400">
-                Select your preferred audio type and server node for seamless playback.
-              </p>
-            </div>
-
-            {/* Sub / Dub Switcher */}
-            <div className="flex flex-col gap-2">
-              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Audio Type</span>
-              <div className="grid grid-cols-2 gap-2">
+          {/* Minimalist Player Controls Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-[#0e0f15] sm:rounded-xl border border-[#1c1c26] mt-3">
+            
+            {/* Server and Audio Track Selectors */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center bg-[#14141d] p-1 rounded-xl border border-[#222230]">
                 <button
                   onClick={() => setSelectedType('sub')}
-                  className={`py-2 px-4 rounded text-xs font-bold transition-all ${selectedType === 'sub' ? 'bg-[#581c87] text-white shadow-lg shadow-purple-950/50' : 'bg-[#18181d] text-gray-400 hover:text-white border border-[#212126]'}`}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${selectedType === 'sub' ? 'bg-[#7b1fa2] text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
                 >
-                  SUBBED
+                  SUB
                 </button>
                 <button
                   onClick={() => setSelectedType('dub')}
-                  className={`py-2 px-4 rounded text-xs font-bold transition-all ${selectedType === 'dub' ? 'bg-[#581c87] text-white shadow-lg shadow-purple-950/50' : 'bg-[#18181d] text-gray-400 hover:text-white border border-[#212126]'}`}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${selectedType === 'dub' ? 'bg-[#7b1fa2] text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
                 >
-                  DUBBED
+                  DUB
                 </button>
               </div>
+
+              {servers.length > 0 && (
+                <div className="flex items-center gap-1.5 bg-[#14141d] p-1 rounded-xl border border-[#222230]">
+                  {Array.from(new Set(servers.map(s => s.serverName))).map(sName => (
+                    <button
+                      key={sName}
+                      onClick={() => setSelectedServer(sName)}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${selectedServer === sName ? 'bg-[#7b1fa2]/30 text-[#c084fc] border border-[#9c27b0]/40' : 'text-gray-400 hover:text-white'}`}
+                    >
+                      {sName}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Server List */}
-            <div className="flex flex-col gap-2">
-              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Available Servers</span>
-              <div className="grid grid-cols-2 gap-2">
-                {['HD-1', 'HD-2'].map((srv) => {
-                  const exists = servers.some(s => s.serverName === srv && s.dataType === selectedType);
-                  return (
-                    <button
-                      key={srv}
-                      onClick={() => setSelectedServer(srv)}
-                      className={`py-2.5 px-3 rounded text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${selectedServer === srv ? 'bg-purple-600/30 text-purple-200 border border-purple-500' : 'bg-[#18181d] text-gray-300 hover:bg-[#212126] border border-[#212126]'}`}
-                    >
-                      <Play className="w-3 h-3 fill-current" />
-                      {srv}
-                    </button>
-                  );
+            {/* Episode Quick Switcher Buttons */}
+            <div className="flex items-center gap-2 ml-auto">
+              {prevEp && (
+                <Link href={`/watch/${encodeURIComponent(prevEp.id)}`}>
+                  <button className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#14141d] hover:bg-[#1f1f2c] text-gray-300 hover:text-white text-xs font-bold border border-[#222230] transition-colors">
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Prev</span>
+                  </button>
+                </Link>
+              )}
+
+              {nextEp && (
+                <Link href={`/watch/${encodeURIComponent(nextEp.id)}`}>
+                  <button className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-[#7b1fa2] hover:bg-[#9c27b0] text-white text-xs font-bold shadow-[0_2px_12px_rgba(123,31,162,0.4)] transition-all">
+                    <span>Next Ep {nextEp.number}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </Link>
+              )}
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      {/* EPISODE DETAILS & SELECTION SECTION */}
+      <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 mt-6 flex flex-col gap-8">
+        
+        {/* Title and Metadata Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1c1c26] pb-5">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Link href={`/details/${slug}`}>
+                <span className="text-xs font-bold text-[#c084fc] hover:underline cursor-pointer">
+                  {animeTitle}
+                </span>
+              </Link>
+              <span className="text-xs text-gray-500">•</span>
+              <span className="text-xs font-semibold text-gray-400">Season {detectedSeason}</span>
+            </div>
+
+            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+              Episode {epNum}: {currentEpObj?.title || `Episode ${epNum}`}
+            </h1>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={toggleWatchlist}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+                isBookmarked 
+                  ? 'bg-[#7b1fa2]/25 text-white border-[#9c27b0]/50' 
+                  : 'bg-[#14141d] text-gray-300 hover:text-white border-[#222230] hover:bg-[#1b1b26]'
+              }`}
+            >
+              <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-[#c084fc] text-[#c084fc]' : ''}`} />
+              <span>{isBookmarked ? 'In Library' : 'Add to Library'}</span>
+            </button>
+
+            <Link href={`/details/${slug}`}>
+              <button className="px-4 py-2 rounded-xl bg-[#14141d] hover:bg-[#1b1b26] text-gray-300 hover:text-white text-xs font-bold border border-[#222230] transition-colors">
+                All Episodes
+              </button>
+            </Link>
+          </div>
+        </div>
+
+        {/* EPISODES GRID SELECTOR */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">Episodes</h2>
+              <span className="text-xs text-gray-400 bg-[#14141d] px-2.5 py-0.5 rounded-full border border-[#222230]">
+                {episodes.length} total
+              </span>
+            </div>
+
+            {totalChunks > 1 && (
+              <select
+                value={selectedChunk}
+                onChange={(e) => setSelectedChunk(Number(e.target.value))}
+                className="bg-[#14141d] border border-[#222230] text-gray-200 text-xs font-bold rounded-lg px-3 py-1.5 outline-none focus:border-[#7b1fa2] cursor-pointer"
+              >
+                {Array.from({ length: totalChunks }).map((_, i) => {
+                  const start = i * CHUNK_SIZE + 1;
+                  const end = Math.min((i + 1) * CHUNK_SIZE, episodes.length);
+                  return <option key={i} value={i}>Episodes {start} - {end}</option>;
                 })}
+              </select>
+            )}
+          </div>
+
+          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+            {displayedEpisodes.map((ep: any) => {
+              const isCurrent = ep.number.toString() === epNum;
+              const epProg = historyUtil.getEpisodeProgress(slug, ep.number);
+              const isWatched = epProg?.isCompleted || (epProg && epProg.completionPercentage >= 88);
+
+              return (
+                <Link key={ep.id} href={`/watch/${encodeURIComponent(ep.id)}`}>
+                  <button
+                    className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all relative flex items-center justify-center border cursor-pointer ${
+                      isCurrent
+                        ? 'bg-[#7b1fa2] text-white border-[#ba68c8] shadow-[0_0_15px_rgba(123,31,162,0.45)]'
+                        : isWatched
+                          ? 'bg-[#11161d] text-emerald-400 border-emerald-500/30 hover:bg-[#161d27]'
+                          : 'bg-[#121219] text-gray-400 border-[#20202c] hover:text-white hover:bg-[#181822] hover:border-[#353548]'
+                    }`}
+                  >
+                    <span>{ep.number}</span>
+                    {isWatched && !isCurrent && (
+                      <CheckCircle2 className="w-3 h-3 text-emerald-400 absolute top-1 right-1" />
+                    )}
+                  </button>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ABOUT ANIME SYNOPSIS */}
+        {animeData && (
+          <div className="bg-[#0e0f14] border border-[#1c1c26] rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row gap-5 items-start">
+            <img 
+              src={animeData.image || DEFAULT_POSTER} 
+              alt={animeTitle} 
+              className="w-24 sm:w-28 aspect-[3/4] object-cover rounded-xl border border-white/10 shrink-0" 
+            />
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg font-bold text-white mb-2">{animeTitle}</h3>
+              <p 
+                className="text-xs sm:text-sm text-gray-400 leading-relaxed line-clamp-4"
+                dangerouslySetInnerHTML={{ __html: animeData.description || 'No description available.' }} 
+              />
+              <div className="flex flex-wrap gap-2 mt-3">
+                {(animeData.genres || []).map((g: string) => (
+                  <span key={g} className="text-[10px] font-bold text-gray-400 bg-[#161622] px-2.5 py-1 rounded-lg border border-[#242434]">
+                    {g}
+                  </span>
+                ))}
               </div>
             </div>
-
-            <div className="p-3 bg-[#18181d] rounded-lg border border-[#212126] text-xs text-gray-400 leading-relaxed">
-              <p className="font-semibold text-gray-300 mb-1">Playback Notice:</p>
-              Streams are securely proxied via authorized embed handoffs from our Railway API backend. If any server fails to load, simply toggle between HD-1 and HD-2.
-            </div>
           </div>
-        </motion.div>
+        )}
+
+        {/* RECOMMENDATIONS */}
+        {recommendationsData?.results && recommendationsData.results.length > 0 && (
+          <div className="mt-4">
+            <AnimeGrid 
+              title="You May Also Like" 
+              items={recommendationsData.results.slice(0, 10)} 
+            />
+          </div>
+        )}
 
       </div>
-    </motion.div>
+    </div>
   );
 }

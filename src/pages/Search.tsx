@@ -82,8 +82,8 @@ export function Search() {
   });
 
   return (
-    <div className="w-full min-h-screen bg-[#0e0f11] py-8 px-4 sm:px-6">
-      <div className="max-w-7xl mx-auto flex flex-col gap-8">
+    <div className="w-full min-h-screen bg-[#0e0f11] py-8">
+      <div className="w-full px-4 sm:px-6 md:px-8 lg:px-10 2xl:px-16 flex flex-col gap-8">
         
         {/* Catalog Header & Search Input */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-[#141418] border border-[#1c1c22] p-6 rounded-2xl shadow-xl">
@@ -100,12 +100,12 @@ export function Search() {
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
                 placeholder="Search anime title..."
-                className="w-full bg-[#1c1c22] border border-[#2c2c34] text-white pl-10 pr-4 py-2.5 rounded-lg text-sm focus:outline-none focus:border-[#581c87] transition-colors"
+                className="w-full bg-[#1c1c22] border border-[#2c2c34] text-white pl-10 pr-4 py-2.5 rounded-lg text-sm focus:outline-none focus:border-[#4a148c] transition-colors"
               />
             </div>
             <button 
               type="submit"
-              className="bg-[#581c87] hover:bg-[#4c1d95] text-white px-5 py-2.5 rounded-lg text-sm font-bold transition-all shadow-md shrink-0"
+              className="bg-[#4a148c] hover:bg-[#38006b] text-white px-5 py-2.5 rounded-lg text-sm font-bold transition-all shadow-md shrink-0"
             >
               Search
             </button>
@@ -118,13 +118,13 @@ export function Search() {
           {/* Genres */}
           <div className="flex items-center gap-2 overflow-x-auto w-full pb-2 lg:pb-0 scrollbar-none">
             <span className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1 shrink-0">
-              <Filter className="w-3.5 h-3.5 text-[#581c87]" /> Genre:
+              <Filter className="w-3.5 h-3.5 text-[#4a148c]" /> Genre:
             </span>
             {GENRES.map((genre) => (
               <button
                 key={genre}
                 onClick={() => setSelectedGenre(genre)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${selectedGenre === genre ? 'bg-[#581c87] text-white shadow-[0_0_12px_rgba(88,28,135,0.6)]' : 'bg-[#1c1c22] text-gray-400 hover:text-white hover:bg-[#25252d]'}`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${selectedGenre === genre ? 'bg-[#4a148c] text-white shadow-[0_0_12px_rgba(49,16,66,0.6)]' : 'bg-[#1c1c22] text-gray-400 hover:text-white hover:bg-[#25252d]'}`}
               >
                 {genre}
               </button>
@@ -134,12 +134,12 @@ export function Search() {
           {/* Sort By */}
           <div className="flex items-center gap-2 shrink-0 self-end lg:self-center">
             <span className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-              <ArrowUpDown className="w-3.5 h-3.5 text-[#581c87]" /> Sort:
+              <ArrowUpDown className="w-3.5 h-3.5 text-[#4a148c]" /> Sort:
             </span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="bg-[#1c1c22] border border-[#2c2c34] text-white text-xs font-semibold px-3 py-2 rounded-lg focus:outline-none focus:border-[#581c87]"
+              className="bg-[#1c1c22] border border-[#2c2c34] text-white text-xs font-semibold px-3 py-2 rounded-lg focus:outline-none focus:border-[#4a148c]"
             >
               <option value="popularity">Most Popular</option>
               <option value="score">Highest Score</option>
@@ -157,7 +157,7 @@ export function Search() {
             
             {/* Loading More Indicator / Infinite Scroll State */}
             {isLoadingMore && (
-              <div className="flex items-center justify-center py-8 gap-2 text-purple-400">
+              <div className="flex items-center justify-center py-8 gap-2 text-[#4a148c]">
                 <Loader2 className="w-6 h-6 animate-spin" />
                 <span className="text-sm font-semibold">Loading more anime...</span>
               </div>

@@ -1,5 +1,5 @@
 {
-  "name": "ANIMORA",
+  "name": "Kinoma",
   "description": "Unified anime and manga discovery, streaming, and reading platform powered by Aniwatch API (codex0555/Aniwatch-Api), MangaDex Direct HD Reader, AniList GraphQL metadata, and multi-server video playback.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

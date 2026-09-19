@@ -326,7 +326,7 @@ async function fetchApi<T>(
     return await response.json();
 
   } catch (error) {
-
+    console.error("fetchApi inner error:", error, "URL:", url);
     if (
       error instanceof AnimeApiError
     ) {
@@ -343,7 +343,7 @@ async function fetchApi<T>(
     }
 
     throw new Error(
-      "Unable to connect to the anime API."
+      "Unable to connect: ${error instanceof Error ? error.message : String(error)}"
     );
 
   } finally {
@@ -411,6 +411,14 @@ export const animeApi = {
     );
   },
 
+
+  getRecommendations: (
+    animeId: string
+  ): Promise<any> => {
+    return fetchApi<any>(
+      `/recommendations/${encodeURIComponent(animeId)}`
+    );
+  },
 
   /*
    * Episodes

@@ -11,12 +11,48 @@
 }
 
 @layer base {
+  html, body, #root {
+    width: 100%;
+    min-height: 100%;
+    margin: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+  
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
   }
+}
+
+/* Hardware accelerated transform utility */
+.gpu-layer {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Refined custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0e0f11;
+}
+::-webkit-scrollbar-thumb {
+  background: #23232b;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #393945;
 }
 
 /* Hide scrollbar for clean UI */

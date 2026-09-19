@@ -1,21 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'wouter';
-import { Play, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Play, Plus, Star, Film, Volume2, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { AnimeItem } from '../../types';
+import { AnimeItem, DEFAULT_BANNER } from '../../types';
 
 interface HeroProps {
   item?: AnimeItem;
   items?: AnimeItem[];
 }
 
+// Simple deterministic pseudo-random for particles
+const generateParticles = (count: number) => {
+  return Array.from({ length: count }).map((_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    size: Math.random() * 3 + 1,
+    duration: Math.random() * 20 + 10,
+    delay: Math.random() * 5
+  }));
+};
+
 export function Hero({ item, items }: HeroProps) {
   const [shuffledItems, setShuffledItems] = useState<AnimeItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [particles] = useState(() => generateParticles(20));
 
   useEffect(() => {
     const list = items && items.length > 0 ? items : (item ? [item] : []);
-    // Shuffle copy of list randomly on mount
     const shuffled = [...list].sort(() => Math.random() - 0.5);
     setShuffledItems(shuffled);
     setCurrentIndex(0);
@@ -27,7 +39,7 @@ export function Hero({ item, items }: HeroProps) {
     if (heroList.length <= 1) return;
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % heroList.length);
-    }, 6000);
+    }, 8800);
     return () => clearInterval(interval);
   }, [heroList.length]);
 
@@ -38,120 +50,140 @@ export function Hero({ item, items }: HeroProps) {
     ? currentItem.title 
     : currentItem.title?.english || currentItem.title?.romaji || 'Unknown Title';
 
-  const handlePrev = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setCurrentIndex((prev) => (prev - 1 + heroList.length) % heroList.length);
-  };
-
-  const handleNext = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setCurrentIndex((prev) => (prev + 1) % heroList.length);
-  };
-
   return (
-    <div className="relative w-full overflow-hidden bg-[#0e0f11] pt-6 pb-8 md:pt-10 md:pb-12 px-4 sm:px-6 group">
-      <div className="mx-auto max-w-7xl flex flex-col md:flex-row gap-6 md:gap-12 items-center relative">
-        
-        {/* Navigation Arrows */}
-        {heroList.length > 1 && (
-          <>
-            <button 
-              onClick={handlePrev}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/60 border border-[#2a2a32] text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#581c87]"
-              aria-label="Previous Featured Anime"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button 
-              onClick={handleNext}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/60 border border-[#2a2a32] text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#581c87]"
-              aria-label="Next Featured Anime"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </>
-        )}
+    <div className="relative w-full h-[65vh] sm:h-[75vh] min-h-[500px] lg:h-[85vh] bg-[#0e0f11] overflow-hidden flex items-end group">
+      
+      {/* Background & Overlays */}
+      <AnimatePresence mode="popLayout">
+        <motion.div
+          key={currentItem.id || currentIndex}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 1.2, ease: "easeInOut" }}
+          className="absolute inset-0 z-0"
+        >
+          {/* Parallax Image */}
+          <motion.img 
+            initial={{ scale: 1 }}
+            animate={{ scale: 1.08 }}
+            transition={{ duration: 15, ease: "linear" }}
+            src={currentItem.cover || currentItem.image || DEFAULT_BANNER}
+            alt={title}
+            className="w-full h-full object-cover object-top opacity-80"
+          />
+        </motion.div>
+      </AnimatePresence>
 
-        {/* Left Side: Content */}
+      {/* Cinematic Gradients */}
+      <div className="absolute inset-0 z-0 bg-gradient-to-r from-[#0e0f11] via-[#0e0f11]/70 to-transparent w-[95%] md:w-[75%]" />
+      <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#0e0f11] via-transparent to-transparent opacity-90" />
+      <div className="absolute inset-x-0 bottom-0 z-0 h-40 bg-gradient-to-t from-[#0e0f11] to-transparent" />
+
+      {/* Subtle Animated Particles (Dust/Embers) - Hardware accelerated */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden mix-blend-screen opacity-30 gpu-layer">
+        {particles.map((p) => (
+          <motion.div
+            key={p.id}
+            initial={{ y: `${p.y}vh`, x: `${p.x}vw`, opacity: 0 }}
+            animate={{ 
+              y: [`${p.y}vh`, `${p.y - 18}vh`], 
+              x: [`${p.x}vw`, `${p.x + (p.id % 2 === 0 ? 8 : -8)}vw`],
+              opacity: [0, 0.7, 0] 
+            }}
+            transition={{
+              duration: p.duration,
+              repeat: Infinity,
+              delay: p.delay,
+              ease: "linear"
+            }}
+            className="absolute rounded-full bg-white will-change-transform"
+            style={{ width: p.size, height: p.size, filter: 'blur(1px)' }}
+          />
+        ))}
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 w-full px-4 sm:px-6 md:px-8 lg:px-10 2xl:px-16 pb-12 sm:pb-20 lg:pb-28">
         <AnimatePresence mode="wait">
           <motion.div 
-            key={currentItem.id || currentIndex}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-            className="w-full md:w-[45%] lg:w-[50%] z-10 flex flex-col gap-4"
+            key={`content-${currentItem.id || currentIndex}`}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -16 }}
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            className="max-w-[700px] flex flex-col gap-4 sm:gap-5"
           >
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-[1.1] text-shadow-sm line-clamp-3">
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black text-white leading-[1.1] drop-shadow-2xl">
               {title}
             </h1>
             
-            <div className="flex flex-wrap items-center gap-2 mt-1">
-              <span className="px-1.5 py-0.5 border border-gray-600 rounded-sm text-[10px] font-bold text-gray-300">TV / HD</span>
-              <span className="px-1.5 py-0.5 bg-gray-200 text-black rounded-sm text-[10px] font-bold">CC</span>
-              {currentItem.totalEpisodes && (
-                 <span className="px-1.5 py-0.5 bg-yellow-400 text-black rounded-sm text-[10px] font-bold flex items-center gap-1">
-                   🎤 {currentItem.totalEpisodes} Eps
-                 </span>
-              )}
+            {/* Metadata Row */}
+            <div className="flex flex-wrap items-center gap-3 sm:gap-5 text-xs sm:text-sm font-semibold drop-shadow-md">
               {currentItem.rating && (
-                <span className="px-1.5 py-0.5 bg-[#581c87]/60 text-purple-200 rounded-sm text-[10px] font-bold">
-                  Score: {currentItem.rating}
+                <span className="flex items-center gap-1.5 text-yellow-400">
+                  <Star className="w-4 h-4 fill-current" /> {(Number(currentItem.rating) / 10).toFixed(1) || '8.7'}
                 </span>
               )}
+              {currentItem.totalEpisodes && (
+                <span className="flex items-center gap-1.5 text-gray-200">
+                  <Film className="w-4 h-4 text-gray-400" /> {currentItem.totalEpisodes} Episodes
+                </span>
+              )}
+              <span className="flex items-center gap-1.5 text-gray-200">
+                <Globe className="w-4 h-4 text-gray-400" /> Japanese
+              </span>
+              <span className="flex items-center gap-1.5 text-gray-200">
+                <Volume2 className="w-4 h-4 text-gray-400" /> English Dub
+              </span>
             </div>
             
             <p 
-              className="text-sm text-[#8b8b92] line-clamp-3 leading-relaxed mt-2" 
+              className="text-sm sm:text-base text-gray-300 line-clamp-2 sm:line-clamp-3 leading-relaxed max-w-xl drop-shadow-lg" 
               dangerouslySetInnerHTML={{ __html: currentItem.description || 'No synopsis available for this title.' }} 
             />
             
-            <div className="mt-4 flex items-center gap-3">
+            {/* Buttons */}
+            <div className="mt-2 flex items-center gap-3 sm:gap-4">
               <Link href={`/details/${currentItem.id}`}>
-                <button className="flex items-center gap-2 bg-[#581c87] hover:bg-[#4c1d95] text-white px-7 py-3.5 rounded text-sm font-bold transition-all transform active:scale-95 shadow-[0_4px_20px_0_rgba(88,28,135,0.4)]">
-                  <Play className="w-4 h-4 fill-white" />
-                  PLAY NOW
-                </button>
+                <motion.button 
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="flex items-center justify-center gap-2 bg-white hover:bg-gray-100 text-black px-6 sm:px-8 py-3 rounded-xl text-sm sm:text-base font-black transition-all shadow-[0_4px_20px_rgba(255,255,255,0.25)]"
+                >
+                  <Play className="w-5 h-5 fill-current" />
+                  Watch Now
+                </motion.button>
               </Link>
+              <motion.button 
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 px-6 sm:px-8 py-3 rounded-xl text-sm sm:text-base font-bold transition-all shadow-xl"
+              >
+                <Plus className="w-5 h-5" strokeWidth={3} />
+                Add to List
+              </motion.button>
             </div>
-            
-            {/* Dot Indicators */}
-            {heroList.length > 1 && (
-              <div className="flex items-center gap-2 mt-6">
-                {heroList.map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setCurrentIndex(idx)}
-                    className={`h-2 rounded-full transition-all ${idx === currentIndex ? 'w-6 bg-[#581c87] shadow-[0_0_10px_rgba(88,28,135,0.8)]' : 'w-2 bg-[#2a2a32] hover:bg-gray-500'}`}
-                    aria-label={`Go to slide ${idx + 1}`}
-                  />
-                ))}
-              </div>
-            )}
           </motion.div>
         </AnimatePresence>
-
-        {/* Right Side: Image/Banner */}
-        <AnimatePresence mode="wait">
-          <motion.div 
-            key={`img-${currentItem.id || currentIndex}`}
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.96 }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
-            className="w-full md:w-[55%] lg:w-[50%] h-[220px] sm:h-[300px] md:h-[360px] lg:h-[410px] relative rounded-2xl overflow-hidden shadow-2xl bg-[#15151a]"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-[#0e0f11] via-transparent to-transparent z-10 md:hidden" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0e0f11] via-transparent to-transparent z-10 md:hidden" />
-            
-            <img 
-              src={currentItem.cover || currentItem.image} 
-              alt={title}
-              className="w-full h-full object-cover select-none"
-              loading="eager"
-            />
-          </motion.div>
-        </AnimatePresence>
+        
+        {/* Modern Pill Slide Indicators */}
+        {heroList.length > 1 && (
+          <div className="absolute bottom-6 right-6 sm:right-10 flex items-center gap-2 z-20">
+            {heroList.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentIndex(idx)}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  idx === currentIndex 
+                    ? 'w-7 bg-gradient-to-r from-[#9c27b0] to-[#ba68c8] shadow-[0_0_12px_rgba(156,39,176,0.8)]' 
+                    : 'w-2 bg-white/30 hover:bg-white/60'
+                }`}
+                aria-label={`Go to slide ${idx + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
