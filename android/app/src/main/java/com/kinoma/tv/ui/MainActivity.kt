@@ -77,7 +77,7 @@ fun TVHomeScreen() {
     Box(modifier = Modifier.fillMaxSize().background(Color(0xFF07080d))) {
         if (isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                androidx.tv.material3.Text("Loading...")
             }
         } else if (errorMessage != null) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
