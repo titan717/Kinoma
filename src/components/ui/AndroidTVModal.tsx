@@ -144,32 +144,43 @@ export function AndroidTVModal() {
                   <Download className="w-6 h-6 text-[#c084fc]" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black text-white">GitHub Actions Cloud APK Builder</h3>
+                  <h3 className="text-sm font-black text-white">GitHub Actions Cloud APK Builder (Recommended)</h3>
                   <p className="text-xs text-gray-300 mt-0.5">
-                    Push this project to GitHub! Our included workflow (<code className="text-[#c084fc]">.github/workflows/build-apk.yml</code>) automatically builds <code className="text-white font-bold">Kinoma-TV.apk</code> in the cloud.
+                    Web containers cannot compile native Android binaries. Push this repo to GitHub to let GitHub Actions automatically build the full <code className="text-white font-bold">Kinoma-TV.apk</code> & <code className="text-white font-bold">Kinoma-Mobile.apk</code> with auto-updates!
                   </p>
                 </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-2.5 pt-1">
                 <a
-                  href="https://github.com"
+                  href="/downloads/Kinoma-TV.apk"
+                  download="Kinoma-TV-release.apk"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-2 transition-all cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-xs font-black shadow-lg shadow-purple-600/30 flex items-center gap-2 transition-all hover:scale-105 cursor-pointer"
                 >
-                  <ExternalLink className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Open GitHub Repo</span>
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download TV APK</span>
+                </a>
+                <a
+                  href="/downloads/Kinoma-Mobile.apk"
+                  download="Kinoma-Mobile-release.apk"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-black shadow-lg shadow-blue-600/30 flex items-center gap-2 transition-all hover:scale-105 cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download Mobile APK</span>
                 </a>
                 <button
                   onClick={() => {
                     setTVMode(true);
                     closeAndroidTVModal();
                   }}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-xs font-black shadow-lg shadow-purple-600/30 flex items-center gap-2 transition-all cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/25 text-white text-xs font-bold flex items-center gap-2 transition-all cursor-pointer"
                 >
-                  <Tv className="w-3.5 h-3.5" />
-                  <span>Launch Web TV Mode</span>
+                  <Tv className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Launch Instant Web TV Mode</span>
                 </button>
               </div>
             </div>
