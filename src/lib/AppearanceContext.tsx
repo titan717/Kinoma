@@ -11,7 +11,7 @@ export interface PlayerSettings {
   preferredAudio: 'sub' | 'dub';
 }
 
-export type SettingsTab = 'appearance' | 'player' | 'library' | 'androidtv';
+export type SettingsTab = 'appearance' | 'player' | 'library' | 'androidtv' | 'updates';
 
 interface AppearanceContextType {
   themeMode: ThemeMode;

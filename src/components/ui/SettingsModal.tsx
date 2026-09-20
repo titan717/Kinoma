@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, 
@@ -17,7 +17,9 @@ import {
   Trash2,
   Download,
   QrCode,
-  Gamepad2
+  Gamepad2,
+  RefreshCw,
+  GitBranch
 } from 'lucide-react';
 import { useAppearance, ThemeMode } from '../../lib/AppearanceContext';
 import { useTVMode } from '../../lib/TVModeContext';
@@ -40,6 +42,51 @@ export function SettingsModal() {
 
   const { openAndroidTVModal, isTVMode, toggleTVMode, isAndroidTVDetected } = useTVMode();
   const { isInstallable, isInstalled, install } = usePWAInstall();
+
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [updateStatus, setUpdateStatus] = useState<string | null>(null);
+
+  const fetchLatestRelease = async () => {
+    setIsCheckingUpdate(true);
+    setUpdateStatus('Querying GitHub latest release...');
+    try {
+      // Query GitHub API for latest release assets
+      const res = await fetch('https://api.github.com/repos/owner/repo/releases/latest');
+      if (!res.ok) {
+        throw new Error(`GitHub API error: ${res.status}`);
+      }
+      const data = await res.json();
+      const apkAsset = data.assets?.find((asset: any) => asset.name && asset.name.endsWith('.apk'));
+      if (apkAsset && apkAsset.browser_download_url) {
+        setUpdateStatus(`Found version ${data.tag_name || 'latest'}! Downloading APK...`);
+        const a = document.createElement('a');
+        a.href = apkAsset.browser_download_url;
+        a.download = apkAsset.name || 'Kinoma-TV-release.apk';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => setUpdateStatus('Download started successfully!'), 1500);
+      } else {
+        throw new Error('No .apk asset found in the latest GitHub release.');
+      }
+    } catch (err: any) {
+      // Fallback to local server APK package endpoint
+      setUpdateStatus('Falling back to local release package download...');
+      try {
+        const a = document.createElement('a');
+        a.href = '/downloads/Kinoma-TV.apk';
+        a.download = 'Kinoma-TV-release.apk';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => setUpdateStatus('Local APK download triggered successfully!'), 1500);
+      } catch (e) {
+        setUpdateStatus(`Download error: ${err.message || 'Failed'}`);
+      }
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
 
   if (!isSettingsModalOpen) return null;
 
@@ -144,6 +191,22 @@ export function SettingsModal() {
             <Tv className="w-3.5 h-3.5 text-[#c084fc]" />
             <span>Android TV</span>
             {activeSettingsTab === 'androidtv' && (
+              <motion.div 
+                layoutId="settingsTabIndicator" 
+                className="absolute bottom-0 inset-x-0 h-0.5 bg-[#c084fc] rounded-full" 
+              />
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveSettingsTab('updates')}
+            className={`flex items-center gap-2 pb-3 px-1 text-xs font-bold transition-colors relative ${
+              activeSettingsTab === 'updates' ? 'text-white' : 'text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            <GitBranch className="w-3.5 h-3.5 text-[#c084fc]" />
+            <span>Updates & APK</span>
+            {activeSettingsTab === 'updates' && (
               <motion.div 
                 layoutId="settingsTabIndicator" 
                 className="absolute bottom-0 inset-x-0 h-0.5 bg-[#c084fc] rounded-full" 
@@ -568,6 +631,68 @@ export function SettingsModal() {
                   <div><span className="text-gray-200 font-semibold">Back/Esc:</span> Go Back</div>
                   <div><span className="text-gray-200 font-semibold">F Key:</span> TV Fullscreen</div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* UPDATES & APK TAB */}
+          {activeSettingsTab === 'updates' && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">GitHub Releases & APK Updater</h3>
+                <p className="text-xs text-gray-400">
+                  Fetch the latest release directly from GitHub API, extract the .apk download URL, and trigger download instantly.
+                </p>
+              </div>
+
+              <div className="p-4 bg-[#13141c] border border-[#222230] rounded-xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-bold text-white">Check GitHub Latest Release</h4>
+                    <p className="text-[11px] text-gray-400">Query GitHub API and trigger direct APK download</p>
+                  </div>
+                  <button
+                    onClick={fetchLatestRelease}
+                    disabled={isCheckingUpdate}
+                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-xs rounded-xl shadow-lg transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
+                    <span>{isCheckingUpdate ? 'Checking...' : 'Check For Updates'}</span>
+                  </button>
+                </div>
+
+                {updateStatus && (
+                  <div className="p-3 bg-purple-950/40 border border-purple-500/30 rounded-lg text-xs text-purple-200 font-medium flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-[#c084fc] shrink-0" />
+                    <span>{updateStatus}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <a
+                  href="/downloads/Kinoma-TV.apk"
+                  download="Kinoma-TV-release.apk"
+                  className="p-3.5 bg-[#13141c] hover:bg-[#1a1b26] border border-[#222230] rounded-xl flex items-center justify-between transition-all group"
+                >
+                  <div>
+                    <h4 className="text-xs font-bold text-white group-hover:text-[#c084fc]">Download TV APK</h4>
+                    <p className="text-[10px] text-gray-400">Kinoma-TV-release.apk</p>
+                  </div>
+                  <Download className="w-4 h-4 text-purple-400" />
+                </a>
+
+                <a
+                  href="/downloads/Kinoma-Mobile.apk"
+                  download="Kinoma-Mobile-release.apk"
+                  className="p-3.5 bg-[#13141c] hover:bg-[#1a1b26] border border-[#222230] rounded-xl flex items-center justify-between transition-all group"
+                >
+                  <div>
+                    <h4 className="text-xs font-bold text-white group-hover:text-blue-400">Download Mobile APK</h4>
+                    <p className="text-[10px] text-gray-400">Kinoma-Mobile-release.apk</p>
+                  </div>
+                  <Download className="w-4 h-4 text-blue-400" />
+                </a>
               </div>
             </div>
           )}
