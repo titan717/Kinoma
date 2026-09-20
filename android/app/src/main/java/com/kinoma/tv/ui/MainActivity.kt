@@ -7,7 +7,6 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.shape.RectangleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,7 +28,7 @@ class MainActivity : ComponentActivity() {
             KinomaTVTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    shape = RectangleShape
+                    shape = RoundedCornerShape(0.dp)
                 ) {
                     TVHomeScreen()
                 }

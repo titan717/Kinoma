@@ -6,6 +6,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.darkColorScheme
 import androidx.compose.ui.graphics.Color
 
+@OptIn(ExperimentalTvMaterial3Api::class)
 val DarkColorScheme = darkColorScheme(
     primary = Color(0xFFc084fc),
     secondary = Color(0xFF9333ea),
