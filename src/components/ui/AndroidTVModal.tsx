@@ -153,7 +153,7 @@ export function AndroidTVModal() {
 
               <div className="flex flex-wrap items-center gap-2.5 pt-1">
                 <a
-                  href="/downloads/Kinoma-TV.apk"
+                  href="https://github.com/titan717/Kinoma/releases/latest/download/Kinoma-TV.apk"
                   download="Kinoma-TV-release.apk"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -161,16 +161,6 @@ export function AndroidTVModal() {
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Download TV APK</span>
-                </a>
-                <a
-                  href="/downloads/Kinoma-Mobile.apk"
-                  download="Kinoma-Mobile-release.apk"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-black shadow-lg shadow-blue-600/30 flex items-center gap-2 transition-all hover:scale-105 cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Download Mobile APK</span>
                 </a>
                 <button
                   onClick={() => {

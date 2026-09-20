@@ -51,7 +51,7 @@ export function SettingsModal() {
     setUpdateStatus('Querying GitHub latest release...');
     try {
       // Query GitHub API for latest release assets
-      const res = await fetch('https://api.github.com/repos/owner/repo/releases/latest');
+      const res = await fetch('https://api.github.com/repos/titan717/Kinoma/releases/latest');
       if (!res.ok) {
         throw new Error(`GitHub API error: ${res.status}`);
       }
@@ -74,7 +74,7 @@ export function SettingsModal() {
       setUpdateStatus('Falling back to local release package download...');
       try {
         const a = document.createElement('a');
-        a.href = '/downloads/Kinoma-TV.apk';
+        a.href = 'https://github.com/titan717/Kinoma/releases/latest/download/Kinoma-TV.apk';
         a.download = 'Kinoma-TV-release.apk';
         document.body.appendChild(a);
         a.click();
@@ -671,7 +671,7 @@ export function SettingsModal() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <a
-                  href="/downloads/Kinoma-TV.apk"
+                  href="https://github.com/titan717/Kinoma/releases/latest/download/Kinoma-TV.apk"
                   download="Kinoma-TV-release.apk"
                   className="p-3.5 bg-[#13141c] hover:bg-[#1a1b26] border border-[#222230] rounded-xl flex items-center justify-between transition-all group"
                 >
@@ -680,18 +680,6 @@ export function SettingsModal() {
                     <p className="text-[10px] text-gray-400">Kinoma-TV-release.apk</p>
                   </div>
                   <Download className="w-4 h-4 text-purple-400" />
-                </a>
-
-                <a
-                  href="/downloads/Kinoma-Mobile.apk"
-                  download="Kinoma-Mobile-release.apk"
-                  className="p-3.5 bg-[#13141c] hover:bg-[#1a1b26] border border-[#222230] rounded-xl flex items-center justify-between transition-all group"
-                >
-                  <div>
-                    <h4 className="text-xs font-bold text-white group-hover:text-blue-400">Download Mobile APK</h4>
-                    <p className="text-[10px] text-gray-400">Kinoma-Mobile-release.apk</p>
-                  </div>
-                  <Download className="w-4 h-4 text-blue-400" />
                 </a>
               </div>
             </div>

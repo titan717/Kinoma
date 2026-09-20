@@ -32,5 +32,6 @@ data class UpdateInfo(
     @SerializedName("latestVersionName") val latestVersionName: String,
     @SerializedName("apkUrl") val apkUrl: String,
     @SerializedName("releaseNotes") val releaseNotes: String,
-    @SerializedName("mandatory") val mandatory: Boolean
+    @SerializedName("mandatory") val mandatory: Boolean,
+    @SerializedName("sha256") val sha256: String
 )

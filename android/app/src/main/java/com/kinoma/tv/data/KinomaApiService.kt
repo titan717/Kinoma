@@ -17,7 +17,7 @@ interface KinomaApiService {
     suspend fun searchAnime(@Path("query") query: String): AnimeListResponse
 
     companion object {
-        private const val BASE_URL = "https://ais-dev-ldac4dfys5uh24kepg3akw-880382000432.asia-east1.run.app/"
+        private const val BASE_URL = "https://ais-dev-idpmqym35ummgdndid4c3h-880382000432.asia-east1.run.app/"
 
         val instance: KinomaApiService by lazy {
             Retrofit.Builder()

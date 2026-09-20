@@ -1,0 +1,89 @@
+name: Release Android TV APK
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install web dependencies
+        run: npm ci
+
+      - name: Build web application
+        run: npm run build
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Configure Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+
+      - name: Install Android SDK packages
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "platform-tools"
+          sdkmanager "platforms;android-34"
+          sdkmanager "build-tools;34.0.0"
+
+      - name: Build Android TV APK
+        working-directory: android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleRelease --stacktrace
+
+      - name: Prepare APK and SHA-256
+        run: |
+          mkdir -p release
+          cp android/app/build/outputs/apk/release/*.apk release/Kinoma.apk
+          sha256sum release/Kinoma.apk | cut -d ' ' -f 1 > release/Kinoma.apk.sha256
+          echo "SHA256=$(cat release/Kinoma.apk.sha256)" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/Kinoma.apk
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update latest.json
+        run: |
+          VERSION_TAG=${GITHUB_REF#refs/tags/v}
+          APK_URL="https://github.com/titan717/Kinoma/releases/download/v$VERSION_TAG/Kinoma.apk"
+          
+          # Read version code from build.gradle
+          VERSION_CODE=$(grep 'versionCode' android/app/build.gradle | head -1 | awk '{print $2}')
+          
+          echo "{\"versionCode\": $VERSION_CODE, \"versionName\": \"$VERSION_TAG\", \"apkUrl\": \"$APK_URL\", \"releaseNotes\": \"Release v$VERSION_TAG\", \"sha256\": \"${{ env.SHA256 }}\", \"mandatory\": false}" > update/latest.json
+          
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add update/latest.json
+          git commit -m "Update latest.json for v$VERSION_TAG"
+          git push

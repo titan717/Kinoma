@@ -107,11 +107,38 @@ fun TVHomeScreen() {
                     .fillMaxSize()
                     .padding(48.dp)
             ) {
-                Text(
-                    text = "Kinoma TV",
-                    style = MaterialTheme.typography.displayMedium,
-                    color = Color.White
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Kinoma TV",
+                        style = MaterialTheme.typography.displayMedium,
+                        color = Color.White
+                    )
+                    
+                    var isManualChecking by remember { mutableStateOf(false) }
+                    
+                    Button(
+                        onClick = {
+                            isManualChecking = true
+                            scope.launch {
+                                val update = UpdateChecker.checkForUpdate()
+                                if (update != null) {
+                                    updateInfo = update
+                                    showUpdateDialog = true
+                                } else {
+                                    // Could show a toast, but this is simple.
+                                }
+                                isManualChecking = false
+                            }
+                        },
+                        enabled = !isManualChecking
+                    ) {
+                        Text(if (isManualChecking) "Checking..." else "Check for Updates")
+                    }
+                }
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
@@ -207,13 +234,25 @@ fun TVHomeScreen() {
                                     Text("Later")
                                 }
                             }
+                            var progress by remember { mutableStateOf(0) }
+                            var isDownloading by remember { mutableStateOf(false) }
+
                             Button(
                                 onClick = {
-                                    showUpdateDialog = false
-                                    UpdateChecker.downloadAndInstall(context, updateInfo!!.apkUrl)
-                                }
+                                    isDownloading = true
+                                    UpdateChecker.downloadAndInstall(context, updateInfo!!.apkUrl, updateInfo!!.sha256, { p ->
+                                        progress = p
+                                    }, {
+                                        showUpdateDialog = false
+                                        isDownloading = false
+                                    }, { error ->
+                                        isDownloading = false
+                                        errorMessage = error
+                                    })
+                                },
+                                enabled = !isDownloading
                             ) {
-                                Text("Update Now")
+                                Text(if (isDownloading) "Downloading $progress%" else "Update Now")
                             }
                         }
                     }
