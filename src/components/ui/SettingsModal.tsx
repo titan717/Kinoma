@@ -669,17 +669,29 @@ export function SettingsModal() {
                 )}
               </div>
 
-              <div className="max-w-md">
+              <div className="max-w-md flex flex-col sm:flex-row gap-3">
                 <a
                   href="https://github.com/titan717/Kinoma/releases/latest/download/Kinoma.apk"
                   download="Kinoma.apk"
-                  className="p-3.5 bg-[#13141c] hover:bg-[#1a1b26] border border-[#222230] rounded-xl flex items-center justify-between transition-all group"
+                  className="flex-1 p-3.5 bg-[#13141c] hover:bg-[#1a1b26] border border-[#222230] rounded-xl flex items-center justify-between transition-all group"
                 >
                   <div>
                     <h4 className="text-xs font-bold text-white group-hover:text-[#c084fc]">Download TV APK</h4>
                     <p className="text-[10px] text-gray-400">Kinoma.apk</p>
                   </div>
                   <Download className="w-4 h-4 text-purple-400" />
+                </a>
+                <a
+                  href="https://github.com/titan717/Kinoma"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3.5 bg-[#13141c] hover:bg-[#1a1b26] border border-[#222230] rounded-xl flex items-center justify-between transition-all group sm:w-48"
+                >
+                  <div>
+                    <h4 className="text-xs font-bold text-white group-hover:text-purple-400">GitHub Repo</h4>
+                    <p className="text-[10px] text-gray-400">titan717/Kinoma</p>
+                  </div>
+                  <GitBranch className="w-4 h-4 text-gray-400 group-hover:text-purple-400" />
                 </a>
               </div>
             </div>

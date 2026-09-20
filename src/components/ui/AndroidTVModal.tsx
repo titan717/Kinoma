@@ -172,6 +172,15 @@ export function AndroidTVModal() {
                   <Tv className="w-3.5 h-3.5 text-purple-400" />
                   <span>Launch Instant Web TV Mode</span>
                 </button>
+                <a
+                  href="https://github.com/titan717/Kinoma"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-white text-xs font-bold flex items-center gap-2 transition-all hover:scale-105 cursor-pointer"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Go to Repo</span>
+                </a>
               </div>
             </div>
 
