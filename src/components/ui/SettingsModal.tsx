@@ -48,38 +48,49 @@ export function SettingsModal() {
 
   const fetchLatestRelease = async () => {
     setIsCheckingUpdate(true);
-    setUpdateStatus('Querying GitHub latest release...');
+    setUpdateStatus('Querying GitHub releases for titan717/Kinoma...');
     try {
-      // Query GitHub API for latest release assets
-      const res = await fetch('https://api.github.com/repos/owner/repo/releases/latest');
+      // Query GitHub API for latest release assets for titan717/Kinoma
+      let res = await fetch('https://api.github.com/repos/titan717/Kinoma/releases/latest');
+      if (!res.ok) {
+        // Fallback to latest-build tag release or releases list
+        res = await fetch('https://api.github.com/repos/titan717/Kinoma/releases/tags/latest-build');
+      }
+      if (!res.ok) {
+        res = await fetch('https://api.github.com/repos/titan717/Kinoma/releases');
+      }
       if (!res.ok) {
         throw new Error(`GitHub API error: ${res.status}`);
       }
-      const data = await res.json();
-      const apkAsset = data.assets?.find((asset: any) => asset.name && asset.name.endsWith('.apk'));
+      const rawData = await res.json();
+      const releaseData = Array.isArray(rawData) ? rawData[0] : rawData;
+      if (!releaseData) {
+        throw new Error('No published releases found on GitHub repository.');
+      }
+      const apkAsset = releaseData.assets?.find((asset: any) => asset.name && asset.name.endsWith('.apk'));
       if (apkAsset && apkAsset.browser_download_url) {
-        setUpdateStatus(`Found version ${data.tag_name || 'latest'}! Downloading APK...`);
+        setUpdateStatus(`Found release ${releaseData.tag_name || 'latest'}! Downloading ${apkAsset.name}...`);
         const a = document.createElement('a');
         a.href = apkAsset.browser_download_url;
         a.download = apkAsset.name || 'Kinoma-TV-release.apk';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        setTimeout(() => setUpdateStatus('Download started successfully!'), 1500);
+        setTimeout(() => setUpdateStatus('Download started directly from GitHub Releases!'), 1500);
       } else {
-        throw new Error('No .apk asset found in the latest GitHub release.');
+        throw new Error('No .apk asset found in the latest GitHub release yet.');
       }
     } catch (err: any) {
-      // Fallback to local server APK package endpoint
-      setUpdateStatus('Falling back to local release package download...');
+      // Fallback to direct releases download URL or server proxy
+      setUpdateStatus('Redirecting to latest release download...');
       try {
         const a = document.createElement('a');
-        a.href = '/downloads/Kinoma-TV.apk';
+        a.href = 'https://github.com/titan717/Kinoma/releases/download/latest-build/Kinoma-TV-release.apk';
         a.download = 'Kinoma-TV-release.apk';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        setTimeout(() => setUpdateStatus('Local APK download triggered successfully!'), 1500);
+        setTimeout(() => setUpdateStatus('GitHub direct release download triggered!'), 1500);
       } catch (e) {
         setUpdateStatus(`Download error: ${err.message || 'Failed'}`);
       }

@@ -82,7 +82,7 @@ async function startServer() {
 
   // Explicit Android TV APK download endpoint (supports GitHub Releases proxy or local binary)
   app.get('/downloads/Kinoma-TV.apk', async (req, res) => {
-    const releaseUrl = process.env.TV_APK_RELEASE_URL || process.env.APK_DOWNLOAD_URL;
+    const releaseUrl = process.env.TV_APK_RELEASE_URL || process.env.APK_DOWNLOAD_URL || 'https://github.com/titan717/Kinoma/releases/download/latest-build/Kinoma-TV-release.apk';
     if (releaseUrl) {
       try {
         const response = await fetch(releaseUrl);
@@ -122,7 +122,7 @@ async function startServer() {
 
   // Explicit Android Mobile APK download endpoint (supports GitHub Releases proxy or local binary)
   app.get('/downloads/Kinoma-Mobile.apk', async (req, res) => {
-    const releaseUrl = process.env.MOBILE_APK_RELEASE_URL;
+    const releaseUrl = process.env.MOBILE_APK_RELEASE_URL || 'https://github.com/titan717/Kinoma/releases/download/latest-build/Kinoma-Mobile-release.apk';
     if (releaseUrl) {
       try {
         const response = await fetch(releaseUrl);
