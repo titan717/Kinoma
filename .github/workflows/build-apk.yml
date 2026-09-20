@@ -1,50 +1,230 @@
 name: Build Android TV APK
 
 on:
-  push:
-    branches: [ "main", "master" ]
-  pull_request:
-    branches: [ "main", "master" ]
   workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
 
 jobs:
   build:
+    name: Build Kinoma Android TV APK
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      # ------------------------------------------------------------
+      # 1. Checkout
+      # ------------------------------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '17'
+      # ------------------------------------------------------------
+      # 2. Node.js
+      # ------------------------------------------------------------
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
 
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v3
-      with:
-        packages: 'platforms;android-34 build-tools;34.0.0'
+      # ------------------------------------------------------------
+      # 3. Install web dependencies
+      # ------------------------------------------------------------
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Grant execute permission for gradlew
-      run: |
-        cd android
-        chmod +x gradlew
+      # ------------------------------------------------------------
+      # 4. Build PWA
+      # ------------------------------------------------------------
+      - name: Build web application
+        run: npm run build
 
-    - name: Build Debug APK with Gradle
-      run: |
-        cd android
-        ./gradlew assembleDebug
+      # ------------------------------------------------------------
+      # 5. Setup Java
+      # ------------------------------------------------------------
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
 
-    - name: Upload APK Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: Kinoma-TV-Debug
-        path: android/app/build/outputs/apk/debug/app-debug.apk
+      # ------------------------------------------------------------
+      # 6. Setup Android SDK
+      # ------------------------------------------------------------
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
-    - name: Create GitHub Release on Tag
-      if: startsWith(github.ref, 'refs/tags/v')
-      uses: softprops/action-gh-release@v1
-      with:
-        files: android/app/build/outputs/apk/debug/app-debug.apk
-        generate_release_notes: true
+      # ------------------------------------------------------------
+      # 7. Install required Android SDK packages
+      # ------------------------------------------------------------
+      - name: Install Android SDK packages
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "platform-tools"
+          sdkmanager "platforms;android-34"
+          sdkmanager "build-tools;34.0.0"
+
+      # ------------------------------------------------------------
+      # 8. Check Android project
+      # ------------------------------------------------------------
+      - name: Inspect Android project
+        working-directory: android
+        run: |
+          echo "Android project contents:"
+          find . -maxdepth 3 -type f | sort
+
+          echo ""
+          echo "Gradle files:"
+          find . -iname "*gradle*" -type f | sort || true
+
+      # ------------------------------------------------------------
+      # 9. Determine / create Gradle wrapper
+      # ------------------------------------------------------------
+      - name: Prepare Gradle wrapper
+        working-directory: android
+        shell: bash
+        run: |
+          set -e
+
+          if [ -f "./gradlew" ]; then
+            echo "Existing Gradle wrapper found."
+            chmod +x ./gradlew
+            exit 0
+          fi
+
+          echo "Gradle wrapper is missing."
+          echo "Checking Android Gradle Plugin configuration..."
+
+          AGP_VERSION=""
+
+          if [ -f "build.gradle" ]; then
+            AGP_VERSION=$(grep -Eo \
+              'com\.android\.tools\.build:gradle:[0-9]+\.[0-9]+\.[0-9]+' \
+              build.gradle | head -1 | sed 's/.*://' || true)
+          fi
+
+          if [ -z "$AGP_VERSION" ] && [ -f "build.gradle.kts" ]; then
+            AGP_VERSION=$(grep -Eo \
+              'com\.android\.tools\.build:gradle:[0-9]+\.[0-9]+\.[0-9]+' \
+              build.gradle.kts | head -1 | sed 's/.*://' || true)
+          fi
+
+          if [ -z "$AGP_VERSION" ] && [ -f "settings.gradle" ]; then
+            AGP_VERSION=$(grep -Eo \
+              'com\.android\.tools\.build:gradle:[0-9]+\.[0-9]+\.[0-9]+' \
+              settings.gradle | head -1 | sed 's/.*://' || true)
+          fi
+
+          if [ -z "$AGP_VERSION" ] && [ -f "settings.gradle.kts" ]; then
+            AGP_VERSION=$(grep -Eo \
+              'com\.android\.tools\.build:gradle:[0-9]+\.[0-9]+\.[0-9]+' \
+              settings.gradle.kts | head -1 | sed 's/.*://' || true)
+          fi
+
+          echo "Detected AGP version: ${AGP_VERSION:-not found}"
+
+          # If the project does not expose the AGP version directly,
+          # use the Android project's existing Gradle configuration.
+          if [ -z "$AGP_VERSION" ]; then
+            echo "Could not detect AGP version automatically."
+            echo "Checking for existing Gradle version declarations..."
+
+            if [ -f "gradle/libs.versions.toml" ]; then
+              grep -n "agp\|android.gradle" gradle/libs.versions.toml || true
+            fi
+          fi
+
+          # Use an installed Gradle only to generate the wrapper.
+          # The Android project remains responsible for selecting the
+          # compatible Gradle version during the actual build.
+          if command -v gradle >/dev/null 2>&1; then
+            echo "System Gradle found:"
+            gradle --version
+          else
+            echo "Installing Gradle temporarily for wrapper generation..."
+
+            sudo apt-get update
+            sudo apt-get install -y gradle
+          fi
+
+          echo ""
+          echo "Generating Gradle wrapper..."
+
+          # Prefer the project's existing wrapper properties if present.
+          if [ -f "gradle/wrapper/gradle-wrapper.properties" ]; then
+            echo "Existing wrapper properties found."
+            cat gradle/wrapper/gradle-wrapper.properties
+          fi
+
+          # Generate wrapper using Gradle.
+          #
+          # If an existing distributionUrl is available, extract its
+          # version so we don't unnecessarily change the project's
+          # intended Gradle version.
+          GRADLE_VERSION=""
+
+          if [ -f "gradle/wrapper/gradle-wrapper.properties" ]; then
+            GRADLE_VERSION=$(grep -Eo \
+              'gradle-[0-9]+\.[0-9]+(\.[0-9]+)?(-[A-Za-z0-9.-]+)?-(bin|all)\.zip' \
+              gradle/wrapper/gradle-wrapper.properties \
+              | head -1 \
+              | sed -E 's/gradle-//; s/-(bin|all)\.zip$//' || true)
+          fi
+
+          if [ -n "$GRADLE_VERSION" ]; then
+            echo "Using Gradle version from existing wrapper configuration: $GRADLE_VERSION"
+            gradle wrapper --gradle-version "$GRADLE_VERSION"
+          else
+            echo "No existing Gradle wrapper version found."
+
+            # This is only a fallback. The build will still use the
+            # project's Gradle configuration.
+            gradle wrapper
+          fi
+
+          chmod +x ./gradlew
+
+          echo ""
+          echo "Generated wrapper:"
+          ls -la ./gradlew
+          find gradle/wrapper -maxdepth 1 -type f -print
+
+      # ------------------------------------------------------------
+      # 10. Build Android TV APK
+      # ------------------------------------------------------------
+      - name: Build Android TV APK
+        working-directory: android
+        run: |
+          chmod +x ./gradlew
+
+          echo "Gradle version:"
+          ./gradlew --version
+
+          echo ""
+          echo "Building Android APK..."
+
+          ./gradlew assembleDebug --stacktrace
+
+      # ------------------------------------------------------------
+      # 11. Locate APK
+      # ------------------------------------------------------------
+      - name: Locate APK
+        working-directory: android
+        run: |
+          echo "Generated APK files:"
+          find . -type f -name "*.apk" -print
+
+      # ------------------------------------------------------------
+      # 12. Upload APK
+      # ------------------------------------------------------------
+      - name: Upload Android TV APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kinoma-Android-TV-APK
+          path: android/**/build/outputs/apk/**/*.apk
+          if-no-files-found: error
+          retention-days: 30
