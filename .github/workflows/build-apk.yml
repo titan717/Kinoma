@@ -17,7 +17,7 @@ jobs:
     steps:
 
       # ------------------------------------------------------------
-      # 1. Checkout repository
+      # 1. Checkout
       # ------------------------------------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -40,29 +40,22 @@ jobs:
         run: |
           set -e
 
-          echo "Checking package manager files..."
-
           if [ -f "package-lock.json" ]; then
-            echo "package-lock.json found"
             npm ci
 
           elif [ -f "npm-shrinkwrap.json" ]; then
-            echo "npm-shrinkwrap.json found"
             npm ci
 
           elif [ -f "yarn.lock" ]; then
-            echo "yarn.lock found"
             corepack enable
             yarn install --frozen-lockfile
 
           elif [ -f "pnpm-lock.yaml" ]; then
-            echo "pnpm-lock.yaml found"
             corepack enable
             pnpm install --frozen-lockfile
 
           else
             echo "No lock file found."
-            echo "Using npm install."
             npm install
           fi
 
@@ -85,25 +78,74 @@ jobs:
 
 
       # ------------------------------------------------------------
-      # 6. Setup Android SDK
+      # 6. Configure Android SDK
+      #
+      # Do NOT use android-actions/setup-android@v3 here.
+      # That action is attempting to install the obsolete
+      # "tools" SDK package.
+      # GitHub's ubuntu runner already provides the Android SDK.
       # ------------------------------------------------------------
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Configure Android SDK
+        shell: bash
+        run: |
+          set -e
+
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+
+          if [ -z "$ANDROID_HOME" ]; then
+            export ANDROID_HOME="$ANDROID_SDK_ROOT"
+          fi
+
+          if [ -z "$ANDROID_HOME" ]; then
+            export ANDROID_HOME="/usr/local/lib/android/sdk"
+          fi
+
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
+
+          echo "Using Android SDK:"
+          echo "$ANDROID_HOME"
+
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
+
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+
+          echo ""
+          echo "SDK manager:"
+          if [ -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]; then
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --version
+          elif command -v sdkmanager >/dev/null 2>&1; then
+            sdkmanager --version
+          else
+            echo "ERROR: sdkmanager not found."
+            exit 1
+          fi
 
 
       # ------------------------------------------------------------
-      # 7. Install Android SDK packages
+      # 7. Install required Android SDK packages
       # ------------------------------------------------------------
       - name: Install Android SDK packages
         shell: bash
         run: |
           set -e
 
+          echo "Accepting Android SDK licenses..."
+
           yes | sdkmanager --licenses > /dev/null || true
+
+          echo "Installing required SDK packages..."
 
           sdkmanager "platform-tools"
           sdkmanager "platforms;android-34"
           sdkmanager "build-tools;34.0.0"
+
+          echo ""
+          echo "Installed Android SDK packages:"
+          sdkmanager --list_installed | grep -E \
+            "platform-tools|platforms;android-34|build-tools;34.0.0" || true
 
 
       # ------------------------------------------------------------
@@ -122,12 +164,12 @@ jobs:
           echo "Android project found."
 
           echo ""
-          echo "Android project files:"
-          find android -maxdepth 3 -type f | sort
+          echo "Top-level Android files:"
+          find android -maxdepth 2 -type f | sort
 
 
       # ------------------------------------------------------------
-      # 9. Prepare Gradle
+      # 9. Prepare Gradle wrapper
       # ------------------------------------------------------------
       - name: Prepare Gradle wrapper
         working-directory: android
@@ -138,52 +180,48 @@ jobs:
           if [ -f "./gradlew" ]; then
             echo "Existing Gradle wrapper found."
             chmod +x ./gradlew
-            exit 0
-          fi
-
-          echo "Gradle wrapper is missing."
-          echo "Attempting to generate it."
-
-          # Install Gradle only if it isn't already available.
-          if ! command -v gradle >/dev/null 2>&1; then
-            echo "Installing Gradle..."
-            sudo apt-get update
-            sudo apt-get install -y gradle
-          fi
-
-          echo ""
-          echo "Installed Gradle:"
-          gradle --version
-
-          # Try to preserve an existing wrapper version if available.
-          GRADLE_VERSION=""
-
-          if [ -f "gradle/wrapper/gradle-wrapper.properties" ]; then
-            GRADLE_VERSION=$(grep -Eo \
-              'gradle-[0-9]+\.[0-9]+(\.[0-9]+)?(-[A-Za-z0-9.-]+)?-(bin|all)\.zip' \
-              gradle/wrapper/gradle-wrapper.properties \
-              | head -1 \
-              | sed -E 's/gradle-//; s/-(bin|all)\.zip$//' || true)
-          fi
-
-          if [ -n "$GRADLE_VERSION" ]; then
-            echo "Using Gradle version: $GRADLE_VERSION"
-            gradle wrapper --gradle-version "$GRADLE_VERSION"
           else
-            echo "No existing wrapper version found."
-            echo "Generating wrapper using installed Gradle."
-            gradle wrapper
+            echo "Gradle wrapper is missing."
+            echo "Generating wrapper..."
+
+            if ! command -v gradle >/dev/null 2>&1; then
+              echo "Installing Gradle..."
+              sudo apt-get update
+              sudo apt-get install -y gradle
+            fi
+
+            echo ""
+            echo "System Gradle:"
+            gradle --version
+
+            GRADLE_VERSION=""
+
+            if [ -f "gradle/wrapper/gradle-wrapper.properties" ]; then
+              GRADLE_VERSION=$(grep -Eo \
+                'gradle-[0-9]+\.[0-9]+(\.[0-9]+)?(-[A-Za-z0-9.-]+)?-(bin|all)\.zip' \
+                gradle/wrapper/gradle-wrapper.properties \
+                | head -1 \
+                | sed -E 's/gradle-//; s/-(bin|all)\.zip$//' || true)
+            fi
+
+            if [ -n "$GRADLE_VERSION" ]; then
+              echo "Using existing Gradle version: $GRADLE_VERSION"
+              gradle wrapper --gradle-version "$GRADLE_VERSION"
+            else
+              echo "No existing wrapper version found."
+              gradle wrapper
+            fi
+
+            chmod +x ./gradlew
           fi
 
-          chmod +x ./gradlew
-
           echo ""
-          echo "Gradle wrapper generated successfully."
+          echo "Checking Gradle wrapper..."
 
           ls -la ./gradlew
 
           if [ ! -f "./gradlew" ]; then
-            echo "ERROR: gradlew was not generated."
+            echo "ERROR: gradlew is still missing."
             exit 1
           fi
 
@@ -214,7 +252,9 @@ jobs:
       - name: Find generated APK
         shell: bash
         run: |
-          echo "Searching for generated APK files..."
+          set -e
+
+          echo "Searching for APK..."
 
           find android -type f -name "*.apk" -print
 
