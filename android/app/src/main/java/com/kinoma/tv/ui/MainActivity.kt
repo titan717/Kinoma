@@ -4,30 +4,21 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RectangleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Surface
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
-import androidx.compose.material3.Card
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.tv.material3.ExperimentalTvMaterial3Api
-import androidx.tv.material3.MaterialTheme as TvMaterialTheme
-import androidx.tv.material3.Text as TvText
-import androidx.tv.material3.Button as TvButton
-import androidx.tv.material3.Card as TvCard
+import androidx.tv.material3.*
 import coil.compose.AsyncImage
-import kotlinx.coroutines.launch
 import com.kinoma.tv.data.*
 import com.kinoma.tv.ui.theme.KinomaTVTheme
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 class MainActivity : ComponentActivity() {
@@ -36,7 +27,7 @@ class MainActivity : ComponentActivity() {
         
         setContent {
             KinomaTVTheme {
-                androidx.tv.material3.Surface(
+                Surface(
                     modifier = Modifier.fillMaxSize(),
                     shape = RectangleShape
                 ) {
@@ -46,6 +37,10 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+fun TVHomeScreen() {
     var trendingList by remember { mutableStateOf<List<AnimeItem>>(emptyList()) }
     var popularList by remember { mutableStateOf<List<AnimeItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -128,7 +123,7 @@ class MainActivity : ComponentActivity() {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // Horizontal list of trending anime
-                androidx.compose.foundation.lazy.LazyRow(
+                LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(trendingList.size) { index ->
