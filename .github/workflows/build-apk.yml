@@ -5,9 +5,13 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - 'update/latest.json'
+    tags:
+      - 'v*'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -279,3 +283,103 @@ jobs:
           path: android/**/build/outputs/apk/**/*.apk
           if-no-files-found: error
           retention-days: 30
+
+
+      # ------------------------------------------------------------
+      # 13. Prepare Release Artifacts (Tags only)
+      # ------------------------------------------------------------
+      - name: Prepare Release Artifacts
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          set -e
+          mkdir -p release
+          
+          # Find the built APK
+          APK_PATH=$(find android -type f -name "*.apk" | head -n 1)
+          if [ -z "$APK_PATH" ]; then
+            echo "ERROR: Built APK not found."
+            exit 1
+          fi
+          
+          echo "Found APK at: $APK_PATH"
+          cp "$APK_PATH" release/Kinoma.apk
+          
+          # Calculate SHA-256 hash
+          sha256sum release/Kinoma.apk | cut -d ' ' -f 1 > release/Kinoma.apk.sha256
+          SHA256_HASH=$(cat release/Kinoma.apk.sha256)
+          echo "SHA256_HASH=$SHA256_HASH" >> "$GITHUB_ENV"
+          echo "Calculated SHA-256: $SHA256_HASH"
+
+
+      # ------------------------------------------------------------
+      # 14. Create GitHub Release (Tags only)
+      # ------------------------------------------------------------
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/Kinoma.apk
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+      # ------------------------------------------------------------
+      # 15. Update latest.json (Tags only)
+      # ------------------------------------------------------------
+      - name: Update latest.json on main
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          set -e
+          
+          # Extract version from tag (e.g. refs/tags/v1.0.0 -> 1.0.0)
+          VERSION_TAG=${GITHUB_REF#refs/tags/v}
+          APK_URL="https://github.com/titan717/Kinoma/releases/download/v$VERSION_TAG/Kinoma.apk"
+          
+          # Read version code from build.gradle
+          VERSION_CODE=$(grep 'versionCode' android/app/build.gradle | head -1 | awk '{print $2}')
+          if [ -z "$VERSION_CODE" ]; then
+            VERSION_CODE=1
+          fi
+          
+          echo "Version Tag: $VERSION_TAG"
+          echo "Version Code: $VERSION_CODE"
+          echo "APK URL: $APK_URL"
+          echo "SHA-256: ${{ env.SHA256_HASH }}"
+          
+          # Create the json payload matching both GSON SerializedName and old latest.json format
+          mkdir -p update
+          cat <<EOF > update/latest.json
+          {
+            "latestVersionCode": $VERSION_CODE,
+            "latestVersionName": "$VERSION_TAG",
+            "versionCode": $VERSION_CODE,
+            "versionName": "$VERSION_TAG",
+            "apkUrl": "$APK_URL",
+            "releaseNotes": "Release v$VERSION_TAG",
+            "sha256": "${{ env.SHA256_HASH }}",
+            "mandatory": false
+          }
+          EOF
+          
+          # Persist the generated JSON outside git checkout
+          cp update/latest.json /tmp/latest.json
+          
+          # Configure Git
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          
+          # Fetch and checkout main to apply the update directly to main branch
+          git fetch origin main
+          git checkout -f main
+          git pull origin main
+          
+          # Overwrite and commit
+          mkdir -p update
+          cp /tmp/latest.json update/latest.json
+          git add update/latest.json
+          git commit -m "Update latest.json for v$VERSION_TAG [skip ci]" || echo "No changes to commit"
+          git push origin main

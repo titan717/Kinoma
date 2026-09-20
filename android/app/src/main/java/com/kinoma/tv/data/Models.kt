@@ -28,8 +28,8 @@ data class AnimeListResponse(
 )
 
 data class UpdateInfo(
-    @SerializedName("latestVersionCode") val latestVersionCode: Int,
-    @SerializedName("latestVersionName") val latestVersionName: String,
+    @SerializedName(value = "latestVersionCode", alternate = ["versionCode"]) val latestVersionCode: Int,
+    @SerializedName(value = "latestVersionName", alternate = ["versionName"]) val latestVersionName: String,
     @SerializedName("apkUrl") val apkUrl: String,
     @SerializedName("releaseNotes") val releaseNotes: String,
     @SerializedName("mandatory") val mandatory: Boolean,

@@ -17,10 +17,25 @@ import com.google.gson.Gson
 import java.io.File
 
 object UpdateChecker {
-    // Configurable stable endpoint
-    private const val UPDATE_JSON_URL = "https://kinoma.tv/updates/tv/update.json"
+    private const val UPDATE_JSON_URL = "https://raw.githubusercontent.com/titan717/Kinoma/main/update/latest.json"
+    private const val PREFS_NAME = "kinoma_update_prefs"
+    private const val KEY_LAST_CHECK = "last_check_timestamp"
+    private const val CHECK_INTERVAL_MS = 3600 * 1000 // 1 hour
 
-    suspend fun checkForUpdate(): UpdateInfo? = withContext(Dispatchers.IO) {
+    private fun isTrustedUrl(url: String): Boolean {
+        return url.startsWith("https://github.com/titan717/Kinoma/", ignoreCase = true)
+    }
+
+    suspend fun checkForUpdate(context: Context? = null, force: Boolean = false): UpdateInfo? = withContext(Dispatchers.IO) {
+        if (context != null && !force) {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val lastCheck = prefs.getLong(KEY_LAST_CHECK, 0L)
+            val currentTime = System.currentTimeMillis()
+            if (currentTime - lastCheck < CHECK_INTERVAL_MS) {
+                return@withContext null
+            }
+        }
+
         try {
             val client = OkHttpClient()
             val request = Request.Builder().url(UPDATE_JSON_URL).build()
@@ -34,6 +49,21 @@ object UpdateChecker {
             }
             
             val updateInfo = Gson().fromJson(trimmedBody, UpdateInfo::class.java)
+            if (updateInfo == null || updateInfo.latestVersionCode <= 0 || updateInfo.apkUrl.isNullOrEmpty() || updateInfo.sha256.isNullOrEmpty()) {
+                return@withContext null
+            }
+
+            if (!isTrustedUrl(updateInfo.apkUrl)) {
+                return@withContext null
+            }
+
+            // Save last successful check time
+            if (context != null) {
+                context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                    .edit()
+                    .putLong(KEY_LAST_CHECK, System.currentTimeMillis())
+                    .apply()
+            }
             
             // Compare version code
             if (updateInfo.latestVersionCode > BuildConfig.VERSION_CODE) {
@@ -47,7 +77,12 @@ object UpdateChecker {
 
     fun downloadAndInstall(context: Context, apkUrl: String, expectedSha256: String, onProgress: (Int) -> Unit, onComplete: () -> Unit, onError: (String) -> Unit) {
         try {
-            val destination = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "Kinoma-TV.apk")
+            if (!isTrustedUrl(apkUrl)) {
+                onError("Untrusted update download URL.")
+                return
+            }
+
+            val destination = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "Kinoma.apk")
             if (destination.exists()) destination.delete()
 
             val request = DownloadManager.Request(Uri.parse(apkUrl))

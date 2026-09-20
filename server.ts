@@ -64,16 +64,20 @@ async function startServer() {
   // Schedule
   app.get(['/api/schedule', '/schedule'], (req, res) => proxyHandler('/schedule', req, res));
 
-  // Android TV Self-Update JSON endpoint
-  app.get('/tv/update.json', (req, res) => {
-    const protocol = req.headers['x-forwarded-proto'] || 'https';
-    const host = req.get('host') || 'ais-dev-ldac4dfys5uh24kepg3akw-880382000432.asia-east1.run.app';
+  // Android TV Self-Update JSON endpoint (maps to latest.json)
+  app.get(['/tv/update.json', '/update/latest.json'], (req, res) => {
+    const latestJsonPath = path.join(process.cwd(), 'update', 'latest.json');
+    if (fs.existsSync(latestJsonPath)) {
+      res.setHeader('Content-Type', 'application/json');
+      return res.sendFile(latestJsonPath);
+    }
     res.json({
-      latestVersionCode: 1,
-      latestVersionName: '1.0.0',
-      apkUrl: `${protocol}://${host}/downloads/Kinoma-TV.apk`,
-      releaseNotes: 'Initial release of Kinoma Native Android TV App with ExoPlayer and Leanback support.',
-      mandatory: false
+      versionCode: 1,
+      versionName: '1.0.0',
+      apkUrl: 'https://github.com/titan717/Kinoma/releases/latest/download/Kinoma.apk',
+      releaseNotes: 'Initial release of Kinoma Native Android TV App.',
+      mandatory: false,
+      sha256: 'PENDING'
     });
   });
 
@@ -81,32 +85,10 @@ async function startServer() {
   app.use('/downloads', express.static(path.join(process.cwd(), 'public', 'downloads')));
 
   // Explicit Android TV APK download endpoint (supports GitHub Releases proxy or local binary)
-  app.get('/downloads/Kinoma-TV.apk', async (req, res) => {
-    const releaseUrl = process.env.TV_APK_RELEASE_URL || process.env.APK_DOWNLOAD_URL;
-    if (releaseUrl) {
-      try {
-        const response = await fetch(releaseUrl);
-        if (response.ok && response.body) {
-          res.setHeader('Content-Type', 'application/vnd.android.package-archive');
-          res.setHeader('Content-Disposition', 'attachment; filename="Kinoma-TV-release.apk"');
-          res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-          const reader = response.body.getReader();
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            res.write(value);
-          }
-          res.end();
-          return;
-        }
-      } catch (e) {
-        // Fallback to local
-      }
-    }
-
-    const filePath = path.join(process.cwd(), 'public', 'downloads', 'Kinoma-TV.apk');
+  app.get('/downloads/Kinoma.apk', async (req, res) => {
+    const filePath = path.join(process.cwd(), 'public', 'downloads', 'Kinoma.apk');
     if (fs.existsSync(filePath)) {
-      return res.download(filePath, 'Kinoma-TV-release.apk', {
+      return res.download(filePath, 'Kinoma.apk', {
         headers: {
           'Content-Type': 'application/vnd.android.package-archive',
           'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
@@ -117,47 +99,7 @@ async function startServer() {
         }
       });
     }
-    res.status(404).send('Kinoma-TV.apk not found');
-  });
-
-  // Explicit Android Mobile APK download endpoint (supports GitHub Releases proxy or local binary)
-  app.get('/downloads/Kinoma-Mobile.apk', async (req, res) => {
-    const releaseUrl = process.env.MOBILE_APK_RELEASE_URL;
-    if (releaseUrl) {
-      try {
-        const response = await fetch(releaseUrl);
-        if (response.ok && response.body) {
-          res.setHeader('Content-Type', 'application/vnd.android.package-archive');
-          res.setHeader('Content-Disposition', 'attachment; filename="Kinoma-Mobile-release.apk"');
-          res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-          const reader = response.body.getReader();
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            res.write(value);
-          }
-          res.end();
-          return;
-        }
-      } catch (e) {
-        // Fallback to local
-      }
-    }
-
-    const filePath = path.join(process.cwd(), 'public', 'downloads', 'Kinoma-Mobile.apk');
-    if (fs.existsSync(filePath)) {
-      return res.download(filePath, 'Kinoma-Mobile-release.apk', {
-        headers: {
-          'Content-Type': 'application/vnd.android.package-archive',
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
-        }
-      }, (err) => {
-        if (err && !res.headersSent) {
-          res.status(404).send('APK file not found');
-        }
-      });
-    }
-    res.status(404).send('Kinoma-Mobile.apk not found');
+    res.redirect('https://github.com/titan717/Kinoma/releases/latest/download/Kinoma.apk');
   });
 
   // Vite middleware for development

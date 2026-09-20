@@ -146,15 +146,15 @@ export function AndroidTVModal() {
                 <div>
                   <h3 className="text-sm font-black text-white">GitHub Actions Cloud APK Builder (Recommended)</h3>
                   <p className="text-xs text-gray-300 mt-0.5">
-                    Web containers cannot compile native Android binaries. Push this repo to GitHub to let GitHub Actions automatically build the full <code className="text-white font-bold">Kinoma-TV.apk</code> & <code className="text-white font-bold">Kinoma-Mobile.apk</code> with auto-updates!
+                    Web containers cannot compile native Android binaries. Push this repo to GitHub to let GitHub Actions automatically build the full <code className="text-white font-bold">Kinoma.apk</code> with auto-updates!
                   </p>
                 </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-2.5 pt-1">
                 <a
-                  href="https://github.com/titan717/Kinoma/releases/latest/download/Kinoma-TV.apk"
-                  download="Kinoma-TV-release.apk"
+                  href="https://github.com/titan717/Kinoma/releases/latest/download/Kinoma.apk"
+                  download="Kinoma.apk"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-xs font-black shadow-lg shadow-purple-600/30 flex items-center gap-2 transition-all hover:scale-105 cursor-pointer"

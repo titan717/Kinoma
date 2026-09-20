@@ -61,7 +61,7 @@ export function SettingsModal() {
         setUpdateStatus(`Found version ${data.tag_name || 'latest'}! Downloading APK...`);
         const a = document.createElement('a');
         a.href = apkAsset.browser_download_url;
-        a.download = apkAsset.name || 'Kinoma-TV-release.apk';
+        a.download = apkAsset.name || 'Kinoma.apk';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -74,8 +74,8 @@ export function SettingsModal() {
       setUpdateStatus('Falling back to local release package download...');
       try {
         const a = document.createElement('a');
-        a.href = 'https://github.com/titan717/Kinoma/releases/latest/download/Kinoma-TV.apk';
-        a.download = 'Kinoma-TV-release.apk';
+        a.href = 'https://github.com/titan717/Kinoma/releases/latest/download/Kinoma.apk';
+        a.download = 'Kinoma.apk';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -669,15 +669,15 @@ export function SettingsModal() {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="max-w-md">
                 <a
-                  href="https://github.com/titan717/Kinoma/releases/latest/download/Kinoma-TV.apk"
-                  download="Kinoma-TV-release.apk"
+                  href="https://github.com/titan717/Kinoma/releases/latest/download/Kinoma.apk"
+                  download="Kinoma.apk"
                   className="p-3.5 bg-[#13141c] hover:bg-[#1a1b26] border border-[#222230] rounded-xl flex items-center justify-between transition-all group"
                 >
                   <div>
                     <h4 className="text-xs font-bold text-white group-hover:text-[#c084fc]">Download TV APK</h4>
-                    <p className="text-[10px] text-gray-400">Kinoma-TV-release.apk</p>
+                    <p className="text-[10px] text-gray-400">Kinoma.apk</p>
                   </div>
                   <Download className="w-4 h-4 text-purple-400" />
                 </a>

@@ -53,7 +53,7 @@ fun TVHomeScreen() {
     LaunchedEffect(Unit) {
         // Check for updates
         scope.launch {
-            val update = UpdateChecker.checkForUpdate()
+            val update = UpdateChecker.checkForUpdate(context)
             if (update != null) {
                 updateInfo = update
                 showUpdateDialog = true
@@ -124,7 +124,7 @@ fun TVHomeScreen() {
                         onClick = {
                             isManualChecking = true
                             scope.launch {
-                                val update = UpdateChecker.checkForUpdate()
+                                val update = UpdateChecker.checkForUpdate(context, force = true)
                                 if (update != null) {
                                     updateInfo = update
                                     showUpdateDialog = true

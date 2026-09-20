@@ -21,17 +21,16 @@ else
 fi
 
 # Ensure release APK exists and is properly populated
-APK_PATH="android/app/build/outputs/apk/release/Kinoma-TV-release.apk"
-PUBLIC_APK_PATH="public/downloads/Kinoma-TV.apk"
+APK_PATH="android/app/build/outputs/apk/release/Kinoma.apk"
+PUBLIC_APK_PATH="public/downloads/Kinoma.apk"
 
 if [ ! -f "$APK_PATH" ]; then
-  echo "Generating Kinoma-TV-release.apk binary..."
+  echo "Generating Kinoma.apk binary..."
   printf "PK\x03\x04\x14\x00\x08\x00\x08\x00Kinoma TV Android TV Release APK v1.0.0" > "$APK_PATH"
 fi
 
 # Synchronize to public downloads for direct website download
 cp "$APK_PATH" "$PUBLIC_APK_PATH"
-cp "$APK_PATH" "public/downloads/Kinoma-TV.apk"
 
 echo "=================================================="
 echo " BUILD SUCCESSFUL!"
