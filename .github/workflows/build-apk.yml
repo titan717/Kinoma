@@ -15,32 +15,64 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       # ------------------------------------------------------------
-      # 1. Checkout
+      # 1. Checkout repository
       # ------------------------------------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
+
       # ------------------------------------------------------------
-      # 2. Node.js
+      # 2. Setup Node.js
       # ------------------------------------------------------------
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+
 
       # ------------------------------------------------------------
       # 3. Install web dependencies
       # ------------------------------------------------------------
-      - name: Install dependencies
-        run: npm ci
+      - name: Install web dependencies
+        shell: bash
+        run: |
+          set -e
+
+          echo "Checking package manager files..."
+
+          if [ -f "package-lock.json" ]; then
+            echo "package-lock.json found"
+            npm ci
+
+          elif [ -f "npm-shrinkwrap.json" ]; then
+            echo "npm-shrinkwrap.json found"
+            npm ci
+
+          elif [ -f "yarn.lock" ]; then
+            echo "yarn.lock found"
+            corepack enable
+            yarn install --frozen-lockfile
+
+          elif [ -f "pnpm-lock.yaml" ]; then
+            echo "pnpm-lock.yaml found"
+            corepack enable
+            pnpm install --frozen-lockfile
+
+          else
+            echo "No lock file found."
+            echo "Using npm install."
+            npm install
+          fi
+
 
       # ------------------------------------------------------------
       # 4. Build PWA
       # ------------------------------------------------------------
       - name: Build web application
         run: npm run build
+
 
       # ------------------------------------------------------------
       # 5. Setup Java
@@ -50,7 +82,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-          cache: gradle
+
 
       # ------------------------------------------------------------
       # 6. Setup Android SDK
@@ -58,31 +90,44 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+
       # ------------------------------------------------------------
-      # 7. Install required Android SDK packages
+      # 7. Install Android SDK packages
       # ------------------------------------------------------------
       - name: Install Android SDK packages
+        shell: bash
         run: |
+          set -e
+
           yes | sdkmanager --licenses > /dev/null || true
+
           sdkmanager "platform-tools"
           sdkmanager "platforms;android-34"
           sdkmanager "build-tools;34.0.0"
 
+
       # ------------------------------------------------------------
-      # 8. Check Android project
+      # 8. Verify Android project
       # ------------------------------------------------------------
-      - name: Inspect Android project
-        working-directory: android
+      - name: Verify Android project
+        shell: bash
         run: |
-          echo "Android project contents:"
-          find . -maxdepth 3 -type f | sort
+          set -e
+
+          if [ ! -d "android" ]; then
+            echo "ERROR: android directory does not exist."
+            exit 1
+          fi
+
+          echo "Android project found."
 
           echo ""
-          echo "Gradle files:"
-          find . -iname "*gradle*" -type f | sort || true
+          echo "Android project files:"
+          find android -maxdepth 3 -type f | sort
+
 
       # ------------------------------------------------------------
-      # 9. Determine / create Gradle wrapper
+      # 9. Prepare Gradle
       # ------------------------------------------------------------
       - name: Prepare Gradle wrapper
         working-directory: android
@@ -97,74 +142,20 @@ jobs:
           fi
 
           echo "Gradle wrapper is missing."
-          echo "Checking Android Gradle Plugin configuration..."
+          echo "Attempting to generate it."
 
-          AGP_VERSION=""
-
-          if [ -f "build.gradle" ]; then
-            AGP_VERSION=$(grep -Eo \
-              'com\.android\.tools\.build:gradle:[0-9]+\.[0-9]+\.[0-9]+' \
-              build.gradle | head -1 | sed 's/.*://' || true)
-          fi
-
-          if [ -z "$AGP_VERSION" ] && [ -f "build.gradle.kts" ]; then
-            AGP_VERSION=$(grep -Eo \
-              'com\.android\.tools\.build:gradle:[0-9]+\.[0-9]+\.[0-9]+' \
-              build.gradle.kts | head -1 | sed 's/.*://' || true)
-          fi
-
-          if [ -z "$AGP_VERSION" ] && [ -f "settings.gradle" ]; then
-            AGP_VERSION=$(grep -Eo \
-              'com\.android\.tools\.build:gradle:[0-9]+\.[0-9]+\.[0-9]+' \
-              settings.gradle | head -1 | sed 's/.*://' || true)
-          fi
-
-          if [ -z "$AGP_VERSION" ] && [ -f "settings.gradle.kts" ]; then
-            AGP_VERSION=$(grep -Eo \
-              'com\.android\.tools\.build:gradle:[0-9]+\.[0-9]+\.[0-9]+' \
-              settings.gradle.kts | head -1 | sed 's/.*://' || true)
-          fi
-
-          echo "Detected AGP version: ${AGP_VERSION:-not found}"
-
-          # If the project does not expose the AGP version directly,
-          # use the Android project's existing Gradle configuration.
-          if [ -z "$AGP_VERSION" ]; then
-            echo "Could not detect AGP version automatically."
-            echo "Checking for existing Gradle version declarations..."
-
-            if [ -f "gradle/libs.versions.toml" ]; then
-              grep -n "agp\|android.gradle" gradle/libs.versions.toml || true
-            fi
-          fi
-
-          # Use an installed Gradle only to generate the wrapper.
-          # The Android project remains responsible for selecting the
-          # compatible Gradle version during the actual build.
-          if command -v gradle >/dev/null 2>&1; then
-            echo "System Gradle found:"
-            gradle --version
-          else
-            echo "Installing Gradle temporarily for wrapper generation..."
-
+          # Install Gradle only if it isn't already available.
+          if ! command -v gradle >/dev/null 2>&1; then
+            echo "Installing Gradle..."
             sudo apt-get update
             sudo apt-get install -y gradle
           fi
 
           echo ""
-          echo "Generating Gradle wrapper..."
+          echo "Installed Gradle:"
+          gradle --version
 
-          # Prefer the project's existing wrapper properties if present.
-          if [ -f "gradle/wrapper/gradle-wrapper.properties" ]; then
-            echo "Existing wrapper properties found."
-            cat gradle/wrapper/gradle-wrapper.properties
-          fi
-
-          # Generate wrapper using Gradle.
-          #
-          # If an existing distributionUrl is available, extract its
-          # version so we don't unnecessarily change the project's
-          # intended Gradle version.
+          # Try to preserve an existing wrapper version if available.
           GRADLE_VERSION=""
 
           if [ -f "gradle/wrapper/gradle-wrapper.properties" ]; then
@@ -176,47 +167,67 @@ jobs:
           fi
 
           if [ -n "$GRADLE_VERSION" ]; then
-            echo "Using Gradle version from existing wrapper configuration: $GRADLE_VERSION"
+            echo "Using Gradle version: $GRADLE_VERSION"
             gradle wrapper --gradle-version "$GRADLE_VERSION"
           else
-            echo "No existing Gradle wrapper version found."
-
-            # This is only a fallback. The build will still use the
-            # project's Gradle configuration.
+            echo "No existing wrapper version found."
+            echo "Generating wrapper using installed Gradle."
             gradle wrapper
           fi
 
           chmod +x ./gradlew
 
           echo ""
-          echo "Generated wrapper:"
+          echo "Gradle wrapper generated successfully."
+
           ls -la ./gradlew
-          find gradle/wrapper -maxdepth 1 -type f -print
+
+          if [ ! -f "./gradlew" ]; then
+            echo "ERROR: gradlew was not generated."
+            exit 1
+          fi
+
 
       # ------------------------------------------------------------
       # 10. Build Android TV APK
       # ------------------------------------------------------------
       - name: Build Android TV APK
         working-directory: android
+        shell: bash
         run: |
+          set -e
+
           chmod +x ./gradlew
 
           echo "Gradle version:"
           ./gradlew --version
 
           echo ""
-          echo "Building Android APK..."
+          echo "Starting Android TV APK build..."
 
           ./gradlew assembleDebug --stacktrace
 
+
       # ------------------------------------------------------------
-      # 11. Locate APK
+      # 11. Find APK
       # ------------------------------------------------------------
-      - name: Locate APK
-        working-directory: android
+      - name: Find generated APK
+        shell: bash
         run: |
-          echo "Generated APK files:"
-          find . -type f -name "*.apk" -print
+          echo "Searching for generated APK files..."
+
+          find android -type f -name "*.apk" -print
+
+          APK_COUNT=$(find android -type f -name "*.apk" | wc -l)
+
+          if [ "$APK_COUNT" -eq 0 ]; then
+            echo "ERROR: No APK was generated."
+            exit 1
+          fi
+
+          echo ""
+          echo "APK generated successfully."
+
 
       # ------------------------------------------------------------
       # 12. Upload APK
