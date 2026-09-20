@@ -209,7 +209,7 @@ jobs:
               gradle wrapper --gradle-version "$GRADLE_VERSION"
             else
               echo "No existing wrapper version found."
-              gradle wrapper
+              gradle wrapper --gradle-version 8.5
             fi
 
             chmod +x ./gradlew
