@@ -7,11 +7,11 @@ data class AnimeItem(
     @SerializedName("title") val title: Any?,
     @SerializedName("image") val image: String?,
     @SerializedName("cover") val cover: String?,
-    @SerializedName("rating") val rating: Int?,
+    @SerializedName("rating") val rating: Any?,
     @SerializedName("type") val type: String?,
     @SerializedName("description") val description: String?,
     @SerializedName("genres") val genres: List<String>?,
-    @SerializedName("totalEpisodes") val totalEpisodes: Int?
+    @SerializedName("totalEpisodes") val totalEpisodes: Any?
 ) {
     val displayTitle: String
         get() {
@@ -20,6 +20,20 @@ data class AnimeItem(
                 return (title["english"] as? String) ?: (title["romaji"] as? String) ?: "Unknown Anime"
             }
             return "Unknown Anime"
+        }
+
+    val displayRating: String?
+        get() {
+            if (rating == null) return null
+            return rating.toString()
+        }
+
+    val displayTotalEpisodes: Int?
+        get() {
+            if (totalEpisodes == null) return null
+            if (totalEpisodes is Number) return totalEpisodes.toInt()
+            if (totalEpisodes is String) return totalEpisodes.toIntOrNull()
+            return null
         }
 }
 
