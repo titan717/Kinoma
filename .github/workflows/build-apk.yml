@@ -61,12 +61,14 @@ jobs:
         shell: bash
         run: |
           set -e
+
           if [ ! -f "./gradlew" ]; then
             echo "gradlew is missing. Generating wrapper with official Gradle 8.5..."
-            gradle wrapper --gradle-version 8.5 --distribution-url https://services.gradle.org/distributions/gradle-8.5-bin.zip
+            gradle wrapper --gradle-version 8.5 --distribution-type bin
           else
             echo "gradlew already exists."
           fi
+
           chmod +x ./gradlew
 
       - name: Configure Gradle wrapper
@@ -74,13 +76,15 @@ jobs:
         shell: bash
         run: |
           set -e
-          mkdir -p gradle/wrapper
-          if [ -f "gradle/wrapper/gradle-wrapper.properties" ]; then
-            sed -i 's#distributionUrl=.*#distributionUrl=https\\://services.gradle.org/distributions/gradle-8.5-bin.zip#' gradle/wrapper/gradle-wrapper.properties
-          else
+
+          if [ ! -f "gradle/wrapper/gradle-wrapper.properties" ]; then
             echo "ERROR: Gradle wrapper properties were not generated."
             exit 1
           fi
+
+          sed -i 's#^distributionUrl=.*#distributionUrl=https\://services.gradle.org/distributions/gradle-8.5-bin.zip#' gradle/wrapper/gradle-wrapper.properties
+
+          echo "Final Gradle wrapper configuration:"
           cat gradle/wrapper/gradle-wrapper.properties
 
       - name: Configure AndroidX
