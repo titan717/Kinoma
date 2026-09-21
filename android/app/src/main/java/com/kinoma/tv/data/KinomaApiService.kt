@@ -6,21 +6,29 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
-import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface KinomaApiService {
-    @GET("api/anime/trending")
-    suspend fun getTrending(): AnimeListResponse
+    @GET("search")
+    suspend fun getTrending(
+        @Query("q") q: String = "action",
+        @Query("limit") limit: Int = 20
+    ): AnimeListResponse
 
-    @GET("api/anime/popular")
-    suspend fun getPopular(): AnimeListResponse
+    @GET("search")
+    suspend fun getPopular(
+        @Query("q") q: String = "adventure",
+        @Query("limit") limit: Int = 20
+    ): AnimeListResponse
 
-    @GET("api/anime/search/{query}")
-    suspend fun searchAnime(@Path("query") query: String): AnimeListResponse
+    @GET("search")
+    suspend fun searchAnime(
+        @Query("q") query: String,
+        @Query("limit") limit: Int = 20
+    ): AnimeListResponse
 
     companion object {
-        private const val BASE_URL = "https://ais-dev-ldac4dfys5uh24kepg3akw-880382000432.asia-east1.run.app/"
+        private const val BASE_URL = "https://reanimeto-api-production-46bf.up.railway.app/"
 
         val instance: KinomaApiService by lazy {
             val loggingInterceptor = HttpLoggingInterceptor { message ->
