@@ -26,10 +26,14 @@ async function startServer() {
   app.get(['/api/health', '/health'], (req, res) => proxyHandler('/health', req, res));
 
   // Search
-  app.get(['/api/search', '/search'], (req, res) => proxyHandler('/search', req, res));
+  app.get(['/api/search', '/api/anime/search', '/search'], (req, res) => proxyHandler('/search', req, res));
+  app.get(['/api/search/:query', '/api/anime/search/:query'], (req, res) => {
+    req.query.q = req.params.query;
+    proxyHandler('/search', req, res);
+  });
 
   // Trending & Popular (aliased to search)
-  app.get(['/api/trending', '/trending'], async (req, res) => {
+  app.get(['/api/trending', '/api/anime/trending', '/trending'], async (req, res) => {
     try {
       const r = await fetch(`${RAILWAY_API}/search?q=action&limit=20&offset=0`);
       const data = await r.json();
@@ -39,7 +43,7 @@ async function startServer() {
     }
   });
 
-  app.get(['/api/popular', '/popular'], async (req, res) => {
+  app.get(['/api/popular', '/api/anime/popular', '/popular'], async (req, res) => {
     try {
       const r = await fetch(`${RAILWAY_API}/search?q=adventure&limit=20&offset=0`);
       const data = await r.json();

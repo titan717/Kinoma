@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Tv, 
   Download, 
@@ -19,6 +19,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { usePWAInstall } from '../../lib/usePWAInstall';
 import { useTVMode } from '../../lib/TVModeContext';
+import { downloadLatestApk, fetchLatestRelease } from '../../services/githubReleases';
 
 export function AndroidTVModal() {
   const { isAndroidTVModalOpen, closeAndroidTVModal, isTVMode, setTVMode, toggleTVMode, isAndroidTVDetected } = useTVMode();
@@ -27,6 +28,21 @@ export function AndroidTVModal() {
   const [activeTab, setActiveTab] = useState<'browser' | 'downloader' | 'cast' | 'remote'>('browser');
   const [copied, setCopied] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadStatus, setDownloadStatus] = useState<string | null>(null);
+  const [latestVersion, setLatestVersion] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isAndroidTVModalOpen) {
+      fetchLatestRelease()
+        .then((release) => {
+          if (release?.tag_name) {
+            setLatestVersion(release.tag_name);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isAndroidTVModalOpen]);
 
   if (!isAndroidTVModalOpen) return null;
 
@@ -44,6 +60,20 @@ export function AndroidTVModal() {
       await install();
     } finally {
       setIsInstalling(false);
+    }
+  };
+
+  const handleDownloadApk = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDownloading(true);
+    setDownloadStatus('Fetching latest release...');
+    try {
+      await downloadLatestApk((msg) => setDownloadStatus(msg));
+      setTimeout(() => setDownloadStatus(null), 3000);
+    } catch (err: any) {
+      setDownloadStatus(`Error: ${err.message || 'Failed to download APK'}`);
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -152,16 +182,19 @@ export function AndroidTVModal() {
               </div>
 
               <div className="flex flex-wrap items-center gap-2.5 pt-1">
-                <a
-                  href="https://github.com/titan717/Kinoma/releases/latest/download/Kinoma.apk"
-                  download="Kinoma.apk"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-xs font-black shadow-lg shadow-purple-600/30 flex items-center gap-2 transition-all hover:scale-105 cursor-pointer"
+                <button
+                  onClick={handleDownloadApk}
+                  disabled={isDownloading}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-xs font-black shadow-lg shadow-purple-600/30 flex items-center gap-2 transition-all hover:scale-105 cursor-pointer disabled:opacity-50"
                 >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Download TV APK</span>
-                </a>
+                  <Download className={`w-3.5 h-3.5 ${isDownloading ? 'animate-bounce' : ''}`} />
+                  <span>{isDownloading ? 'Downloading...' : `Download TV APK ${latestVersion ? `(${latestVersion})` : ''}`}</span>
+                </button>
+                {downloadStatus && (
+                  <div className="w-full text-[11px] text-[#c084fc] font-medium mt-1">
+                    {downloadStatus}
+                  </div>
+                )}
                 <button
                   onClick={() => {
                     setTVMode(true);

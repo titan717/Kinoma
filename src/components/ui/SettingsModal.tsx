@@ -26,6 +26,7 @@ import { useTVMode } from '../../lib/TVModeContext';
 import { usePWAInstall } from '../../lib/usePWAInstall';
 import { historyUtil } from '../../lib/history';
 import { libraryManager } from '../../lib/library';
+import { downloadLatestApk } from '../../services/githubReleases';
 
 export function SettingsModal() {
   const { 
@@ -48,41 +49,11 @@ export function SettingsModal() {
 
   const fetchLatestRelease = async () => {
     setIsCheckingUpdate(true);
-    setUpdateStatus('Querying GitHub latest release...');
+    setUpdateStatus('Querying GitHub latest release for Kinoma-Android-TV.apk...');
     try {
-      // Query GitHub API for latest release assets
-      const res = await fetch('https://api.github.com/repos/titan717/Kinoma/releases/latest');
-      if (!res.ok) {
-        throw new Error(`GitHub API error: ${res.status}`);
-      }
-      const data = await res.json();
-      const apkAsset = data.assets?.find((asset: any) => asset.name === 'Kinoma.apk' || asset.name.endsWith('.apk'));
-      if (apkAsset && apkAsset.browser_download_url) {
-        setUpdateStatus(`Found version ${data.tag_name || 'latest'}! Downloading APK...`);
-        const a = document.createElement('a');
-        a.href = apkAsset.browser_download_url;
-        a.download = 'Kinoma.apk';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => setUpdateStatus('Download started successfully!'), 1500);
-      } else {
-        throw new Error('No .apk asset found in the latest GitHub release.');
-      }
+      await downloadLatestApk((msg) => setUpdateStatus(msg));
     } catch (err: any) {
-      // Fallback to local server APK package endpoint
-      setUpdateStatus('Falling back to direct release download...');
-      try {
-        const a = document.createElement('a');
-        a.href = 'https://github.com/titan717/Kinoma/releases/latest/download/Kinoma.apk';
-        a.download = 'Kinoma.apk';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => setUpdateStatus('Local APK download triggered successfully!'), 1500);
-      } catch (e) {
-        setUpdateStatus(`Download error: ${err.message || 'Failed'}`);
-      }
+      setUpdateStatus(`Download error: ${err.message || 'Failed to download APK'}`);
     } finally {
       setIsCheckingUpdate(false);
     }
@@ -670,17 +641,16 @@ export function SettingsModal() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <a
-                  href="https://github.com/titan717/Kinoma/releases/latest/download/Kinoma.apk"
-                  download="Kinoma.apk"
-                  className="p-3.5 bg-[#13141c] hover:bg-[#1a1b26] border border-[#222230] rounded-xl flex items-center justify-between transition-all group"
+                <button
+                  onClick={fetchLatestRelease}
+                  className="w-full text-left p-3.5 bg-[#13141c] hover:bg-[#1a1b26] border border-[#222230] rounded-xl flex items-center justify-between transition-all group cursor-pointer"
                 >
                   <div>
                     <h4 className="text-xs font-bold text-white group-hover:text-[#c084fc]">Download TV APK</h4>
-                    <p className="text-[10px] text-gray-400">Kinoma.apk</p>
+                    <p className="text-[10px] text-gray-400">Kinoma-Android-TV.apk</p>
                   </div>
                   <Download className="w-4 h-4 text-purple-400" />
-                </a>
+                </button>
               </div>
             </div>
           )}
