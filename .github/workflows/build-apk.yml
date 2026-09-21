@@ -240,4 +240,4 @@ jobs:
             `Kinoma-Android-TV.apk`
           files: release/Kinoma-Android-TV.apk
           generate_release_notes: false
-```
+
