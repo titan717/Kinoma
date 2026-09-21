@@ -329,7 +329,7 @@ class MainActivity : ComponentActivity() {
                     progressDialog.setMessage("Downloading: $percent%")
                 }
             },
-            onSuccess = {
+            onComplete = {
                 runOnUiThread {
                     progressDialog.dismiss()
                 }
