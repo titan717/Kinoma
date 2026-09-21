@@ -15,15 +15,32 @@ const TVModeContext = createContext<TVModeContextType | null>(null);
 export function TVModeProvider({ children }: { children: React.ReactNode }) {
   const [isTVMode, setIsTVModeState] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
-    const saved = localStorage.getItem('kinoma_tv_mode');
-    if (saved !== null) return saved === 'true';
     
-    // Auto-enable if detected Android TV / Large screen TV or Kinoma TV APK
+    // Check Android TV injection, native bridge, or userAgent
+    const isKinomaAndroidTV = Boolean((window as any).isKinomaAndroidTV);
+    const hasKinomaBridge = typeof (window as any).KinomaNative !== 'undefined';
     const ua = window.navigator.userAgent.toLowerCase();
-    return /android.*(tv|googletv|leanback|smarttv|large screen|aft)/i.test(ua) ||
+    const isTVUA = /android.*(tv|googletv|leanback|smarttv|large screen|aft)/i.test(ua) ||
       /smart-tv|hbbtv|appletv|roku/i.test(ua) ||
-      ua.includes('kinomatv') ||
-      Boolean((window as any).isKinomaAndroidTV);
+      ua.includes('kinomatv');
+
+    if (isKinomaAndroidTV || hasKinomaBridge || isTVUA) {
+      console.log('isKinomaAndroidTV =', isKinomaAndroidTV || hasKinomaBridge || isTVUA);
+      console.log('TV mode = true');
+      return true;
+    }
+
+    const saved = localStorage.getItem('kinoma_tv_mode');
+    if (saved !== null) {
+      const mode = saved === 'true';
+      console.log('isKinomaAndroidTV = false');
+      console.log('TV mode =', mode);
+      return mode;
+    }
+    
+    console.log('isKinomaAndroidTV = false');
+    console.log('TV mode = false');
+    return false;
   });
 
   const [isAndroidTVDetected, setIsAndroidTVDetected] = useState(false);
@@ -34,7 +51,8 @@ export function TVModeProvider({ children }: { children: React.ReactNode }) {
     const isTV = /android.*(tv|googletv|leanback|smarttv|large screen|aft)/i.test(ua) ||
       /smart-tv|hbbtv|appletv|roku/i.test(ua) ||
       ua.includes('kinomatv') ||
-      Boolean((window as any).isKinomaAndroidTV);
+      Boolean((window as any).isKinomaAndroidTV) ||
+      typeof (window as any).KinomaNative !== 'undefined';
     setIsAndroidTVDetected(isTV);
 
     // Apply or remove TV class to document body

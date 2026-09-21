@@ -7,6 +7,16 @@ export interface Episode {
   playable?: boolean;
   subbed?: boolean;
   dubbed?: boolean;
+  seasonNumber?: number;
+  seasonAnimeId?: string;
+}
+
+export interface AnimeSeasonItem {
+  seasonNumber: number;
+  animeId: string;
+  anilistId?: number;
+  title: string;
+  episodeCount: number;
 }
 
 export interface AnimeItem {
@@ -15,7 +25,8 @@ export interface AnimeItem {
   title: string | { english?: string; romaji?: string; native?: string };
   image: string;
   cover?: string;
-  rating?: number;
+  rating?: number | string;
+  contentRating?: string;
   type?: string;
   releaseDate?: string;
   description?: string;
@@ -26,6 +37,7 @@ export interface AnimeItem {
 
 export interface AnimeDetails extends AnimeItem {
   episodes: Episode[];
+  seasons?: AnimeSeasonItem[];
   studio?: string;
   _reanimeSlug?: string;
   _reanimeConfigured?: boolean;

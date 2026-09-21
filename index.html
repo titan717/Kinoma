@@ -18,6 +18,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+    <script>
+      (function() {
+        try {
+          var ua = (navigator.userAgent || '').toLowerCase();
+          if (ua.indexOf('kinomatv') !== -1 || window.KinomaNative) {
+            window.isKinomaAndroidTV = true;
+            localStorage.setItem('kinoma_tv_mode', 'true');
+            document.documentElement.classList.add('tv-mode');
+          }
+        } catch(e) {}
+      })();
+    </script>
   </head>
   <body class="bg-[#08090d] text-white min-h-screen antialiased selection:bg-purple-600 selection:text-white overflow-x-hidden">
     <div id="root"></div>

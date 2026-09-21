@@ -161,6 +161,26 @@ export interface StreamResponse {
   url: string;
 }
 
+export interface AnimeSeason {
+  season_number: number;
+  anime_id: string;
+  anilist_id?: number;
+  title: string;
+  episode_count: number;
+}
+
+export interface SeasonsResponse {
+  anime_id: string;
+  seasons: AnimeSeason[];
+}
+
+export interface SeasonEpisodesResponse {
+  anime_id: string;
+  season_number: number;
+  season_anime_id: string;
+  episodes: Episode[];
+}
+
 export interface ScheduleEpisode {
   anime_id: string;
   anilist_id: number;
@@ -343,7 +363,7 @@ async function fetchApi<T>(
     }
 
     throw new Error(
-      "Unable to connect: ${error instanceof Error ? error.message : String(error)}"
+      `Unable to connect: ${error instanceof Error ? error.message : String(error)}`
     );
 
   } finally {
@@ -564,6 +584,52 @@ export const animeApi = {
       {
         tz,
         week,
+      }
+    );
+  },
+
+  /*
+   * Seasons
+   *
+   * GET
+   * /seasons/{anime_id}
+   */
+
+  getSeasons: (animeId: string): Promise<SeasonsResponse> => {
+    return fetchApi<SeasonsResponse>(
+      `/seasons/${encodeURIComponent(animeId)}`
+    );
+  },
+
+  /*
+   * Season Episodes
+   *
+   * GET
+   * /seasons/{anime_id}/{season_number}/episodes
+   */
+
+  getSeasonEpisodes: (
+    animeId: string,
+    seasonNumber: number | string
+  ): Promise<SeasonEpisodesResponse> => {
+    return fetchApi<SeasonEpisodesResponse>(
+      `/seasons/${encodeURIComponent(animeId)}/${encodeURIComponent(String(seasonNumber))}/episodes`
+    );
+  },
+
+  /*
+   * Stream From Link
+   *
+   * GET
+   * /stream/from-link?link=...
+   */
+
+  getStreamFromLink: (link: string): Promise<StreamResponse> => {
+    return fetchApi<StreamResponse>(
+      "/stream/from-link",
+      {},
+      {
+        link,
       }
     );
   },

@@ -20,8 +20,10 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
+import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Button
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.webkit.WebViewAssetLoader
@@ -37,6 +39,8 @@ class MainActivity : ComponentActivity() {
     private var customView: View? = null
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
     private lateinit var fullscreenContainer: FrameLayout
+    private lateinit var diagnosticContainer: LinearLayout
+    private lateinit var diagnosticText: TextView
 
     companion object {
         private const val TAG = "KinomaTV"
@@ -47,6 +51,8 @@ class MainActivity : ComponentActivity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        Log.i(TAG, "Starting Kinoma TV MainActivity")
 
         // Keep screen on for TV viewing and set full immersion
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -70,7 +76,40 @@ class MainActivity : ComponentActivity() {
             setBackgroundColor(Color.BLACK)
         }
 
-        // Configure WebViewAssetLoader to serve bundled web assets securely over HTTPS
+        // Diagnostic layout to prevent silent blank screens
+        diagnosticContainer = LinearLayout(this).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.parseColor("#07080d"))
+            setPadding(80, 80, 80, 80)
+            visibility = View.GONE
+        }
+
+        diagnosticText = TextView(this).apply {
+            textSize = 14f
+            setTextColor(Color.WHITE)
+            typeface = android.graphics.Typeface.MONOSPACE
+            setPadding(0, 0, 0, 30)
+        }
+
+        val retryButton = Button(this).apply {
+            text = "Reload Kinoma TV"
+            setBackgroundColor(Color.parseColor("#7b1fa2"))
+            setTextColor(Color.WHITE)
+            setOnClickListener {
+                diagnosticContainer.visibility = View.GONE
+                webView.visibility = View.VISIBLE
+                webView.loadUrl(WEB_ENTRY_URL)
+            }
+        }
+
+        diagnosticContainer.addView(diagnosticText)
+        diagnosticContainer.addView(retryButton)
+
+        // Configure WebViewAssetLoader as fallback
         assetLoader = WebViewAssetLoader.Builder()
             .setDomain(APP_DOMAIN)
             .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))
@@ -98,30 +137,36 @@ class MainActivity : ComponentActivity() {
             ): WebResourceResponse? {
                 val url = request.url
                 if (url.host == APP_DOMAIN) {
-                    val path = url.path ?: ""
-                    val fileName = path.substringAfterLast('/', "")
-                    val hasExtension = fileName.contains('.') && !fileName.endsWith(".html")
-
-                    // If it's a known static asset file (js, css, image, font), let asset loader handle it
-                    if (hasExtension || path.endsWith(".html")) {
-                        return assetLoader.shouldInterceptRequest(url)
+                    val path = url.path ?: "/"
+                    val resolved = resolveBundledAsset(path)
+                    if (resolved != null) {
+                        return resolved
                     }
-
-                    // For client-side SPA routing (e.g. /tv, /watch/:id), serve web/index.html
-                    return try {
-                        val inputStream: InputStream = assets.open("web/index.html")
-                        WebResourceResponse("text/html", "UTF-8", inputStream)
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Failed to load SPA fallback index.html for: $path", e)
-                        assetLoader.shouldInterceptRequest(url)
-                    }
+                    // Fall back to asset loader
+                    return assetLoader.shouldInterceptRequest(url)
                 }
-                // External requests (kinomaapi.vercel.app, anilist images, video streams) pass through normally
+                // External requests (kinomaapi.vercel.app, anilist images, stream CDNs) pass through
                 return super.shouldInterceptRequest(view, request)
+            }
+
+            override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) {
+                super.onPageStarted(view, url, favicon)
+                Log.i(TAG, "WebView page started: $url")
+                // Inject early TV mode flag
+                view.evaluateJavascript(
+                    """
+                    window.isKinomaAndroidTV = true;
+                    try {
+                        localStorage.setItem('kinoma_tv_mode', 'true');
+                        document.documentElement.classList.add('tv-mode');
+                    } catch(e) {}
+                    """.trimIndent(), null
+                )
             }
 
             override fun onPageFinished(view: WebView, url: String) {
                 super.onPageFinished(view, url)
+                Log.i(TAG, "WebView page finished: $url")
                 // Guarantee TV mode is active in the web frontend
                 view.evaluateJavascript(
                     """
@@ -134,6 +179,52 @@ class MainActivity : ComponentActivity() {
                     })();
                     """.trimIndent(), null
                 )
+            }
+
+            override fun onReceivedError(
+                view: WebView,
+                request: WebResourceRequest,
+                error: android.webkit.WebResourceError
+            ) {
+                super.onReceivedError(view, request, error)
+                val isMain = request.isForMainFrame
+                val url = request.url.toString()
+                Log.e(TAG, "WebView error [main=$isMain] code=${error.errorCode} desc=${error.description} url=$url")
+                if (isMain) {
+                    showDiagnosticScreen("Resource Loading Failed", url, error.errorCode, error.description.toString())
+                }
+            }
+
+            override fun onReceivedHttpError(
+                view: WebView,
+                request: WebResourceRequest,
+                errorResponse: WebResourceResponse
+            ) {
+                super.onReceivedHttpError(view, request, errorResponse)
+                val isMain = request.isForMainFrame
+                val url = request.url.toString()
+                Log.e(TAG, "WebView HTTP error [main=$isMain] status=${errorResponse.statusCode} url=$url")
+                if (isMain && errorResponse.statusCode >= 400) {
+                    showDiagnosticScreen("HTTP Error", url, errorResponse.statusCode, errorResponse.reasonPhrase ?: "Status ${errorResponse.statusCode}")
+                }
+            }
+
+            override fun onReceivedSslError(
+                view: WebView,
+                handler: android.webkit.SslErrorHandler,
+                error: android.net.http.SslError
+            ) {
+                Log.e(TAG, "WebView SSL error: $error for ${error.url}")
+                super.onReceivedSslError(view, handler, error)
+            }
+
+            override fun onRenderProcessGone(
+                view: WebView,
+                detail: android.webkit.RenderProcessGoneDetail
+            ): Boolean {
+                Log.e(TAG, "WebView render process gone! didCrash=${detail.didCrash()}")
+                showDiagnosticScreen("Render Process Crash", WEB_ENTRY_URL, null, "WebView render process crashed. didCrash=${detail.didCrash()}")
+                return true
             }
         }
 
@@ -160,21 +251,107 @@ class MainActivity : ComponentActivity() {
             }
 
             override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
-                Log.d("KinomaTVWeb", "${consoleMessage?.message()} -- From line ${consoleMessage?.lineNumber()} of ${consoleMessage?.sourceId()}")
+                Log.d("KinomaTVWeb", "[${consoleMessage?.messageLevel()}] ${consoleMessage?.message()} -- line ${consoleMessage?.lineNumber()} of ${consoleMessage?.sourceId()}")
                 return true
             }
         }
 
         rootLayout.addView(webView)
         rootLayout.addView(fullscreenContainer)
+        rootLayout.addView(diagnosticContainer)
         setContentView(rootLayout)
 
         // Load the bundled production Kinoma TV application
+        Log.i(TAG, "Loading entry URL: $WEB_ENTRY_URL")
         webView.loadUrl(WEB_ENTRY_URL)
         webView.requestFocus()
 
         // Background check for updates without blocking TV interface
         checkUpdatesInBackground()
+    }
+
+    private fun resolveBundledAsset(path: String): WebResourceResponse? {
+        val clean = path.removePrefix("/")
+        val candidates = mutableListOf<String>()
+
+        if (clean.startsWith("assets/web/")) {
+            candidates.add(clean.removePrefix("assets/")) // "web/..."
+        }
+        if (clean.startsWith("assets/")) {
+            candidates.add("web/$clean") // "web/assets/..."
+            candidates.add(clean) // "assets/..."
+        }
+        candidates.add("web/$clean")
+        candidates.add(clean)
+
+        for (candidate in candidates.distinct()) {
+            try {
+                val stream = assets.open(candidate)
+                val mimeType = getMimeType(candidate)
+                val response = WebResourceResponse(mimeType, "UTF-8", stream)
+                response.responseHeaders = mapOf(
+                    "Access-Control-Allow-Origin" to "*",
+                    "Cache-Control" to "no-cache"
+                )
+                return response
+            } catch (_: Exception) {
+                // Try next candidate
+            }
+        }
+
+        // For client-side SPA routing (paths without file extensions like /tv, /details/xxx), serve web/index.html
+        val lastSegment = clean.substringAfterLast('/')
+        if (!lastSegment.contains('.')) {
+            return try {
+                val stream = assets.open("web/index.html")
+                val response = WebResourceResponse("text/html", "UTF-8", stream)
+                response.responseHeaders = mapOf("Access-Control-Allow-Origin" to "*")
+                response
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to open fallback web/index.html for SPA route: $path", e)
+                null
+            }
+        }
+
+        Log.w(TAG, "Bundled asset not found for path: $path (tried: $candidates)")
+        return null
+    }
+
+    private fun getMimeType(path: String): String {
+        return when {
+            path.endsWith(".html", ignoreCase = true) -> "text/html"
+            path.endsWith(".js", ignoreCase = true) || path.endsWith(".mjs", ignoreCase = true) -> "application/javascript"
+            path.endsWith(".css", ignoreCase = true) -> "text/css"
+            path.endsWith(".json", ignoreCase = true) || path.endsWith(".webmanifest", ignoreCase = true) -> "application/json"
+            path.endsWith(".svg", ignoreCase = true) -> "image/svg+xml"
+            path.endsWith(".png", ignoreCase = true) -> "image/png"
+            path.endsWith(".jpg", ignoreCase = true) || path.endsWith(".jpeg", ignoreCase = true) -> "image/jpeg"
+            path.endsWith(".webp", ignoreCase = true) -> "image/webp"
+            path.endsWith(".ico", ignoreCase = true) -> "image/x-icon"
+            path.endsWith(".woff2", ignoreCase = true) -> "font/woff2"
+            path.endsWith(".woff", ignoreCase = true) -> "font/woff"
+            path.endsWith(".ttf", ignoreCase = true) -> "font/ttf"
+            else -> "application/octet-stream"
+        }
+    }
+
+    private fun showDiagnosticScreen(type: String, url: String, code: Int?, desc: String) {
+        runOnUiThread {
+            webView.visibility = View.GONE
+            diagnosticContainer.visibility = View.VISIBLE
+            diagnosticText.text = """
+                =================================================
+                KINOMA ANDROID TV - WEBVIEW DIAGNOSTIC
+                =================================================
+                Error Type : $type
+                Failing URL: $url
+                Code/Status: ${code ?: "N/A"}
+                Details    : $desc
+                
+                Please check network connectivity or reload below.
+                =================================================
+            """.trimIndent()
+        }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -196,6 +373,7 @@ class MainActivity : ComponentActivity() {
             // Identify as Android TV Leanback environment for automatic TV layout
             val defaultUa = userAgentString
             userAgentString = "$defaultUa KinomaTV/1.0.0 (Android TV; Leanback; SmartTV)"
+            mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
         }
     }
 

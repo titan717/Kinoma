@@ -50,7 +50,14 @@ export function IntroSplash({ forceShow = false, onComplete }: IntroSplashProps)
       completeIntro();
     }, 2600);
 
-    return () => clearTimeout(timer);
+    // Any key press (e.g. TV remote DPAD or Enter) dismisses immediately
+    const handleKey = () => completeIntro();
+    window.addEventListener('keydown', handleKey, { once: true });
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('keydown', handleKey);
+    };
   }, [isVisible, completeIntro]);
 
   // Click on screen also triggers sound if browser required user gesture

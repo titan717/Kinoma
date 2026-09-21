@@ -29,6 +29,10 @@ export function TVApp() {
   const [, setLocation] = useLocation();
   const { isTVMode, setTVMode } = useTVMode();
 
+  useEffect(() => {
+    console.log('TVApp mounted');
+  }, []);
+
   // Primary TV Navigation Views
   const [activeSection, setActiveSection] = useState<TVNavSection>('home');
   const [selectedDetailsAnime, setSelectedDetailsAnime] = useState<AnimeItem | null>(null);

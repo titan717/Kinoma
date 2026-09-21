@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import useSWR from 'swr';
 import { Play, Plus, Check, ArrowLeft, Star, Clock, Calendar } from 'lucide-react';
 import { api } from '../../lib/api';
-import { AnimeItem, AnimeDetails, DEFAULT_BANNER, DEFAULT_POSTER } from '../../types';
+import { AnimeItem, AnimeDetails, Episode, DEFAULT_BANNER, DEFAULT_POSTER } from '../../types';
 import { libraryManager } from '../../lib/library';
 import { historyUtil } from '../../lib/history';
 
@@ -21,37 +21,75 @@ export function TVDetailsView({
 }: TVDetailsViewProps) {
   const { data: detailsData, isLoading } = useSWR(
     animeId ? `tv-details-${animeId}` : null,
-    () => api.getDetails(animeId),
+    () => api.getDetails(animeId, initialItem || undefined),
     { revalidateOnFocus: false }
   );
 
   const anime: AnimeDetails | AnimeItem | null = detailsData || initialItem || null;
   const episodes = useMemo(() => detailsData?.episodes || [], [detailsData]);
+  const [seasonEpisodesMap, setSeasonEpisodesMap] = useState<Record<number, Episode[]>>({});
 
-  // Group episodes into seasons (or 24-episode groups if single continuous run)
+  // Group episodes into seasons (preferring real API seasons)
   const seasonGroups = useMemo(() => {
-    if (episodes.length === 0) return [{ title: 'Season 1', episodes: [] }];
+    if (detailsData?.seasons && detailsData.seasons.length > 0) {
+      return detailsData.seasons.map(s => ({
+        seasonNumber: s.seasonNumber,
+        title: s.title || `Season ${s.seasonNumber}`,
+        animeId: s.animeId,
+        anilistId: s.anilistId,
+        episodes: seasonEpisodesMap[s.seasonNumber] || (s.seasonNumber === 1 ? episodes : [])
+      }));
+    }
+
+    if (episodes.length === 0) return [{ title: 'Season 1', seasonNumber: 1, animeId, anilistId: anime?.anilist_id, episodes: [] }];
     
     // If fewer than 26 episodes, single season
     if (episodes.length <= 25) {
-      return [{ title: 'Season 1', episodes }];
+      return [{ title: 'Season 1', seasonNumber: 1, animeId, anilistId: anime?.anilist_id, episodes }];
     }
 
     // Group into 24-episode seasons for smooth TV pagination
-    const groups: { title: string; episodes: typeof episodes }[] = [];
+    const groups: { title: string; seasonNumber: number; animeId: string; anilistId?: number; episodes: typeof episodes }[] = [];
     const chunkSize = 24;
     for (let i = 0; i < episodes.length; i += chunkSize) {
       const seasonNum = Math.floor(i / chunkSize) + 1;
       const endEp = Math.min(i + chunkSize, episodes.length);
       groups.push({
+        seasonNumber: seasonNum,
+        animeId,
+        anilistId: anime?.anilist_id,
         title: `Season ${seasonNum} (Ep ${i + 1}-${endEp})`,
         episodes: episodes.slice(i, endEp)
       });
     }
     return groups;
-  }, [episodes]);
+  }, [detailsData?.seasons, episodes, seasonEpisodesMap, animeId, anime?.anilist_id]);
 
   const [selectedSeasonIdx, setSelectedSeasonIdx] = useState(0);
+
+  // Fetch season episodes when TV user navigates between seasons
+  useEffect(() => {
+    const currentGroup = seasonGroups[selectedSeasonIdx];
+    if (!currentGroup || !animeId) return;
+
+    const sNum = currentGroup.seasonNumber || selectedSeasonIdx + 1;
+    if (seasonEpisodesMap[sNum] && seasonEpisodesMap[sNum].length > 0) return;
+
+    if (sNum === 1 && episodes.length > 0) {
+      setSeasonEpisodesMap(prev => ({ ...prev, [1]: episodes }));
+      return;
+    }
+
+    api.getSeasonEpisodes(animeId, sNum, currentGroup.animeId, currentGroup.anilistId)
+      .then(res => {
+        if (res?.episodes) {
+          setSeasonEpisodesMap(prev => ({ ...prev, [sNum]: res.episodes }));
+        }
+      })
+      .catch(err => {
+        console.error('TV season load error:', err);
+      });
+  }, [animeId, selectedSeasonIdx, seasonGroups, episodes, seasonEpisodesMap]);
   const [isInList, setIsInList] = useState(false);
 
   // Focus zones: 'cta' | 'seasons' | 'episodes'
@@ -231,7 +269,12 @@ export function TVDetailsView({
           {anime?.rating && (
             <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-[#22c55e]/20 border border-[#22c55e]/40 text-[#4ade80] font-bold text-xs">
               <Star className="w-3 h-3 fill-current" />
-              <span>{Math.round(Number(anime.rating))}% Match</span>
+              <span>{typeof anime.rating === 'number' && !isNaN(anime.rating) ? `${Math.round(anime.rating)}% Match` : String(anime.rating)}</span>
+            </span>
+          )}
+          {(anime as any)?.contentRating && (
+            <span className="px-2.5 py-0.5 rounded-md bg-[#7b1fa2]/30 border border-[#9c27b0]/50 text-[#e1bee7] font-bold text-xs">
+              {(anime as any).contentRating}
             </span>
           )}
           {anime?.releaseDate && (

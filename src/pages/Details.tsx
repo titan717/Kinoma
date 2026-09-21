@@ -8,7 +8,7 @@ import { Skeleton } from '../components/ui/Skeleton';
 import { AnimeLoader } from '../components/ui/AnimeLoader';
 import { historyUtil, HistoryItem, formatPlaybackTimestamp, parseSeasonNumber, WatchCTAInfo } from '../lib/history';
 import { libraryManager } from '../lib/library';
-import { DEFAULT_POSTER, DEFAULT_BANNER, AnimeDetails } from '../types';
+import { DEFAULT_POSTER, DEFAULT_BANNER, AnimeDetails, Episode } from '../types';
 
 export function Details() {
   const [isMatch, params] = useRoute<{id: string}>('/details/:id');
@@ -19,6 +19,8 @@ export function Details() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedChunk, setSelectedChunk] = useState(0);
   const [progressVersion, setProgressVersion] = useState(0);
+  const [seasonEpisodesMap, setSeasonEpisodesMap] = useState<Record<number, Episode[]>>({});
+  const [isLoadingSeasonEps, setIsLoadingSeasonEps] = useState<boolean>(false);
   
   const { data, isLoading } = useSWR<AnimeDetails>(id ? `info-${id}` : null, () => api.getDetails(id));
 
@@ -42,13 +44,24 @@ export function Details() {
     return historyUtil.getAnimeEpisodesProgress(id, data?._reanimeSlug || data?.id);
   }, [id, data, progressVersion]);
 
-  // Multi-season identification & grouping
+  // Multi-season identification & grouping (preferring real API seasons)
   const seasons = useMemo(() => {
+    if (data?.seasons && data.seasons.length > 0) {
+      return data.seasons.map(s => ({
+        seasonNumber: s.seasonNumber,
+        title: s.title || `Season ${s.seasonNumber}`,
+        animeId: s.animeId,
+        anilistId: s.anilistId,
+        episodeCount: s.episodeCount,
+        episodes: seasonEpisodesMap[s.seasonNumber] || (s.seasonNumber === 1 ? episodes : [])
+      }));
+    }
+
     if (!episodes || episodes.length === 0) return [];
 
     const map = new Map<number, typeof episodes>();
     episodes.forEach((ep: any) => {
-      let sNum = ep.season;
+      let sNum = ep.seasonNumber || (ep as any).season;
       if (!sNum) {
         if (episodes.length > 12) {
           sNum = Math.ceil(ep.number / 12);
@@ -65,9 +78,40 @@ export function Details() {
       .map(([seasonNumber, seasonEpisodes]) => ({
         seasonNumber,
         title: `Season ${seasonNumber}`,
+        animeId: id,
+        anilistId: data?.anilist_id,
+        episodeCount: seasonEpisodes.length,
         episodes: seasonEpisodes
       }));
-  }, [episodes, data?.title]);
+  }, [data?.seasons, episodes, seasonEpisodesMap, id, data?.anilist_id, data?.title]);
+
+  // Fetch season episodes when a new season tab is selected
+  useEffect(() => {
+    if (!id || !selectedSeasonNumber) return;
+    if (seasonEpisodesMap[selectedSeasonNumber] && seasonEpisodesMap[selectedSeasonNumber].length > 0) return;
+
+    const seasonObj = seasons.find(s => s.seasonNumber === selectedSeasonNumber);
+    if (!seasonObj) return;
+
+    if (selectedSeasonNumber === 1 && episodes && episodes.length > 0) {
+      setSeasonEpisodesMap(prev => ({ ...prev, [1]: episodes }));
+      return;
+    }
+
+    setIsLoadingSeasonEps(true);
+    api.getSeasonEpisodes(id, selectedSeasonNumber, seasonObj.animeId, seasonObj.anilistId)
+      .then(res => {
+        if (res?.episodes) {
+          setSeasonEpisodesMap(prev => ({ ...prev, [selectedSeasonNumber]: res.episodes }));
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load season episodes:', err);
+      })
+      .finally(() => {
+        setIsLoadingSeasonEps(false);
+      });
+  }, [id, selectedSeasonNumber, seasons, episodes, seasonEpisodesMap]);
 
   // Automatically select the season of the next unwatched episode
   useEffect(() => {
@@ -235,8 +279,13 @@ export function Details() {
             {/* Metadata Tags */}
             <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm font-semibold drop-shadow-md mt-2">
               <span className="flex items-center gap-1 bg-white/10 backdrop-blur-md px-2 py-1 rounded text-white border border-white/10">
-                <Star className="w-4 h-4 text-yellow-400 fill-current" /> {data.rating ? `${(data.rating / 10).toFixed(1)}/10` : 'N/A'}
+                <Star className="w-4 h-4 text-yellow-400 fill-current" /> {typeof data.rating === 'number' && !isNaN(data.rating) ? `${(data.rating / 10).toFixed(1)}/10` : (typeof data.rating === 'string' ? data.rating : 'N/A')}
               </span>
+              {data.contentRating && (
+                <span className="bg-[#7b1fa2]/30 border border-[#9c27b0]/50 px-2 py-1 rounded text-[#e1bee7] text-xs font-bold">
+                  {data.contentRating}
+                </span>
+              )}
               <span className="flex items-center gap-1 text-gray-200 bg-white/5 px-2 py-1 rounded">
                 <Film className="w-4 h-4 text-gray-400" /> {data.type || 'TV'} • {data.releaseDate || 'Unknown'}
               </span>

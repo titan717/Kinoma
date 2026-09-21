@@ -2,10 +2,14 @@ import { animeApi, AnimeSearchResult } from '../services/animeApi';
 import { localCache } from './localCache';
 import { AnimeItem, AnimeDetails, DEFAULT_POSTER, DEFAULT_BANNER } from '../types';
 
+// Memory cache to preserve anilist_id and other metadata between views
+const itemCache = new Map<string, AnimeItem>();
+
 function mapItem(item: any): AnimeItem {
   const title = item.title?.english || item.title?.romaji || item.title?.native || 'Unknown';
-  return {
+  const mapped: AnimeItem = {
     id: item.anime_id || item.id,
+    anilist_id: item.anilist_id,
     title: {
       english: item.title?.english || title,
       romaji: item.title?.romaji || title,
@@ -14,6 +18,7 @@ function mapItem(item: any): AnimeItem {
     image: item.cover_image?.large || item.cover_image?.extra_large || item.image || DEFAULT_POSTER,
     cover: item.cover_image?.extra_large || item.cover_image?.large || item.cover || DEFAULT_BANNER,
     rating: item.average_score,
+    contentRating: typeof item.rating === 'string' ? item.rating : undefined,
     type: item.format,
     releaseDate: item.season_year ? String(item.season_year) : (item.year ? String(item.year) : undefined),
     description: item.rating ? `Rating: ${item.rating}` : undefined,
@@ -21,6 +26,13 @@ function mapItem(item: any): AnimeItem {
     totalEpisodes: item.episodes || item.episodeCount || 0,
     status: item.status
   };
+
+  // Cache the item to preserve anilist_id for getDetails
+  if (mapped.id) {
+    itemCache.set(mapped.id, mapped);
+  }
+
+  return mapped;
 }
 
 function deduplicate<T>(arr: T[], key: keyof T): T[] {
@@ -135,26 +147,31 @@ export const api = {
     }, 1000 * 60 * 60); // 1 hour TTL
   },
 
-  getDetails: async (id: string): Promise<AnimeDetails> => {
+  getDetails: async (id: string, initialItem?: AnimeItem): Promise<AnimeDetails> => {
     const cleanKey = `api_details_${id}`;
     return localCache.getOrFetch(cleanKey, async (): Promise<AnimeDetails> => {
-      const [info, epsRes] = await Promise.all([
+      const [info, epsRes, seasonsRes] = await Promise.all([
         animeApi.getAnimeInfo(id),
-        animeApi.getEpisodes(id, 2000).catch(() => ({ data: [] }))
+        animeApi.getEpisodes(id, 2000).catch(() => ({ data: [] })),
+        animeApi.getSeasons(id).catch(() => null)
       ]);
 
-      let anilistId = info.anilist_id || 0;
-      let format = info.format || 'TV';
-      let status = info.status || 'Finished';
-      let genres = info.genres || [];
-      let description = '';
-      let rating = info.average_score;
-      let seasonYear = info.season_year;
+      const cachedItem = itemCache.get(id);
+      let anilistId = info.anilist_id || initialItem?.anilist_id || cachedItem?.anilist_id || 0;
+      let format = info.format || initialItem?.type || cachedItem?.type || 'TV';
+      let status = info.status || initialItem?.status || cachedItem?.status || 'Finished';
+      let genres = info.genres || initialItem?.genres || cachedItem?.genres || [];
+      let description = initialItem?.description || cachedItem?.description || '';
+      let rating = info.average_score || initialItem?.rating || cachedItem?.rating;
+      let seasonYear = info.season_year || (initialItem?.releaseDate ? parseInt(initialItem.releaseDate) : (cachedItem?.releaseDate ? parseInt(cachedItem.releaseDate) : undefined));
       let studio = '';
+      let contentRating = typeof info.rating === 'string' ? info.rating : (typeof initialItem?.contentRating === 'string' ? initialItem.contentRating : (typeof cachedItem?.contentRating === 'string' ? cachedItem.contentRating : undefined));
 
-      const rawTitle = info.title?.english || info.title?.romaji || id;
+      const cachedTitle = typeof cachedItem?.title === 'object' ? cachedItem.title.english || cachedItem.title.romaji : cachedItem?.title;
+      const initialTitle = typeof initialItem?.title === 'object' ? initialItem.title.english || initialItem.title.romaji : initialItem?.title;
+      const rawTitle = info.title?.english || info.title?.romaji || initialTitle || cachedTitle || id;
 
-      if (!anilistId || genres.length === 0 || !description) {
+      if (!anilistId || genres.length === 0) {
         try {
           const searchRes = await animeApi.search(rawTitle, 5, 0);
           const matched = searchRes.results?.find(r => r.anime_id === id) || searchRes.results?.[0];
@@ -165,6 +182,9 @@ export const api = {
             genres = matched.genres || genres;
             rating = matched.average_score || rating;
             seasonYear = matched.season_year || seasonYear;
+            if (!contentRating && typeof matched.rating === 'string') {
+              contentRating = matched.rating;
+            }
           }
         } catch (e) {}
       }
@@ -193,14 +213,39 @@ export const api = {
         }
       }
 
-      const episodes = (epsRes.data || []).map((ep: any) => ({
+      // Map seasons from API
+      let seasons: { seasonNumber: number; animeId: string; anilistId?: number; title: string; episodeCount: number }[] = [];
+      if (seasonsRes && Array.isArray(seasonsRes.seasons) && seasonsRes.seasons.length > 0) {
+        seasons = seasonsRes.seasons.map(s => ({
+          seasonNumber: s.season_number,
+          animeId: s.anime_id,
+          anilistId: s.anilist_id || anilistId,
+          title: s.title || `Season ${s.season_number}`,
+          episodeCount: s.episode_count
+        }));
+      }
+
+      const rawEpisodes = epsRes.data || [];
+      if (seasons.length === 0 && rawEpisodes.length > 0) {
+        seasons = [{
+          seasonNumber: 1,
+          animeId: id,
+          anilistId,
+          title: 'Season 1',
+          episodeCount: rawEpisodes.length
+        }];
+      }
+
+      const episodes = rawEpisodes.map((ep: any) => ({
         id: `${id}|${ep.episode_number}|${anilistId}`,
         number: ep.episode_number,
         title: ep.title || `Episode ${ep.episode_number}`,
         image: ep.thumbnail || info.cover_image?.large,
         playable: ep.playable ?? true,
         subbed: ep.subbed ?? true,
-        dubbed: ep.dubbed ?? false
+        dubbed: ep.dubbed ?? false,
+        seasonNumber: 1,
+        seasonAnimeId: id
       }));
 
       return {
@@ -216,12 +261,74 @@ export const api = {
         releaseDate: seasonYear ? String(seasonYear) : 'Unknown',
         totalEpisodes: episodes.length || info.episodes || 0,
         rating,
+        contentRating,
         studio: studio || 'Unknown Studio',
         episodes,
+        seasons,
         _reanimeSlug: id,
         _reanimeConfigured: true
       };
     }, 1000 * 60 * 60 * 3); // 3 hours TTL for anime details & episodes
+  },
+
+  getSeasonEpisodes: async (
+    originalAnimeId: string,
+    seasonNumber: number,
+    fallbackSeasonAnimeId?: string,
+    fallbackAnilistId?: number
+  ) => {
+    const cleanKey = `api_season_eps_${originalAnimeId}_${seasonNumber}`;
+    return localCache.getOrFetch(cleanKey, async () => {
+      try {
+        const res = await animeApi.getSeasonEpisodes(originalAnimeId, seasonNumber);
+        const seasonAnimeId = res.season_anime_id || fallbackSeasonAnimeId || originalAnimeId;
+        const anilistId = fallbackAnilistId || 0;
+
+        const episodes = (res.episodes || []).map((ep: any) => ({
+          id: `${seasonAnimeId}|${ep.episode_number}|${anilistId}`,
+          number: ep.episode_number,
+          title: ep.title || `Episode ${ep.episode_number}`,
+          image: ep.thumbnail,
+          playable: ep.playable ?? true,
+          subbed: ep.subbed ?? true,
+          dubbed: ep.dubbed ?? false,
+          seasonNumber,
+          seasonAnimeId
+        }));
+
+        return {
+          anime_id: originalAnimeId,
+          season_number: seasonNumber,
+          season_anime_id: seasonAnimeId,
+          episodes
+        };
+      } catch (err) {
+        console.warn(`Failed to fetch season episodes for ${originalAnimeId} S${seasonNumber}, fallback:`, err);
+        const targetId = fallbackSeasonAnimeId || originalAnimeId;
+        const epsRes = await animeApi.getEpisodes(targetId, 2000).catch(() => ({ data: [] }));
+        const seasonAnimeId = targetId;
+        const anilistId = fallbackAnilistId || 0;
+
+        const episodes = (epsRes.data || []).map((ep: any) => ({
+          id: `${seasonAnimeId}|${ep.episode_number}|${anilistId}`,
+          number: ep.episode_number,
+          title: ep.title || `Episode ${ep.episode_number}`,
+          image: ep.thumbnail,
+          playable: ep.playable ?? true,
+          subbed: ep.subbed ?? true,
+          dubbed: ep.dubbed ?? false,
+          seasonNumber,
+          seasonAnimeId
+        }));
+
+        return {
+          anime_id: originalAnimeId,
+          season_number: seasonNumber,
+          season_anime_id: seasonAnimeId,
+          episodes
+        };
+      }
+    }, 1000 * 60 * 60 * 2);
   },
 
   getWatchLink: async (episodeCompositeId: string) => {
