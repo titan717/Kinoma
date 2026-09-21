@@ -18,10 +18,12 @@ export function TVModeProvider({ children }: { children: React.ReactNode }) {
     const saved = localStorage.getItem('kinoma_tv_mode');
     if (saved !== null) return saved === 'true';
     
-    // Auto-enable if detected Android TV / Large screen TV
+    // Auto-enable if detected Android TV / Large screen TV or Kinoma TV APK
     const ua = window.navigator.userAgent.toLowerCase();
     return /android.*(tv|googletv|leanback|smarttv|large screen|aft)/i.test(ua) ||
-      /smart-tv|hbbtv|appletv|roku/i.test(ua);
+      /smart-tv|hbbtv|appletv|roku/i.test(ua) ||
+      ua.includes('kinomatv') ||
+      Boolean((window as any).isKinomaAndroidTV);
   });
 
   const [isAndroidTVDetected, setIsAndroidTVDetected] = useState(false);
@@ -30,7 +32,9 @@ export function TVModeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const ua = window.navigator.userAgent.toLowerCase();
     const isTV = /android.*(tv|googletv|leanback|smarttv|large screen|aft)/i.test(ua) ||
-      /smart-tv|hbbtv|appletv|roku/i.test(ua);
+      /smart-tv|hbbtv|appletv|roku/i.test(ua) ||
+      ua.includes('kinomatv') ||
+      Boolean((window as any).isKinomaAndroidTV);
     setIsAndroidTVDetected(isTV);
 
     // Apply or remove TV class to document body

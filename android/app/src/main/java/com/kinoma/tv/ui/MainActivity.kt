@@ -1,262 +1,372 @@
 package com.kinoma.tv.ui
 
-import android.content.Intent
+import android.annotation.SuppressLint
+import android.app.AlertDialog
+import android.content.Context
+import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
+import android.view.KeyEvent
+import android.view.View
+import android.view.ViewGroup
+import android.view.WindowManager
+import android.webkit.ConsoleMessage
+import android.webkit.JavascriptInterface
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
+import android.webkit.WebSettings
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import android.widget.FrameLayout
+import android.widget.ProgressBar
+import android.widget.TextView
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import androidx.tv.material3.*
-import coil.compose.AsyncImage
-import com.kinoma.tv.data.*
-import com.kinoma.tv.ui.theme.KinomaTVTheme
+import androidx.lifecycle.lifecycleScope
+import androidx.webkit.WebViewAssetLoader
+import com.kinoma.tv.data.UpdateChecker
+import com.kinoma.tv.data.UpdateInfo
 import kotlinx.coroutines.launch
+import java.io.InputStream
 
-@OptIn(ExperimentalTvMaterial3Api::class)
 class MainActivity : ComponentActivity() {
+
+    private lateinit var webView: WebView
+    private lateinit var assetLoader: WebViewAssetLoader
+    private var customView: View? = null
+    private var customViewCallback: WebChromeClient.CustomViewCallback? = null
+    private lateinit var fullscreenContainer: FrameLayout
+
+    companion object {
+        private const val TAG = "KinomaTV"
+        private const val APP_DOMAIN = "appassets.androidplatform.net"
+        private const val WEB_ENTRY_URL = "https://$APP_DOMAIN/assets/web/index.html"
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        setContent {
-            KinomaTVTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    shape = RoundedCornerShape(0.dp)
-                ) {
-                    TVHomeScreen()
-                }
-            }
-        }
-    }
-}
 
-@OptIn(ExperimentalTvMaterial3Api::class)
-@Composable
-fun TVHomeScreen() {
-    var trendingList by remember { mutableStateOf<List<AnimeItem>>(emptyList()) }
-    var popularList by remember { mutableStateOf<List<AnimeItem>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    var updateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
-    var showUpdateDialog by remember { mutableStateOf(false) }
+        // Keep screen on for TV viewing and set full immersion
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        hideSystemUI()
 
-    val scope = rememberCoroutineScope()
-    val context = androidx.compose.ui.platform.LocalContext.current
-
-    LaunchedEffect(Unit) {
-        // Check for updates
-        scope.launch {
-            val update = UpdateChecker.checkForUpdate(context)
-            if (update != null) {
-                updateInfo = update
-                showUpdateDialog = true
-            }
+        // Root layout
+        val rootLayout = FrameLayout(this).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            setBackgroundColor(Color.parseColor("#07080d"))
         }
 
-        try {
-            isLoading = true
-            val tRes = KinomaApiService.instance.getTrending()
-            val pRes = KinomaApiService.instance.getPopular()
-            trendingList = tRes.results ?: emptyList()
-            popularList = pRes.results ?: emptyList()
-            isLoading = false
-        } catch (e: Exception) {
-            errorMessage = e.localizedMessage ?: "Failed to load catalog"
-            isLoading = false
+        fullscreenContainer = FrameLayout(this).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            visibility = View.GONE
+            setBackgroundColor(Color.BLACK)
         }
-    }
 
-    Box(modifier = Modifier.fillMaxSize().background(Color(0xFF07080d))) {
-        if (isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                androidx.tv.material3.Text("Loading...")
-            }
-        } else if (errorMessage != null) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = "Error: $errorMessage", color = Color.Red)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = {
-                        scope.launch {
-                            isLoading = true
-                            errorMessage = null
-                            try {
-                                trendingList = KinomaApiService.instance.getTrending().results ?: emptyList()
-                                popularList = KinomaApiService.instance.getPopular().results ?: emptyList()
-                            } catch (e: Exception) {
-                                errorMessage = e.localizedMessage
-                            } finally {
-                                isLoading = false
-                            }
-                        }
-                    }) {
-                        Text("Retry")
+        // Configure WebViewAssetLoader to serve bundled web assets securely over HTTPS
+        assetLoader = WebViewAssetLoader.Builder()
+            .setDomain(APP_DOMAIN)
+            .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))
+            .build()
+
+        webView = WebView(this).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            setBackgroundColor(Color.parseColor("#07080d"))
+            isFocusable = true
+            isFocusableInTouchMode = true
+        }
+
+        configureWebSettings(webView.settings)
+
+        // Add JavaScript bridge for TV and updater integration
+        webView.addJavascriptInterface(KinomaTVBridge(this), "KinomaNative")
+
+        webView.webViewClient = object : WebViewClient() {
+            override fun shouldInterceptRequest(
+                view: WebView,
+                request: WebResourceRequest
+            ): WebResourceResponse? {
+                val url = request.url
+                if (url.host == APP_DOMAIN) {
+                    val path = url.path ?: ""
+                    val fileName = path.substringAfterLast('/', "")
+                    val hasExtension = fileName.contains('.') && !fileName.endsWith(".html")
+
+                    // If it's a known static asset file (js, css, image, font), let asset loader handle it
+                    if (hasExtension || path.endsWith(".html")) {
+                        return assetLoader.shouldInterceptRequest(url)
+                    }
+
+                    // For client-side SPA routing (e.g. /tv, /watch/:id), serve web/index.html
+                    return try {
+                        val inputStream: InputStream = assets.open("web/index.html")
+                        WebResourceResponse("text/html", "UTF-8", inputStream)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to load SPA fallback index.html for: $path", e)
+                        assetLoader.shouldInterceptRequest(url)
                     }
                 }
+                // External requests (kinomaapi.vercel.app, anilist images, video streams) pass through normally
+                return super.shouldInterceptRequest(view, request)
             }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(48.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Kinoma TV",
-                        style = MaterialTheme.typography.displayMedium,
-                        color = Color.White
-                    )
-                    
-                    var isManualChecking by remember { mutableStateOf(false) }
-                    
-                    Button(
-                        onClick = {
-                            isManualChecking = true
-                            scope.launch {
-                                val update = UpdateChecker.checkForUpdate(context, force = true)
-                                if (update != null) {
-                                    updateInfo = update
-                                    showUpdateDialog = true
-                                } else {
-                                    // Could show a toast, but this is simple.
-                                }
-                                isManualChecking = false
-                            }
-                        },
-                        enabled = !isManualChecking
-                    ) {
-                        Text(if (isManualChecking) "Checking..." else "Check for Updates")
-                    }
-                }
-                Spacer(modifier = Modifier.height(24.dp))
 
-                Text(
-                    text = "Trending Anime",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Color(0xFFc084fc)
+            override fun onPageFinished(view: WebView, url: String) {
+                super.onPageFinished(view, url)
+                // Guarantee TV mode is active in the web frontend
+                view.evaluateJavascript(
+                    """
+                    (function() {
+                        window.isKinomaAndroidTV = true;
+                        try {
+                            localStorage.setItem('kinoma_tv_mode', 'true');
+                            document.documentElement.classList.add('tv-mode');
+                        } catch(e) {}
+                    })();
+                    """.trimIndent(), null
                 )
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Horizontal list of trending anime
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(trendingList.size) { index ->
-                        val anime = trendingList[index]
-                        Card(
-                            onClick = {
-                                val intent = Intent(context, PlayerActivity::class.java).apply {
-                                    putExtra("anime_title", anime.displayTitle)
-                                }
-                                context.startActivity(intent)
-                            },
-                            modifier = Modifier
-                                .width(180.dp)
-                                .height(260.dp)
-                        ) {
-                            Column(modifier = Modifier.fillMaxSize()) {
-                                AsyncImage(
-                                    model = anime.image,
-                                    contentDescription = anime.displayTitle,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(200.dp)
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = anime.displayTitle,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White,
-                                    maxLines = 1,
-                                    modifier = Modifier.padding(horizontal = 8.dp)
-                                )
-                            }
-                        }
-                    }
-                }
             }
         }
 
-        // Native TV Update Dialog Overlay
-        if (showUpdateDialog && updateInfo != null) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.8f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Surface(
-                    modifier = Modifier
-                        .width(520.dp)
-                        .padding(24.dp),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Kinoma Update Available",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = Color(0xFFc084fc)
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "Version ${updateInfo!!.latestVersionName} is ready to install.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = updateInfo!!.releaseNotes,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            if (!updateInfo!!.mandatory) {
-                                Button(
-                                    onClick = { showUpdateDialog = false }
-                                ) {
-                                    Text("Later")
-                                }
-                            }
-                            var progress by remember { mutableStateOf(0) }
-                            var isDownloading by remember { mutableStateOf(false) }
+        webView.webChromeClient = object : WebChromeClient() {
+            override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
+                if (customView != null) {
+                    callback?.onCustomViewHidden()
+                    return
+                }
+                customView = view
+                customViewCallback = callback
+                fullscreenContainer.addView(view)
+                fullscreenContainer.visibility = View.VISIBLE
+                webView.visibility = View.GONE
+            }
 
-                            Button(
-                                onClick = {
-                                    isDownloading = true
-                                    UpdateChecker.downloadAndInstall(context, updateInfo!!.apkUrl, updateInfo!!.sha256, { p ->
-                                        progress = p
-                                    }, {
-                                        showUpdateDialog = false
-                                        isDownloading = false
-                                    }, { error ->
-                                        isDownloading = false
-                                        errorMessage = error
-                                    })
-                                },
-                                enabled = !isDownloading
-                            ) {
-                                Text(if (isDownloading) "Downloading $progress%" else "Update Now")
-                            }
+            override fun onHideCustomView() {
+                if (customView == null) return
+                fullscreenContainer.removeView(customView)
+                fullscreenContainer.visibility = View.GONE
+                customView = null
+                customViewCallback?.onCustomViewHidden()
+                webView.visibility = View.VISIBLE
+            }
+
+            override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
+                Log.d("KinomaTVWeb", "${consoleMessage?.message()} -- From line ${consoleMessage?.lineNumber()} of ${consoleMessage?.sourceId()}")
+                return true
+            }
+        }
+
+        rootLayout.addView(webView)
+        rootLayout.addView(fullscreenContainer)
+        setContentView(rootLayout)
+
+        // Load the bundled production Kinoma TV application
+        webView.loadUrl(WEB_ENTRY_URL)
+        webView.requestFocus()
+
+        // Background check for updates without blocking TV interface
+        checkUpdatesInBackground()
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun configureWebSettings(settings: WebSettings) {
+        settings.apply {
+            javaScriptEnabled = true
+            domStorageEnabled = true
+            databaseEnabled = true
+            mediaPlaybackRequiresUserGesture = false
+            allowFileAccess = true
+            allowContentAccess = true
+            cacheMode = WebSettings.LOAD_DEFAULT
+            useWideViewPort = true
+            loadWithOverviewMode = true
+            displayZoomControls = false
+            builtInZoomControls = false
+            setSupportZoom(false)
+
+            // Identify as Android TV Leanback environment for automatic TV layout
+            val defaultUa = userAgentString
+            userAgentString = "$defaultUa KinomaTV/1.0.0 (Android TV; Leanback; SmartTV)"
+        }
+    }
+
+    private fun hideSystemUI() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.setDecorFitsSystemWindows(false)
+        } else {
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility = (
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_FULLSCREEN
+            )
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            hideSystemUI()
+            webView.requestFocus()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        hideSystemUI()
+        webView.onResume()
+        webView.requestFocus()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        webView.onPause()
+    }
+
+    override fun onDestroy() {
+        webView.destroy()
+        super.onDestroy()
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        // Handle Back button for TV remote
+        if (event.keyCode == KeyEvent.KEYCODE_BACK) {
+            if (event.action == KeyEvent.ACTION_UP) {
+                // If in fullscreen video custom view, exit fullscreen
+                if (customView != null) {
+                    webView.webChromeClient?.onHideCustomView()
+                    return true
+                }
+
+                // Check if web page can handle back (e.g. details overlay, search, player)
+                webView.evaluateJavascript(
+                    """
+                    (function() {
+                        var isWatch = window.location.pathname.indexOf('/watch') !== -1;
+                        var escEvent = new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', keyCode: 27, which: 27, bubbles: true });
+                        window.dispatchEvent(escEvent);
+                        return isWatch;
+                    })();
+                    """.trimIndent()
+                ) { isWatchResult ->
+                    if (isWatchResult == "true") {
+                        if (webView.canGoBack()) {
+                            webView.goBack()
                         }
                     }
                 }
+                return true
+            }
+            return true
+        }
+
+        // Forward D-pad and media remote keys to WebView
+        return super.dispatchKeyEvent(event)
+    }
+
+    private fun checkUpdatesInBackground() {
+        lifecycleScope.launch {
+            try {
+                val update = UpdateChecker.checkForUpdate(this@MainActivity)
+                if (update != null && !isFinishing) {
+                    showUpdatePrompt(update)
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Background update check error: ${e.message}")
+            }
+        }
+    }
+
+    private fun showUpdatePrompt(update: UpdateInfo) {
+        val builder = AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+        builder.setTitle("Kinoma TV Update")
+        builder.setMessage("A new version (${update.latestVersionName}) is available.\n\n${update.releaseNotes}")
+
+        builder.setPositiveButton("Update Now") { dialog, _ ->
+            dialog.dismiss()
+            startDownloadAndInstall(update)
+        }
+
+        if (!update.mandatory) {
+            builder.setNegativeButton("Later") { dialog, _ ->
+                dialog.dismiss()
+            }
+        }
+
+        builder.setCancelable(!update.mandatory)
+        val alert = builder.create()
+        alert.show()
+    }
+
+    private fun startDownloadAndInstall(update: UpdateInfo) {
+        val progressDialog = AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+            .setTitle("Downloading Update")
+            .setView(ProgressBar(this).apply { isIndeterminate = false; max = 100 })
+            .setMessage("Downloading Kinoma TV update...")
+            .setCancelable(false)
+            .create()
+
+        progressDialog.show()
+
+        UpdateChecker.downloadAndInstall(
+            context = this,
+            apkUrl = update.apkUrl,
+            expectedSha256 = update.sha256,
+            onProgress = { percent ->
+                runOnUiThread {
+                    progressDialog.setMessage("Downloading: $percent%")
+                }
+            },
+            onSuccess = {
+                runOnUiThread {
+                    progressDialog.dismiss()
+                }
+            },
+            onError = { error ->
+                runOnUiThread {
+                    progressDialog.dismiss()
+                    AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                        .setTitle("Update Failed")
+                        .setMessage(error)
+                        .setPositiveButton("OK", null)
+                        .show()
+                }
+            }
+        )
+    }
+
+    inner class KinomaTVBridge(private val context: Context) {
+        @JavascriptInterface
+        fun getAppVersion(): String {
+            return try {
+                val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+                pInfo.versionName ?: "1.0.0"
+            } catch (e: Exception) {
+                "1.0.0"
+            }
+        }
+
+        @JavascriptInterface
+        fun isTV(): Boolean {
+            return true
+        }
+
+        @JavascriptInterface
+        fun checkForUpdates() {
+            runOnUiThread {
+                checkUpdatesInBackground()
             }
         }
     }

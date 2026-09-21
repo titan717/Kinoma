@@ -28,7 +28,7 @@ interface KinomaApiService {
     ): AnimeListResponse
 
     companion object {
-        private const val BASE_URL = "https://reanimeto-api-production-46bf.up.railway.app/"
+        private const val BASE_URL = "https://kinomaapi.vercel.app/"
 
         val instance: KinomaApiService by lazy {
             val loggingInterceptor = HttpLoggingInterceptor { message ->

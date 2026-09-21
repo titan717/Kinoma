@@ -1,6 +1,6 @@
 const API_BASE_URL =
   (import.meta as any).env?.VITE_ANIME_API_URL ||
-  "https://reanimeto-api-production-46bf.up.railway.app";
+  "https://kinomaapi.vercel.app";
 
 export interface AnimeTitle {
   english?: string;

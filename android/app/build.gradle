@@ -74,6 +74,9 @@ dependencies {
     implementation 'androidx.tv:tv-foundation:1.0.0-alpha10'
     implementation 'androidx.tv:tv-material:1.0.0-alpha10'
     
+    // WebKit support for WebViewAssetLoader
+    implementation 'androidx.webkit:webkit:1.10.0'
+
     // Leanback support
     implementation 'androidx.leanback:leanback:1.2.0-alpha04'
 

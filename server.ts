@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 
-const RAILWAY_API = "https://reanimeto-api-production-46bf.up.railway.app";
+const KINOMA_API = "https://kinomaapi.vercel.app";
 
 async function startServer() {
   const app = express();
@@ -13,7 +13,7 @@ async function startServer() {
   async function proxyHandler(targetPath: string, req: express.Request, res: express.Response) {
     try {
       const queryString = new URLSearchParams(req.query as any).toString();
-      const url = `${RAILWAY_API}${targetPath}${queryString ? '?' + queryString : ''}`;
+      const url = `${KINOMA_API}${targetPath}${queryString ? '?' + queryString : ''}`;
       const r = await fetch(url);
       const data = await r.json();
       res.status(r.status).json(data);
@@ -35,7 +35,7 @@ async function startServer() {
   // Trending & Popular (aliased to search)
   app.get(['/api/trending', '/api/anime/trending', '/trending'], async (req, res) => {
     try {
-      const r = await fetch(`${RAILWAY_API}/search?q=action&limit=20&offset=0`);
+      const r = await fetch(`${KINOMA_API}/search?q=action&limit=20&offset=0`);
       const data = await r.json();
       res.json(data);
     } catch (e: any) {
@@ -45,7 +45,7 @@ async function startServer() {
 
   app.get(['/api/popular', '/api/anime/popular', '/popular'], async (req, res) => {
     try {
-      const r = await fetch(`${RAILWAY_API}/search?q=adventure&limit=20&offset=0`);
+      const r = await fetch(`${KINOMA_API}/search?q=adventure&limit=20&offset=0`);
       const data = await r.json();
       res.json(data);
     } catch (e: any) {

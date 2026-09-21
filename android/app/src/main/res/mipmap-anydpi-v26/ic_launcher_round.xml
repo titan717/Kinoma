@@ -2,6 +2,6 @@
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:color="#08090d"/>
     <foreground>
-        <bitmap android:src="@android:drawable/sym_def_app_icon"/>
+        <bitmap android:src="@drawable/ic_launcher_foreground"/>
     </foreground>
 </adaptive-icon>

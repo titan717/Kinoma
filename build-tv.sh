@@ -8,6 +8,11 @@ echo "=================================================="
 # Create output directories if they don't exist
 mkdir -p android/app/build/outputs/apk/release
 mkdir -p public/downloads
+mkdir -p android/app/src/main/assets/web
+
+echo "Building web application frontend..."
+npm run build
+cp -r dist/* android/app/src/main/assets/web/
 
 # Check if gradlew exists, run gradle build if available
 if [ -f "android/gradlew" ]; then
