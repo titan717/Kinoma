@@ -20,7 +20,7 @@ object UpdateChecker {
     // Configurable stable endpoint
     private const val UPDATE_JSON_URL = "https://raw.githubusercontent.com/titan717/Kinoma/main/update/latest.json"
 
-    suspend fun checkForUpdate(): UpdateInfo? = withContext(Dispatchers.IO) {
+    suspend fun checkForUpdate(context: Context? = null, force: Boolean = false): UpdateInfo? = withContext(Dispatchers.IO) {
         try {
             val client = OkHttpClient()
             val request = Request.Builder().url(UPDATE_JSON_URL).build()
