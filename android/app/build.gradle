@@ -20,10 +20,24 @@ android {
         }
     }
 
+    signingConfigs {
+        release {
+            if (System.getenv("KINOMA_KEYSTORE_BASE64") != null) {
+                storeFile file("${project.buildDir}/release.keystore")
+                storePassword System.getenv("KINOMA_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("KINOMA_KEY_ALIAS")
+                keyPassword System.getenv("KINOMA_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (System.getenv("KINOMA_KEYSTORE_BASE64") != null) {
+                signingConfig signingConfigs.release
+            }
         }
     }
     compileOptions {

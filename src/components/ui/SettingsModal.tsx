@@ -56,12 +56,12 @@ export function SettingsModal() {
         throw new Error(`GitHub API error: ${res.status}`);
       }
       const data = await res.json();
-      const apkAsset = data.assets?.find((asset: any) => asset.name && asset.name.endsWith('.apk'));
+      const apkAsset = data.assets?.find((asset: any) => asset.name === 'Kinoma.apk' || asset.name.endsWith('.apk'));
       if (apkAsset && apkAsset.browser_download_url) {
         setUpdateStatus(`Found version ${data.tag_name || 'latest'}! Downloading APK...`);
         const a = document.createElement('a');
         a.href = apkAsset.browser_download_url;
-        a.download = apkAsset.name || 'Kinoma.apk';
+        a.download = 'Kinoma.apk';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -71,7 +71,7 @@ export function SettingsModal() {
       }
     } catch (err: any) {
       // Fallback to local server APK package endpoint
-      setUpdateStatus('Falling back to local release package download...');
+      setUpdateStatus('Falling back to direct release download...');
       try {
         const a = document.createElement('a');
         a.href = 'https://github.com/titan717/Kinoma/releases/latest/download/Kinoma.apk';
@@ -669,29 +669,17 @@ export function SettingsModal() {
                 )}
               </div>
 
-              <div className="max-w-md flex flex-col sm:flex-row gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <a
                   href="https://github.com/titan717/Kinoma/releases/latest/download/Kinoma.apk"
                   download="Kinoma.apk"
-                  className="flex-1 p-3.5 bg-[#13141c] hover:bg-[#1a1b26] border border-[#222230] rounded-xl flex items-center justify-between transition-all group"
+                  className="p-3.5 bg-[#13141c] hover:bg-[#1a1b26] border border-[#222230] rounded-xl flex items-center justify-between transition-all group"
                 >
                   <div>
                     <h4 className="text-xs font-bold text-white group-hover:text-[#c084fc]">Download TV APK</h4>
                     <p className="text-[10px] text-gray-400">Kinoma.apk</p>
                   </div>
                   <Download className="w-4 h-4 text-purple-400" />
-                </a>
-                <a
-                  href="https://github.com/titan717/Kinoma"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-3.5 bg-[#13141c] hover:bg-[#1a1b26] border border-[#222230] rounded-xl flex items-center justify-between transition-all group sm:w-48"
-                >
-                  <div>
-                    <h4 className="text-xs font-bold text-white group-hover:text-purple-400">GitHub Repo</h4>
-                    <p className="text-[10px] text-gray-400">titan717/Kinoma</p>
-                  </div>
-                  <GitBranch className="w-4 h-4 text-gray-400 group-hover:text-purple-400" />
                 </a>
               </div>
             </div>

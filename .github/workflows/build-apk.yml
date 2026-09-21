@@ -1,12 +1,10 @@
-name: Build Android TV APK
+name: Build & Release Android TV APK
 
 on:
   workflow_dispatch:
   push:
     branches:
       - main
-    paths-ignore:
-      - 'update/latest.json'
     tags:
       - 'v*'
 
@@ -19,367 +17,143 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
-      # ------------------------------------------------------------
       # 1. Checkout
-      # ------------------------------------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-
-      # ------------------------------------------------------------
       # 2. Setup Node.js
-      # ------------------------------------------------------------
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-
-      # ------------------------------------------------------------
       # 3. Install web dependencies
-      # ------------------------------------------------------------
       - name: Install web dependencies
         shell: bash
         run: |
           set -e
-
           if [ -f "package-lock.json" ]; then
             npm ci
-
-          elif [ -f "npm-shrinkwrap.json" ]; then
-            npm ci
-
           elif [ -f "yarn.lock" ]; then
             corepack enable
             yarn install --frozen-lockfile
-
-          elif [ -f "pnpm-lock.yaml" ]; then
-            corepack enable
-            pnpm install --frozen-lockfile
-
           else
-            echo "No lock file found."
             npm install
           fi
 
-
-      # ------------------------------------------------------------
       # 4. Build PWA
-      # ------------------------------------------------------------
       - name: Build web application
         run: npm run build
 
-
-      # ------------------------------------------------------------
       # 5. Setup Java
-      # ------------------------------------------------------------
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
-
-      # ------------------------------------------------------------
       # 6. Configure Android SDK
-      #
-      # Do NOT use android-actions/setup-android@v3 here.
-      # That action is attempting to install the obsolete
-      # "tools" SDK package.
-      # GitHub's ubuntu runner already provides the Android SDK.
-      # ------------------------------------------------------------
       - name: Configure Android SDK
         shell: bash
         run: |
           set -e
-
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-
-          if [ -z "$ANDROID_HOME" ]; then
-            export ANDROID_HOME="$ANDROID_SDK_ROOT"
-          fi
-
-          if [ -z "$ANDROID_HOME" ]; then
-            export ANDROID_HOME="/usr/local/lib/android/sdk"
-          fi
-
-          export ANDROID_SDK_ROOT="$ANDROID_HOME"
-
-          echo "Using Android SDK:"
-          echo "$ANDROID_HOME"
-
           echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
-
           echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
           echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
 
-          echo ""
-          echo "SDK manager:"
-          if [ -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]; then
-            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --version
-          elif command -v sdkmanager >/dev/null 2>&1; then
-            sdkmanager --version
-          else
-            echo "ERROR: sdkmanager not found."
-            exit 1
-          fi
-
-
-      # ------------------------------------------------------------
-      # 7. Install required Android SDK packages
-      # ------------------------------------------------------------
+      # 7. Install Android SDK packages
       - name: Install Android SDK packages
         shell: bash
         run: |
           set -e
-
-          echo "Accepting Android SDK licenses..."
-
           yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
-          echo "Installing required SDK packages..."
-
-          sdkmanager "platform-tools"
-          sdkmanager "platforms;android-34"
-          sdkmanager "build-tools;34.0.0"
-
-          echo ""
-          echo "Installed Android SDK packages:"
-          sdkmanager --list_installed | grep -E \
-            "platform-tools|platforms;android-34|build-tools;34.0.0" || true
-
-
-      # ------------------------------------------------------------
-      # 8. Verify Android project
-      # ------------------------------------------------------------
-      - name: Verify Android project
-        shell: bash
-        run: |
-          set -e
-
-          if [ ! -d "android" ]; then
-            echo "ERROR: android directory does not exist."
-            exit 1
-          fi
-
-          echo "Android project found."
-
-          echo ""
-          echo "Top-level Android files:"
-          find android -maxdepth 2 -type f | sort
-
-
-      # ------------------------------------------------------------
-      # 9. Prepare Gradle wrapper
-      # ------------------------------------------------------------
-      - name: Prepare Gradle wrapper
-        working-directory: android
-        shell: bash
-        run: |
-          set -e
-
-          if [ -f "./gradlew" ]; then
-            echo "Existing Gradle wrapper found."
-            chmod +x ./gradlew
-          else
-            echo "Gradle wrapper is missing."
-            echo "Generating wrapper..."
-
-            if ! command -v gradle >/dev/null 2>&1; then
-              echo "Installing Gradle..."
-              sudo apt-get update
-              sudo apt-get install -y gradle
-            fi
-
-            echo ""
-            echo "System Gradle:"
-            gradle --version
-
-            GRADLE_VERSION=""
-
-            if [ -f "gradle/wrapper/gradle-wrapper.properties" ]; then
-              GRADLE_VERSION=$(grep -Eo \
-                'gradle-[0-9]+\.[0-9]+(\.[0-9]+)?(-[A-Za-z0-9.-]+)?-(bin|all)\.zip' \
-                gradle/wrapper/gradle-wrapper.properties \
-                | head -1 \
-                | sed -E 's/gradle-//; s/-(bin|all)\.zip$//' || true)
-            fi
-
-            if [ -n "$GRADLE_VERSION" ]; then
-              echo "Using existing Gradle version: $GRADLE_VERSION"
-              gradle wrapper --gradle-version "$GRADLE_VERSION"
-            else
-              echo "No existing wrapper version found."
-              gradle wrapper --gradle-version 8.5
-            fi
-
-            chmod +x ./gradlew
-          fi
-
-          echo ""
-          echo "Checking Gradle wrapper..."
-
-          ls -la ./gradlew
-
-          if [ ! -f "./gradlew" ]; then
-            echo "ERROR: gradlew is still missing."
-            exit 1
-          fi
-
-
-      # ------------------------------------------------------------
-      # 10. Build Android TV APK
-      # ------------------------------------------------------------
-      - name: Build Android TV APK
-        working-directory: android
-        shell: bash
-        run: |
-          set -e
-
-          chmod +x ./gradlew
-
-          echo "Gradle version:"
-          ./gradlew --version
-
-          echo ""
-          echo "Starting Android TV APK build..."
-
-          ./gradlew assembleDebug --stacktrace
-
-
-      # ------------------------------------------------------------
-      # 11. Find APK
-      # ------------------------------------------------------------
-      - name: Find generated APK
-        shell: bash
-        run: |
-          set -e
-
-          echo "Searching for APK..."
-
-          find android -type f -name "*.apk" -print
-
-          APK_COUNT=$(find android -type f -name "*.apk" | wc -l)
-
-          if [ "$APK_COUNT" -eq 0 ]; then
-            echo "ERROR: No APK was generated."
-            exit 1
-          fi
-
-          echo ""
-          echo "APK generated successfully."
-
-
-      # ------------------------------------------------------------
-      # 12. Upload APK
-      # ------------------------------------------------------------
-      - name: Upload Android TV APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Kinoma-Android-TV-APK
-          path: android/**/build/outputs/apk/**/*.apk
-          if-no-files-found: error
-          retention-days: 30
-
-
-      # ------------------------------------------------------------
-      # 13. Prepare Release Artifacts (Tags only)
-      # ------------------------------------------------------------
-      - name: Prepare Release Artifacts
+      # 8. Decode Keystore (Release only)
+      - name: Decode Keystore
         if: startsWith(github.ref, 'refs/tags/v')
-        shell: bash
+        env:
+          KINOMA_KEYSTORE_BASE64: ${{ secrets.KINOMA_KEYSTORE_BASE64 }}
         run: |
-          set -e
-          mkdir -p release
-          
-          # Find the built APK
-          APK_PATH=$(find android -type f -name "*.apk" | head -n 1)
-          if [ -z "$APK_PATH" ]; then
-            echo "ERROR: Built APK not found."
+          if [ -z "$KINOMA_KEYSTORE_BASE64" ]; then
+            echo "ERROR: KINOMA_KEYSTORE_BASE64 secret is missing. Release build will not be signed correctly."
             exit 1
           fi
-          
-          echo "Found APK at: $APK_PATH"
-          cp "$APK_PATH" release/Kinoma.apk
-          
-          # Calculate SHA-256 hash
-          sha256sum release/Kinoma.apk | cut -d ' ' -f 1 > release/Kinoma.apk.sha256
-          SHA256_HASH=$(cat release/Kinoma.apk.sha256)
-          echo "SHA256_HASH=$SHA256_HASH" >> "$GITHUB_ENV"
-          echo "Calculated SHA-256: $SHA256_HASH"
+          mkdir -p android/app/build
+          echo "$KINOMA_KEYSTORE_BASE64" | base64 --decode > android/app/build/release.keystore
 
+      # 9. Build Android APK
+      - name: Build Android APK
+        working-directory: android
+        env:
+          KINOMA_KEYSTORE_BASE64: ${{ secrets.KINOMA_KEYSTORE_BASE64 }}
+          KINOMA_KEYSTORE_PASSWORD: ${{ secrets.KINOMA_KEYSTORE_PASSWORD }}
+          KINOMA_KEY_ALIAS: ${{ secrets.KINOMA_KEY_ALIAS }}
+          KINOMA_KEY_PASSWORD: ${{ secrets.KINOMA_KEY_PASSWORD }}
+        run: |
+          chmod +x ./gradlew
+          if [[ $GITHUB_REF == refs/tags/v* ]]; then
+            ./gradlew assembleRelease --stacktrace
+          else
+            ./gradlew assembleDebug --stacktrace
+          fi
 
-      # ------------------------------------------------------------
-      # 14. Create GitHub Release (Tags only)
-      # ------------------------------------------------------------
+      # 10. Prepare Final APK and SHA-256 (Release only)
+      - name: Prepare Release Assets
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          mkdir -p dist-release
+          APK_PATH=$(find android/app/build/outputs/apk/release -type f -name "*.apk" | head -1)
+          cp "$APK_PATH" dist-release/Kinoma.apk
+          sha256sum dist-release/Kinoma.apk | cut -d ' ' -f 1 > dist-release/Kinoma.apk.sha256
+          echo "SHA256=$(cat dist-release/Kinoma.apk.sha256)" >> $GITHUB_ENV
+          echo "APK_VERSION_NAME=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+          echo "APK_VERSION_CODE=$(grep 'versionCode' android/app/build.gradle | head -1 | awk '{print $2}')" >> $GITHUB_ENV
+
+      # 11. Create GitHub Release (Release only)
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
-        id: create_release
         uses: softprops/action-gh-release@v2
         with:
-          files: release/Kinoma.apk
+          files: dist-release/Kinoma.apk
           generate_release_notes: true
+          name: Kinoma TV v${{ env.APK_VERSION_NAME }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-
-      # ------------------------------------------------------------
-      # 15. Update latest.json (Tags only)
-      # ------------------------------------------------------------
-      - name: Update latest.json on main
+      # 12. Update latest.json (Release only)
+      - name: Update latest.json
         if: startsWith(github.ref, 'refs/tags/v')
-        shell: bash
         run: |
-          set -e
-          
-          # Extract version from tag (e.g. refs/tags/v1.0.0 -> 1.0.0)
-          VERSION_TAG=${GITHUB_REF#refs/tags/v}
-          APK_URL="https://github.com/titan717/Kinoma/releases/download/v$VERSION_TAG/Kinoma.apk"
-          
-          # Read version code from build.gradle
-          VERSION_CODE=$(grep 'versionCode' android/app/build.gradle | head -1 | awk '{print $2}')
-          if [ -z "$VERSION_CODE" ]; then
-            VERSION_CODE=1
-          fi
-          
-          echo "Version Tag: $VERSION_TAG"
-          echo "Version Code: $VERSION_CODE"
-          echo "APK URL: $APK_URL"
-          echo "SHA-256: ${{ env.SHA256_HASH }}"
-          
-          # Create the json payload matching both GSON SerializedName and old latest.json format
-          mkdir -p update
-          cat <<EOF > update/latest.json
+          JSON_CONTENT=$(cat <<EOF
           {
-            "latestVersionCode": $VERSION_CODE,
-            "latestVersionName": "$VERSION_TAG",
-            "versionCode": $VERSION_CODE,
-            "versionName": "$VERSION_TAG",
-            "apkUrl": "$APK_URL",
-            "releaseNotes": "Release v$VERSION_TAG",
-            "sha256": "${{ env.SHA256_HASH }}",
+            "versionCode": ${{ env.APK_VERSION_CODE }},
+            "versionName": "${{ env.APK_VERSION_NAME }}",
+            "apkUrl": "https://github.com/titan717/Kinoma/releases/latest/download/Kinoma.apk",
+            "releaseNotes": "Release v${{ env.APK_VERSION_NAME }}",
+            "sha256": "${{ env.SHA256 }}",
             "mandatory": false
           }
           EOF
+          )
+          echo "$JSON_CONTENT" > update/latest.json
           
-          # Persist the generated JSON outside git checkout
-          cp update/latest.json /tmp/latest.json
-          
-          # Configure Git
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          
-          # Fetch and checkout main to apply the update directly to main branch
-          git fetch origin main
-          git checkout -f main
-          git pull origin main
-          
-          # Overwrite and commit
-          mkdir -p update
-          cp /tmp/latest.json update/latest.json
           git add update/latest.json
-          git commit -m "Update latest.json for v$VERSION_TAG [skip ci]" || echo "No changes to commit"
+          git commit -m "Update latest.json for v${{ env.APK_VERSION_NAME }}"
           git push origin main
+
+      # 13. Upload Artifacts (Always)
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kinoma-Build-Artifacts
+          path: |
+            android/**/build/outputs/apk/**/*.apk
+            dist-release/*.apk
+          if-no-files-found: warn
+          retention-days: 30
