@@ -1,4 +1,4 @@
-```yaml
+
 name: Build and Release Kinoma Android TV APK
 
 on:
