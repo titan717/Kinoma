@@ -138,7 +138,9 @@ jobs:
         run: |
           set -euo pipefail
           gradle --version
-          gradle clean assembleRelease --no-daemon --stacktrace --warning-mode all
+          gradle clean assembleRelease --no-daemon --stacktrace --warning-mode all \
+            -PKINOMA_VERSION_CODE="${KINOMA_VERSION_CODE}" \
+            -PKINOMA_VERSION_NAME="${KINOMA_VERSION_NAME}"
 
       - name: Verify release APK
         shell: bash
