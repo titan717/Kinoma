@@ -34,11 +34,11 @@ interface TVSidebarProps {
 export const TV_NAV_ITEMS: { id: TVNavSection; label: string; icon: React.ElementType }[] = [
   { id: 'home', label: 'Home', icon: Home },
   { id: 'search', label: 'Search', icon: Search },
-  { id: 'mylist', label: 'My List', icon: Bookmark },
-  { id: 'movies', label: 'Movies', icon: Film },
-  { id: 'new_season', label: 'New Season', icon: Sparkles },
-  { id: 'genres', label: 'Genres', icon: Compass },
-  { id: 'settings', label: 'Settings', icon: SettingsIcon },
+  { id: 'mylist', label: 'My Watchlist', icon: Bookmark },
+  { id: 'movies', label: 'Movies & OVAs', icon: Film },
+  { id: 'new_season', label: 'Anime Series', icon: Sparkles },
+  { id: 'genres', label: 'Categories & Genres', icon: Compass },
+  { id: 'settings', label: 'Settings & Profiles', icon: SettingsIcon },
 ];
 
 export function TVSidebar({
@@ -56,8 +56,8 @@ export function TVSidebar({
       onMouseLeave={() => setIsExpanded(false)}
       className={`fixed top-0 left-0 bottom-0 z-40 flex flex-col justify-between transition-all duration-250 ease-out select-none ${
         isExpanded 
-          ? 'w-64 bg-gradient-to-r from-[#07080d] via-[#0b0c14]/95 to-[#0b0c14]/80 backdrop-blur-2xl shadow-[8px_0_30px_rgba(0,0,0,0.8)] border-r border-white/5' 
-          : 'w-20 bg-gradient-to-r from-[#07080d]/90 to-transparent backdrop-blur-md'
+          ? 'w-[20vw] min-w-[280px] max-w-[360px] bg-[#0B0C10]/96 backdrop-blur-2xl shadow-[8px_0_40px_rgba(0,0,0,0.65)] border-r border-white/10' 
+          : 'w-[8vw] min-w-[88px] max-w-[116px] bg-[#0B0C10]/78 backdrop-blur-xl'
       }`}
     >
       {/* Top Section: Kinoma Logo */}
@@ -89,19 +89,19 @@ export function TVSidebar({
               onClick={() => onSelectSection(item.id)}
               className={`group flex items-center h-12 rounded-xl transition-all duration-200 text-left outline-none cursor-pointer ${
                 isItemFocused
-                  ? 'bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.45)] scale-[1.03] pl-3.5'
+                  ? 'bg-gradient-to-r from-[#00F0FF]/20 to-[#FF0055]/15 text-white border border-[#00F0FF]/70 shadow-[0_0_28px_rgba(0,240,255,0.16)] scale-[1.03] pl-3.5'
                   : isActive
-                  ? 'bg-[#181926] text-white border border-[#2b2c3d]'
-                  : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+                  ? 'bg-white/[0.07] text-white border border-[#00F0FF]/35'
+                  : 'text-white/55 hover:text-white hover:bg-white/5'
               } ${isExpanded ? 'px-3.5 gap-3.5 w-full' : 'w-12 mx-auto justify-center'}`}
             >
               <div className="shrink-0 flex items-center justify-center">
                 <Icon 
                   className={`transition-transform duration-200 ${
                     isItemFocused 
-                      ? 'w-5 h-5 text-black stroke-[2.5]' 
+                      ? 'w-5 h-5 text-[#00F0FF] stroke-[2.5]' 
                       : isActive 
-                      ? 'w-5 h-5 text-[#c084fc] stroke-[2.2]' 
+                      ? 'w-5 h-5 text-[#00F0FF] stroke-[2.2]' 
                       : 'w-5 h-5 group-hover:scale-110'
                   }`} 
                 />
@@ -115,7 +115,7 @@ export function TVSidebar({
                     {item.label}
                   </span>
                   {isActive && !isItemFocused && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#c084fc] shrink-0 mr-1 shadow-[0_0_8px_#c084fc]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#00F0FF] shrink-0 mr-1 shadow-[0_0_10px_#00F0FF]" />
                   )}
                 </div>
               )}
@@ -131,7 +131,7 @@ export function TVSidebar({
           title="Return to Web / Desktop View"
           className={`flex items-center h-11 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all text-left outline-none cursor-pointer ${
             isExpanded ? 'px-3 gap-3 w-full' : 'w-12 mx-auto justify-center'
-          } ${isFocused && focusedIndex === TV_NAV_ITEMS.length ? 'bg-white text-black font-bold scale-105' : ''}`}
+          } ${isFocused && focusedIndex === TV_NAV_ITEMS.length ? 'bg-gradient-to-r from-[#00F0FF]/20 to-[#FF0055]/15 text-white border border-[#00F0FF]/60 scale-105' : ''}`}
         >
           <Monitor className="w-4 h-4 shrink-0" />
           {isExpanded && (
