@@ -186,6 +186,7 @@ jobs:
 
           SHA256="$(sha256sum release/Kinoma-Android-TV.apk | awk '{print $1}')"
           APK_URL="https://github.com/titan717/Kinoma/releases/download/${RELEASE_TAG}/Kinoma-Android-TV.apk"
+          export SHA256 APK_URL
 
           python - <<'PY'
           import json, os
