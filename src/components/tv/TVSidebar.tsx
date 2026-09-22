@@ -2,14 +2,7 @@ import React from 'react';
 import { Home, Search, Bookmark, Film, Sparkles, Compass, Settings as SettingsIcon, Monitor } from 'lucide-react';
 import { KinomaLogo } from '../ui/KinomaLogo';
 
-export type TVNavSection =
-  | 'home'
-  | 'search'
-  | 'mylist'
-  | 'movies'
-  | 'new_season'
-  | 'genres'
-  | 'settings';
+export type TVNavSection = 'home' | 'search' | 'mylist' | 'movies' | 'new_season' | 'genres' | 'settings';
 
 interface TVSidebarProps {
   activeSection: TVNavSection;
@@ -31,6 +24,22 @@ export const TV_NAV_ITEMS: { id: TVNavSection; label: string; icon: React.Elemen
   { id: 'settings', label: 'Settings & Profiles', icon: SettingsIcon },
 ];
 
+function TVMonoArtwork({ expanded }: { expanded: boolean }) {
+  return (
+    <div className={`relative overflow-hidden rounded-2xl border border-white/[0.07] bg-black/75 transition-all duration-300 ${expanded ? 'h-20' : 'h-10'}`}>
+      <svg viewBox="0 0 240 80" className="absolute inset-0 h-full w-full opacity-80" aria-hidden="true">
+        <path d="M72 12c18-12 49-9 63 6 11 12 14 30 6 43-9 14-28 21-45 17-17-4-30-18-31-35-1-13 2-24 7-31Z" fill="#bdbdbd"/>
+        <path d="M68 27c12-22 45-28 68-10l-6 13c-17-9-34-8-56 11Z" fill="#171717"/>
+        <path d="M84 38c7-5 14-5 21 0-6 7-14 8-21 0Zm31 0c7-5 15-4 21 1-7 7-15 6-21-1Z" fill="#0a0a0a"/>
+        <path d="M101 55c9 5 18 5 27 0-4 10-22 13-27 0Z" fill="#111"/>
+        <path d="M67 28 46 12l8 33 17-10Zm66-12 26-15-12 34-17-8Z" fill="#333"/>
+      </svg>
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.03] to-transparent" />
+      {expanded && <span className="absolute bottom-1.5 left-3 text-[7px] font-bold tracking-[0.28em] text-white/30">KINOMA TV</span>}
+    </div>
+  );
+}
+
 export function TVSidebar({
   activeSection,
   onSelectSection,
@@ -44,25 +53,18 @@ export function TVSidebar({
     <aside
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => setIsExpanded(false)}
-      className={`fixed inset-y-0 left-0 z-50 flex flex-col select-none border-r border-white/[0.06] transition-[width,background-color,box-shadow] duration-300 ease-out ${
+      className={`fixed inset-y-0 left-0 z-50 flex flex-col select-none border-r border-white/[0.07] transition-[width,background-color,border-radius,box-shadow] duration-300 ease-out ${
         isExpanded
-          ? 'w-[20vw] min-w-[280px] max-w-[360px] bg-[#0B0C10]/95 backdrop-blur-2xl shadow-[18px_0_60px_rgba(0,0,0,.42)]'
-          : 'w-[8vw] min-w-[84px] max-w-[112px] bg-[#0B0C10]/72 backdrop-blur-xl'
+          ? 'w-[20vw] min-w-[280px] max-w-[360px] rounded-r-[30px] bg-[#0a0b0e]/97 shadow-[14px_0_45px_rgba(0,0,0,.36)]'
+          : 'w-[8vw] min-w-[84px] max-w-[112px] rounded-r-[20px] bg-[#0a0b0e]/92 shadow-[8px_0_28px_rgba(0,0,0,.22)]'
       }`}
     >
-      <div className="h-24 shrink-0 flex items-center px-4">
-        {isExpanded ? (
-          <div className="flex items-center gap-3">
-            <KinomaLogo size="md" variant="full" />
-            <span className="rounded-full border border-[#00F0FF]/30 bg-[#00F0FF]/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-[#00F0FF]">
-              TV
-            </span>
-          </div>
-        ) : (
-          <div className="mx-auto">
-            <KinomaLogo size="sm" variant="mark" />
-          </div>
-        )}
+      <div className="h-28 shrink-0 flex flex-col justify-center px-4 gap-2">
+        <div className={`flex items-center ${isExpanded ? 'gap-3' : 'justify-center'}`}>
+          {isExpanded ? <KinomaLogo size="md" variant="full" /> : <KinomaLogo size="sm" variant="mark" />}
+          {isExpanded && <span className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-white/45">TV</span>}
+        </div>
+        <TVMonoArtwork expanded={isExpanded} />
       </div>
 
       <nav className="flex-1 flex flex-col justify-center gap-2 px-3">
@@ -70,7 +72,6 @@ export function TVSidebar({
           const Icon = item.icon;
           const active = activeSection === item.id;
           const focused = isFocused && focusedIndex === index;
-
           return (
             <button
               key={item.id}
@@ -81,23 +82,15 @@ export function TVSidebar({
                 isExpanded ? 'w-full gap-4 px-4' : 'mx-auto w-14 justify-center'
               } ${
                 focused
-                  ? 'scale-[1.04] border border-[#00F0FF]/70 bg-gradient-to-r from-[#00F0FF]/18 to-[#FF0055]/16 text-white shadow-[0_0_30px_rgba(0,240,255,.14)]'
+                  ? 'scale-[1.03] border border-white/20 bg-white/[0.10] text-white shadow-[0_8px_28px_rgba(0,0,0,.25)]'
                   : active
                     ? 'border border-white/10 bg-white/[0.07] text-white'
                     : 'border border-transparent text-white/55 hover:bg-white/[0.05] hover:text-white'
               }`}
             >
-              {active && (
-                <span className="absolute left-0 h-7 w-1 rounded-r-full bg-gradient-to-b from-[#00F0FF] to-[#FF0055] shadow-[0_0_12px_rgba(0,240,255,.65)]" />
-              )}
-              <Icon className={`h-6 w-6 shrink-0 transition-transform ${
-                focused || active ? 'text-[#00F0FF] scale-110' : ''
-              }`} />
-              {isExpanded && (
-                <span className="truncate text-[15px] font-bold tracking-wide">
-                  {item.label}
-                </span>
-              )}
+              {active && <span className="absolute left-0 h-7 w-0.5 rounded-r-full bg-white/75" />}
+              <Icon className={`h-6 w-6 shrink-0 transition-transform ${focused || active ? 'text-white scale-105' : 'text-white/55'}`} />
+              {isExpanded && <span className="truncate text-[15px] font-bold tracking-wide">{item.label}</span>}
             </button>
           );
         })}
@@ -108,9 +101,7 @@ export function TVSidebar({
           type="button"
           onClick={onExitTVMode}
           className={`flex h-12 items-center rounded-2xl border border-transparent text-white/50 transition-all hover:bg-white/[0.05] hover:text-white outline-none ${
-            isFocused && focusedIndex === TV_NAV_ITEMS.length
-              ? 'scale-[1.03] border-[#00F0FF]/60 bg-white/[0.07] text-white'
-              : ''
+            isFocused && focusedIndex === TV_NAV_ITEMS.length ? 'scale-[1.03] border-white/15 bg-white/[0.07] text-white' : ''
           } ${isExpanded ? 'w-full gap-3 px-4' : 'mx-auto w-12 justify-center'}`}
           title="Return to standard Kinoma"
         >
@@ -118,6 +109,7 @@ export function TVSidebar({
           {isExpanded && <span className="text-sm font-bold">Exit TV Mode</span>}
         </button>
       </div>
+      <div className="pointer-events-none absolute -right-1 top-1/2 h-20 w-2 -translate-y-1/2 rounded-full bg-white/10" />
     </aside>
   );
 }
