@@ -28,12 +28,13 @@ export function ModernHero({ items }: ModernHeroProps) {
   useEffect(() => {
     if (!items || items.length <= 1 || isPaused) return;
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % Math.min(items.length, 6));
+      setCurrentIndex((prev) => (prev + 1) % visibleItems.length);
     }, 4200);
     return () => clearInterval(interval);
-  }, [items, isPaused]);
+  }, [visibleItems.length, isPaused]);
 
-  const currentItem = items[currentIndex] || items[0];
+  const visibleItems = items.slice(0, 5);
+  const currentItem = visibleItems[currentIndex] || visibleItems[0];
 
   // Watchlist status tracking for currentItem
   useEffect(() => {
@@ -107,9 +108,9 @@ export function ModernHero({ items }: ModernHeroProps) {
           className="absolute inset-0 z-0"
         >
           <img
-            src={currentItem.cover || currentItem.image || DEFAULT_BANNER}
+            src={currentItem.banner || currentItem.cover || currentItem.image || DEFAULT_BANNER}
             alt={title}
-            className="w-full h-full object-cover object-[center_20%] sm:object-[center_25%] md:object-top opacity-90 brightness-95"
+            className="w-full h-full object-cover object-center opacity-75 brightness-[0.72] saturate-[0.72] scale-[1.04]"
             loading="eager"
             referrerPolicy="no-referrer"
           />
@@ -126,6 +127,9 @@ export function ModernHero({ items }: ModernHeroProps) {
       {/* 3. Top subtle scrim: Protects navigation */}
       <div className="absolute inset-x-0 top-0 z-0 h-36 bg-gradient-to-b from-[#08090d]/90 to-transparent" />
 
+      {/* Soft cinematic veil keeps artwork rich without the old neon-heavy look. */}
+      <div className="absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_72%_38%,transparent_0%,rgba(8,9,13,.12)_42%,rgba(8,9,13,.72)_100%)]" />
+
       {/* Hero Content Area */}
       <div className="relative z-10 w-full max-w-[1680px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 pb-8 sm:pb-12 lg:pb-16">
         <AnimatePresence mode="wait">
@@ -137,6 +141,18 @@ export function ModernHero({ items }: ModernHeroProps) {
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             className="max-w-2xl flex flex-col gap-2.5 sm:gap-3.5"
           >
+            <div className="hidden lg:block absolute right-8 xl:right-12 bottom-10 w-[150px] xl:w-[180px] aspect-[2/3] rounded-[22px] overflow-hidden border border-white/15 shadow-[0_24px_70px_rgba(0,0,0,.55)] rotate-[2deg]">
+              <img
+                src={currentItem.image || currentItem.cover || DEFAULT_BANNER}
+                alt=""
+                className="h-full w-full object-cover"
+                loading="eager"
+                decoding="async"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent" />
+            </div>
+
             {/* Title */}
             <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-[1.12] tracking-tight drop-shadow-xl font-['Outfit']">
               {title}
@@ -207,12 +223,12 @@ export function ModernHero({ items }: ModernHeroProps) {
         {/* Hero Carousel Navigation Dots */}
         {items.length > 1 && (
           <div className="flex items-center gap-1.5 mt-5">
-            {items.slice(0, 6).map((_, idx) => (
+            {visibleItems.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => setCurrentIndex(idx)}
-                className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer kinoma-focus ${
-                  currentIndex === idx ? 'w-6 bg-white' : 'w-1.5 bg-white/30 hover:bg-white/60'
+                className={`h-1 rounded-full transition-all duration-300 cursor-pointer kinoma-focus ${
+                  currentIndex === idx ? 'w-7 bg-white/80' : 'w-2 bg-white/25 hover:bg-white/50'
                 }`}
                 aria-label={`Slide ${idx + 1}`}
               />
