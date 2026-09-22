@@ -203,6 +203,11 @@ export const api = {
     }, 1000 * 60 * 60); // 1 hour TTL
   },
 
+  getTrailer: async (id: string) => {
+    const cleanKey = `api_trailer_${id}`;
+    return localCache.getOrFetch(cleanKey, () => animeApi.getTrailer(id), 1000 * 60 * 60 * 24);
+  },
+
   getDetails: async (id: string, initialItem?: AnimeItem): Promise<AnimeDetails> => {
     const cleanKey = `api_details_${id}`;
     return localCache.getOrFetch(cleanKey, async (): Promise<AnimeDetails> => {
