@@ -5,7 +5,6 @@ import {
   ChevronRight,
   Settings,
   X,
-  Play,
   ListVideo,
   Volume2,
   MonitorPlay,
