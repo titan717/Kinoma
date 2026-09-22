@@ -3,6 +3,7 @@ import { useRoute, Link, useLocation } from 'wouter';
 import useSWR from 'swr';
 import { api } from '../lib/api';
 import { animeApi } from '../services/animeApi';
+import Hls from 'hls.js';
 import { 
   Play, 
   ArrowLeft, 
@@ -123,7 +124,7 @@ export function Watch() {
   );
 
   const streamUrl = (streamData && streamData.url) ? streamData.url : (currentServer?.dataLink || '');
-  const isDirectMedia = /\.(mp4|webm)(?:\?|$)/i.test(streamUrl);
+  const isDirectMedia = /\.(m3u8|mp4|webm)(?:\?|$)/i.test(streamUrl);
 
   const episodes = animeData?.episodes || [];
   const currentEpIndex = episodes.findIndex((e: any) => e.number.toString() === epNum || e.id === rawId);
@@ -178,34 +179,62 @@ export function Watch() {
     setIsBookmarked(inWatch);
   };
 
-  // Continuous background watch progress tracking
+  // Save real playback progress when the player exposes it.
+  // Never fabricate playback time when the provider is an external iframe.
   useEffect(() => {
     if (!slug || !epNum) return;
 
     const queryParams = new URLSearchParams(window.location.search);
     const timeParam = queryParams.get('t') || queryParams.get('time');
-    const startSec = timeParam ? parseInt(timeParam, 10) : 0;
+    const startSec = timeParam ? Math.max(0, parseInt(timeParam, 10) || 0) : 0;
 
-    historyUtil.saveProgress(slug, rawId, epNum, startSec || 120, 1440, {
-      title: animeTitle,
-      image: currentEpObj?.image || animeData?.image || '',
-      animeId: animeData?.id || slug,
-      seasonNumber: detectedSeason
-    });
+    const save = () => {
+      const video = videoRef.current;
+      const currentSeconds = video && Number.isFinite(video.currentTime)
+        ? video.currentTime
+        : startSec;
+      const duration = video && Number.isFinite(video.duration) && video.duration > 0
+        ? video.duration
+        : 0;
 
-    let currentSeconds = startSec || 120;
-    const interval = setInterval(() => {
-      currentSeconds = Math.min(1440, currentSeconds + 15);
-      historyUtil.saveProgress(slug, rawId, epNum, currentSeconds, 1440, {
+      historyUtil.saveProgress(slug, rawId, epNum, currentSeconds, duration, {
         title: animeTitle,
         image: currentEpObj?.image || animeData?.image || '',
         animeId: animeData?.id || slug,
         seasonNumber: detectedSeason
       });
-    }, 15000);
+    };
 
-    return () => clearInterval(interval);
+    save();
+    const interval = window.setInterval(save, 5000);
+    return () => window.clearInterval(interval);
   }, [slug, epNum, rawId, animeData, currentEpObj, detectedSeason, animeTitle]);
+
+  // Use hls.js for real HLS playback so the TV OSD can expose
+  // an actual seekable timeline when the backend returns an m3u8 source.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !streamUrl || !isDirectMedia) return;
+
+    const isHls = /\.m3u8(?:\?|$)/i.test(streamUrl);
+    let hls: Hls | null = null;
+
+    if (isHls && Hls.isSupported()) {
+      hls = new Hls({ enableWorker: true, lowLatencyMode: false });
+      hls.loadSource(streamUrl);
+      hls.attachMedia(video);
+    } else if (isHls && video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = streamUrl;
+    } else if (!isHls) {
+      video.src = streamUrl;
+    }
+
+    return () => {
+      hls?.destroy();
+      if (!isHls) video.removeAttribute('src');
+      video.load();
+    };
+  }, [streamUrl, isDirectMedia]);
 
   // Network Quality Monitoring (subtle latency / buffer test)
   useEffect(() => {
@@ -335,7 +364,6 @@ export function Watch() {
                 <video
                   ref={videoRef}
                   key={streamUrl}
-                  src={streamUrl}
                   className="h-full w-full bg-black object-contain"
                   playsInline
                   autoPlay
