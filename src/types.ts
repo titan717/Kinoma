@@ -25,6 +25,7 @@ export interface AnimeItem {
   title: string | { english?: string; romaji?: string; native?: string };
   image: string;
   cover?: string;
+  banner?: string;
   rating?: number | string;
   contentRating?: string;
   type?: string;
