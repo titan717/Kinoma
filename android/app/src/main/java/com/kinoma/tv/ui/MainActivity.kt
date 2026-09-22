@@ -6,6 +6,7 @@ import android.content.Context
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
@@ -23,6 +24,7 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.net.Uri
 import android.widget.Button
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
@@ -41,6 +43,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var fullscreenContainer: FrameLayout
     private lateinit var diagnosticContainer: LinearLayout
     private lateinit var diagnosticText: TextView
+    private var pendingVerifiedUpdateUri: Uri? = null
 
     companion object {
         private const val TAG = "KinomaTV"
@@ -406,6 +409,15 @@ class MainActivity : ComponentActivity() {
         hideSystemUI()
         webView.onResume()
         webView.requestFocus()
+
+        // If the user enabled "install unknown apps" after an update download,
+        // resume the already checksum-verified installation automatically.
+        pendingVerifiedUpdateUri?.let { uri ->
+            if (canInstallPackages()) {
+                pendingVerifiedUpdateUri = null
+                installVerifiedApk(uri)
+            }
+        }
     }
 
     override fun onPause() {
@@ -507,9 +519,22 @@ class MainActivity : ComponentActivity() {
                     progressDialog.setMessage("Downloading: $percent%")
                 }
             },
-            onComplete = {
+            onComplete = { apkUri ->
                 runOnUiThread {
                     progressDialog.dismiss()
+                    if (canInstallPackages()) {
+                        installVerifiedApk(apkUri)
+                    } else {
+                        pendingVerifiedUpdateUri = apkUri
+                        AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                            .setTitle("Allow Kinoma Updates")
+                            .setMessage("Android TV needs permission to install updates from Kinoma. Enable "Allow from this source", then return to Kinoma.")
+                            .setPositiveButton("Open Settings") { _, _ ->
+                                openInstallPermissionSettings()
+                            }
+                            .setNegativeButton("Later", null)
+                            .show()
+                    }
                 }
             },
             onError = { error ->
@@ -523,6 +548,42 @@ class MainActivity : ComponentActivity() {
                 }
             }
         )
+    }
+
+    private fun canInstallPackages(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            packageManager.canRequestPackageInstalls()
+        } else {
+            true
+        }
+    }
+
+    private fun openInstallPermissionSettings() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val intent = Intent(
+                Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                Uri.parse("package:$packageName")
+            )
+            startActivity(intent)
+        }
+    }
+
+    private fun installVerifiedApk(apkUri: Uri) {
+        try {
+            val installIntent = Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
+                data = apkUri
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(installIntent)
+        } catch (e: Exception) {
+            pendingVerifiedUpdateUri = apkUri
+            AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                .setTitle("Unable to Start Update")
+                .setMessage(e.message ?: "Android could not start the package installer.")
+                .setPositiveButton("OK", null)
+                .show()
+        }
     }
 
     inner class KinomaTVBridge(private val context: Context) {
