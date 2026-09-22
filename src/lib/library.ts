@@ -29,7 +29,7 @@ function safeGet(key: string, fallbackKey?: string): LibraryItem[] {
         image: item.image || DEFAULT_POSTER,
         type: item.type || (key.includes('completed') ? 'completed' : key.includes('favorites') ? 'favorites' : 'watchlist'),
         updatedAt: Number(item.updatedAt || item.addedAt || item.timestamp || Date.now())
-      })).filter(i => Boolean(i.id));
+      })).filter(i => Boolean(i.id)).sort((a, b) => b.updatedAt - a.updatedAt);
     }
     return [];
   } catch {
@@ -190,9 +190,9 @@ export const libraryManager = {
   getSearchHistory: (): string[] => {
     try {
       const data = localStorage.getItem(SEARCH_HISTORY_KEY) || localStorage.getItem('animora_search_history');
-      return data ? JSON.parse(data) : ['Naruto', 'Attack on Titan', 'Jujutsu Kaisen', 'Demon Slayer'];
+      return data ? JSON.parse(data) : [];
     } catch {
-      return ['Naruto', 'Attack on Titan'];
+      return [];
     }
   },
 
