@@ -133,8 +133,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          gradle wrapper --gradle-version 8.5
-
       - name: Build signed release APK
         working-directory: android
         env:
@@ -144,8 +142,7 @@ jobs:
           KINOMA_KEY_PASSWORD: ${{ secrets.KINOMA_KEY_PASSWORD }}
         run: |
           set -euo pipefail
-          chmod +x ./gradlew
-          ./gradlew clean assembleRelease --no-daemon --stacktrace --warning-mode all
+          gradle clean assembleRelease --no-daemon --stacktrace --warning-mode all
 
       - name: Verify release APK
         shell: bash
