@@ -3,6 +3,7 @@ package com.kinoma.tv.ui
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
@@ -528,7 +529,7 @@ class MainActivity : ComponentActivity() {
                         pendingVerifiedUpdateUri = apkUri
                         AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
                             .setTitle("Allow Kinoma Updates")
-                            .setMessage("Android TV needs permission to install updates from Kinoma. Enable "Allow from this source", then return to Kinoma.")
+                            .setMessage("Android TV needs permission to install updates from Kinoma. Enable \"Allow from this source\", then return to Kinoma.")
                             .setPositiveButton("Open Settings") { _, _ ->
                                 openInstallPermissionSettings()
                             }
