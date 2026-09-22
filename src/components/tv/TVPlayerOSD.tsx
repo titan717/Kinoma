@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   Settings,
   X,
@@ -9,7 +10,9 @@ import {
   Volume2,
   MonitorPlay,
   Gauge,
-  AudioLines
+  AudioLines,
+  Play,
+  Pause
 } from 'lucide-react';
 
 interface TVPlayerOSDProps {
@@ -31,14 +34,27 @@ interface TVPlayerOSDProps {
   servers: any[];
   selectedServer: string;
   onSelectServer: (server: string) => void;
+  currentTime?: number;
+  duration?: number;
+  isPlaying?: boolean;
+  onTogglePlay?: () => void;
+  onSeek?: (time: number) => void;
 }
 
-/**
- * Premium 10-foot Kinoma player OSD.
- *
- * The video itself remains the playback surface. There is intentionally
- * no permanent Play/Pause button and no permanent Audio/Subtitles button.
- */
+type Drawer = 'episodes' | 'settings' | 'more' | null;
+type FocusZone = 'top' | 'timeline' | 'drawer';
+
+function formatTime(value: number) {
+  if (!Number.isFinite(value) || value < 0) return '00:00';
+  const total = Math.floor(value);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  return h > 0
+    ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+    : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
 export function TVPlayerOSD({
   animeTitle,
   episodeNumber,
@@ -57,18 +73,23 @@ export function TVPlayerOSD({
   onSelectType,
   servers,
   selectedServer,
-  onSelectServer
+  onSelectServer,
+  currentTime = 0,
+  duration = 0,
+  isPlaying = false,
+  onTogglePlay,
+  onSeek
 }: TVPlayerOSDProps) {
-  const [drawer, setDrawer] = useState<'episodes' | 'settings' | 'more' | null>(null);
-  const [settingsFocus, setSettingsFocus] = useState(0);
+  const [drawer, setDrawer] = useState<Drawer>(null);
+  const [focusZone, setFocusZone] = useState<FocusZone>('top');
+  const [topFocus, setTopFocus] = useState(0);
+  const [timelineFocus, setTimelineFocus] = useState(0);
   const [seasonFocus, setSeasonFocus] = useState(
     Math.max(0, seasons.findIndex((s: any) => s.seasonNumber === currentSeason))
   );
   const [episodeFocus, setEpisodeFocus] = useState(Math.max(0, currentEpisodeIndex));
-  const [seekSeconds, setSeekSeconds] = useState(0);
-  useEffect(() => {
-    setEpisodeFocus(Math.max(0, currentEpisodeIndex));
-  }, [currentEpisodeIndex]);
+  const [settingsFocus, setSettingsFocus] = useState(0);
+  const [seekPreview, setSeekPreview] = useState(currentTime);
 
   const season = seasons[seasonFocus];
   const seasonEpisodes = useMemo(() => {
@@ -76,173 +97,269 @@ export function TVPlayerOSD({
     return Array.isArray(season.episodes) && season.episodes.length ? season.episodes : episodes;
   }, [season, episodes]);
 
-  if (!isOpen) return null;
-
-  const closeDrawer = () => setDrawer(null);
-
-  const moveSeek = (delta: number) => {
-    setSeekSeconds(prev => Math.max(0, prev + delta));
-  };
-
-  const openEpisodes = () => setDrawer(isMovie ? 'more' : 'episodes');
-
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'ArrowLeft') {
-      e.preventDefault();
-      if (drawer === 'settings') setSettingsFocus(prev => Math.max(0, prev - 1));
-      else if (drawer === 'episodes') setEpisodeFocus(prev => Math.max(0, prev - 1));
-      else if (!drawer) moveSeek(-10);
-      return;
-    }
-
-    if (e.key === 'ArrowRight') {
-      e.preventDefault();
-      if (drawer === 'settings') setSettingsFocus(prev => Math.min(3, prev + 1));
-      else if (drawer === 'episodes') setEpisodeFocus(prev => Math.min(Math.max(0, seasonEpisodes.length - 1), prev + 1));
-      else if (!drawer) moveSeek(10);
-      return;
-    }
-
-    if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      if (drawer === 'episodes') {
-        if (seasonFocus > 0) setSeasonFocus(prev => prev - 1);
-      } else if (drawer) {
-        closeDrawer();
-      }
-      return;
-    }
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      if (!drawer) {
-        openEpisodes();
-      }
-      return;
-    }
-
-    if (e.key === 'Escape' || e.key === 'Backspace') {
-      e.preventDefault();
-      if (drawer) closeDrawer();
-      else onClose();
-      return;
-    }
-
-    if (e.key === 'Enter') {
-      if (drawer === 'episodes') {
-        e.preventDefault();
-        const ep = seasonEpisodes[episodeFocus];
-        if (ep) onPlayEpisode(ep.id, 0);
-      } else if (drawer === 'settings') {
-        e.preventDefault();
-        if (settingsFocus === 0) onSelectType(selectedType === 'sub' ? 'dub' : 'sub');
-        if (settingsFocus === 1 && servers.length) {
-          const index = Math.max(0, servers.findIndex((s: any) => s.serverName === selectedServer));
-          const next = servers[(index + 1) % servers.length];
-          if (next) onSelectServer(next.serverName);
-        }
-      }
-      // With no drawer open, Enter/OK is intentionally not intercepted:
-      // the underlying video player remains responsible for play/pause.
-    }
-  };
+  useEffect(() => {
+    setEpisodeFocus(Math.max(0, currentEpisodeIndex));
+  }, [currentEpisodeIndex]);
 
   useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  });
+    setSeekPreview(currentTime);
+  }, [currentTime]);
 
-  const formatSeek = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-  };
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' || e.key === 'Backspace' || e.keyCode === 10009 || e.keyCode === 461) {
+        e.preventDefault();
+        if (drawer) {
+          setDrawer(null);
+          setFocusZone('top');
+        } else {
+          onClose();
+        }
+        return;
+      }
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        if (drawer === 'settings') {
+          setSettingsFocus(prev => Math.max(0, prev - 1));
+        } else if (drawer === 'episodes') {
+          setEpisodeFocus(prev => Math.max(0, prev - 1));
+        } else if (drawer === 'more') {
+          setEpisodeFocus(prev => Math.max(0, prev - 1));
+        } else if (focusZone === 'top') {
+          setTopFocus(prev => Math.max(0, prev - 1));
+        } else {
+          const next = Math.max(0, Math.min(duration || Infinity, seekPreview - 10));
+          setSeekPreview(next);
+          onSeek?.(next);
+        }
+        return;
+      }
+
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        if (drawer === 'settings') {
+          setSettingsFocus(prev => Math.min(3, prev + 1));
+        } else if (drawer === 'episodes' || drawer === 'more') {
+          setEpisodeFocus(prev => Math.min(Math.max(0, seasonEpisodes.length - 1), prev + 1));
+        } else if (focusZone === 'top') {
+          setTopFocus(prev => Math.min(1, prev + 1));
+        } else {
+          const next = Math.max(0, Math.min(duration || Infinity, seekPreview + 10));
+          setSeekPreview(next);
+          onSeek?.(next);
+        }
+        return;
+      }
+
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (drawer === 'episodes') {
+          if (seasonFocus > 0) {
+            setSeasonFocus(prev => prev - 1);
+            setEpisodeFocus(0);
+          } else {
+            setDrawer(null);
+            setFocusZone('top');
+          }
+        } else if (drawer) {
+          setDrawer(null);
+          setFocusZone('top');
+        } else if (focusZone === 'timeline') {
+          setFocusZone('top');
+        }
+        return;
+      }
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (drawer === 'episodes') {
+          return;
+        }
+        if (drawer) return;
+
+        if (focusZone === 'top') {
+          if (topFocus === 0 || topFocus === 1) {
+            setFocusZone('timeline');
+          }
+        } else if (focusZone === 'timeline') {
+          setDrawer(isMovie ? 'more' : 'episodes');
+          setFocusZone('drawer');
+        }
+        return;
+      }
+
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+
+        if (drawer === 'episodes') {
+          const ep = seasonEpisodes[episodeFocus];
+          if (ep) onPlayEpisode(ep.id, 0);
+          return;
+        }
+
+        if (drawer === 'more') {
+          const item = recommendations[episodeFocus];
+          if (item?.id) onBack();
+          return;
+        }
+
+        if (drawer === 'settings') {
+          if (settingsFocus === 0) {
+            onSelectType(selectedType === 'sub' ? 'dub' : 'sub');
+          } else if (settingsFocus === 1 && servers.length) {
+            const index = Math.max(0, servers.findIndex((s: any) => s.serverName === selectedServer));
+            const next = servers[(index + 1) % servers.length];
+            if (next) onSelectServer(next.serverName);
+          }
+          return;
+        }
+
+        if (focusZone === 'top') {
+          if (topFocus === 0) onBack();
+          else setDrawer('settings');
+          return;
+        }
+
+        if (focusZone === 'timeline') {
+          onTogglePlay?.();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [
+    isOpen, drawer, focusZone, topFocus, seasonFocus, episodeFocus, settingsFocus,
+    seasonEpisodes, duration, seekPreview, recommendations, isMovie, onSeek,
+    onTogglePlay, onBack, onClose, onPlayEpisode, selectedType, selectedServer,
+    servers, currentEpisodeIndex
+  ]);
+
+  if (!isOpen) return null;
+
+  const progress = duration > 0 ? Math.min(100, Math.max(0, (seekPreview / duration) * 100)) : 0;
+  const remaining = duration > 0 ? Math.max(0, duration - seekPreview) : 0;
+  const previewImage = seasonEpisodes[episodeFocus]?.image || episodes[currentEpisodeIndex]?.image;
 
   return (
-    <div className="absolute inset-0 z-40 pointer-events-none font-sans">
-      <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-transparent to-black/90 pointer-events-none" />
+    <div data-kinoma-osd="true" className="pointer-events-none absolute inset-0 z-50 select-none font-sans">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-black/90" />
 
-      <header className="absolute top-0 inset-x-0 px-8 lg:px-14 pt-7 flex items-start justify-between pointer-events-auto">
+      <header className="pointer-events-auto absolute inset-x-0 top-0 flex items-start justify-between px-8 pt-7 lg:px-14">
         <button
+          type="button"
           onClick={onBack}
-          className="group flex items-center gap-3 rounded-2xl bg-black/45 border border-white/10 backdrop-blur-xl px-4 py-3 text-white transition-all hover:bg-black/65 focus:outline-none focus:ring-2 focus:ring-[#00F0FF] focus:scale-105"
+          className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left backdrop-blur-xl outline-none transition-all ${
+            focusZone === 'top' && topFocus === 0
+              ? 'scale-[1.05] border-[#00F0FF] bg-[#00F0FF]/12 ring-2 ring-[#00F0FF]/60'
+              : 'border-white/10 bg-black/45'
+          }`}
         >
-          <ArrowLeft className="w-5 h-5" />
-          <div className="text-left">
-            <div className="text-[10px] uppercase tracking-[0.2em] text-white/55">Back</div>
-            <div className="text-sm font-black">{animeTitle}</div>
-            <div className="text-xs text-white/65">{episodeNumber}{episodeTitle ? ` • ${episodeTitle}` : ''}</div>
+          <ArrowLeft className="h-5 w-5 text-[#00F0FF]" />
+          <div>
+            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45">Back</div>
+            <div className="max-w-[55vw] truncate text-base font-black text-white">{animeTitle}</div>
+            <div className="max-w-[55vw] truncate text-xs font-semibold text-white/55">
+              {episodeNumber}{episodeTitle ? ` • ${episodeTitle}` : ''}
+            </div>
           </div>
         </button>
 
         <div className="flex items-center gap-3">
-          <span className="rounded-xl border border-white/10 bg-black/45 px-3 py-2 text-xs font-black text-white/75 backdrop-blur-xl">
-            4K
+          <span className="rounded-xl border border-white/10 bg-black/45 px-3 py-2 text-xs font-black text-white/70 backdrop-blur-xl">
+            AUTO
           </span>
           <button
+            type="button"
             onClick={() => setDrawer('settings')}
-            className="rounded-2xl border border-white/10 bg-black/45 p-3 text-white backdrop-blur-xl transition-all hover:bg-black/65 focus:outline-none focus:ring-2 focus:ring-[#00F0FF] focus:scale-105"
+            className={`rounded-2xl border p-3 text-white backdrop-blur-xl outline-none transition-all ${
+              focusZone === 'top' && topFocus === 1
+                ? 'scale-[1.08] border-[#00F0FF] bg-[#00F0FF]/12 ring-2 ring-[#00F0FF]/60'
+                : 'border-white/10 bg-black/45'
+            }`}
             aria-label="Settings"
           >
-            <Settings className="w-5 h-5" />
+            <Settings className="h-5 w-5" />
           </button>
         </div>
       </header>
 
-      <div className="absolute inset-x-0 bottom-0 px-8 lg:px-14 pb-7 pointer-events-auto">
-        <div className="mb-2 flex items-center justify-between text-xs font-bold text-white/75">
-          <span>{formatSeek(seekSeconds)}</span>
-          <span>{seekSeconds ? `Preview • ${formatSeek(seekSeconds)}` : 'Live player'}</span>
-        </div>
+      <div className="pointer-events-auto absolute inset-x-0 bottom-0 px-8 pb-8 lg:px-14">
+        {focusZone === 'timeline' && (
+          <div className="mb-3 flex items-end gap-4">
+            <div className="w-44 overflow-hidden rounded-xl border border-white/10 bg-black/65 shadow-2xl backdrop-blur-xl">
+              {previewImage ? (
+                <img src={previewImage} alt="" className="aspect-video w-full object-cover" />
+              ) : (
+                <div className="aspect-video w-full bg-white/[.04]" />
+              )}
+              <div className="px-3 py-2 text-xs font-black text-white">
+                {formatTime(seekPreview)}
+              </div>
+            </div>
+            <div className="pb-2 text-xs font-bold text-white/45">
+              {duration > 0 ? 'Left / Right to seek' : 'Seeking preview will activate when the player exposes a seekable timeline'}
+            </div>
+          </div>
+        )}
 
         <div
-          className="relative h-3 cursor-pointer rounded-full bg-white/20 focus:outline-none"
-          tabIndex={0}
-          aria-label="Timeline"
-          onClick={() => moveSeek(10)}
+          className={`relative h-3 rounded-full bg-white/20 transition-all ${
+            focusZone === 'timeline' ? 'h-4 ring-2 ring-[#00F0FF]/40' : ''
+          }`}
+          aria-label="Playback timeline"
         >
-          <div className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[#00F0FF] to-[#FF0055]" style={{ width: `${Math.min(100, Math.max(2, seekSeconds / 3))}%` }} />
-          <div className="absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-white shadow-[0_0_18px_rgba(0,240,255,.75)]" style={{ left: `calc(${Math.min(100, Math.max(2, seekSeconds / 3))}% - 10px)` }} />
+          <div
+            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[#00F0FF] to-[#FF0055]"
+            style={{ width: `${progress}%` }}
+          />
+          <div
+            className="absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-white shadow-[0_0_18px_rgba(0,240,255,.75)]"
+            style={{ left: `calc(${progress}% - 10px)` }}
+          />
+        </div>
+
+        <div className="mt-3 flex items-center justify-between text-xs font-bold text-white/70">
+          <span>{formatTime(seekPreview)}</span>
+          <span>{duration > 0 ? `-${formatTime(remaining)}` : '—'}</span>
         </div>
 
         <div className="mt-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => moveSeek(-10)}
-              className="rounded-xl border border-white/10 bg-black/45 px-3 py-2 text-xs font-black text-white/80 backdrop-blur-xl focus:outline-none focus:ring-2 focus:ring-[#00F0FF]"
-            >
-              −10s
-            </button>
-            <button
-              onClick={() => moveSeek(10)}
-              className="rounded-xl border border-white/10 bg-black/45 px-3 py-2 text-xs font-black text-white/80 backdrop-blur-xl focus:outline-none focus:ring-2 focus:ring-[#00F0FF]"
-            >
-              +10s
-            </button>
+          <div className="text-[11px] font-black uppercase tracking-[0.2em] text-white/35">
+            {isPlaying ? 'Playing' : 'Paused'}
           </div>
 
           <button
-            onClick={openEpisodes}
-            className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/45 px-4 py-2.5 text-xs font-black text-white backdrop-blur-xl transition-all hover:bg-black/65 focus:outline-none focus:ring-2 focus:ring-[#00F0FF] focus:scale-105"
+            type="button"
+            onClick={() => setDrawer(isMovie ? 'more' : 'episodes')}
+            className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/45 px-4 py-3 text-xs font-black text-white backdrop-blur-xl outline-none transition-all focus:ring-2 focus:ring-[#00F0FF]"
           >
-            <ListVideo className="w-4 h-4" />
+            <ListVideo className="h-4 w-4 text-[#00F0FF]" />
             {isMovie ? 'More Like This' : 'Episodes'}
-            <ChevronDown className="w-4 h-4" />
+            <ChevronDown className="h-4 w-4" />
           </button>
         </div>
       </div>
 
       {drawer === 'episodes' && !isMovie && (
-        <div className="absolute inset-x-0 bottom-0 h-[58%] bg-[#0B0C10]/96 border-t border-white/10 backdrop-blur-2xl pointer-events-auto shadow-[0_-30px_80px_rgba(0,0,0,.75)]">
-          <div className="h-full flex">
-            <aside className="w-[25%] min-w-[220px] border-r border-white/10 p-7 overflow-y-auto">
-              <div className="mb-5 text-xs font-black uppercase tracking-[0.2em] text-white/45">Seasons</div>
+        <div className="pointer-events-auto absolute inset-x-0 bottom-0 h-[60%] overflow-hidden border-t border-white/10 bg-[#0B0C10]/97 shadow-[0_-30px_90px_rgba(0,0,0,.8)] backdrop-blur-2xl">
+          <div className="flex h-full">
+            <aside className="w-[25%] min-w-[230px] overflow-y-auto border-r border-white/10 p-7">
+              <div className="mb-5 text-[11px] font-black uppercase tracking-[0.22em] text-white/40">Seasons</div>
               <div className="space-y-2">
                 {seasons.map((s: any, idx: number) => (
                   <button
+                    type="button"
                     key={s.seasonNumber ?? idx}
                     onClick={() => { setSeasonFocus(idx); setEpisodeFocus(0); }}
-                    className={`w-full rounded-2xl px-4 py-4 text-left font-black transition-all focus:outline-none focus:ring-2 focus:ring-[#00F0FF] ${seasonFocus === idx ? 'bg-gradient-to-r from-[#00F0FF]/20 to-[#FF0055]/20 border border-[#00F0FF]/50 text-white scale-[1.02]' : 'border border-white/5 bg-white/[.03] text-white/60'}`}
+                    className={`w-full rounded-2xl border px-5 py-4 text-left text-sm font-black outline-none transition-all ${
+                      seasonFocus === idx
+                        ? 'scale-[1.02] border-[#00F0FF]/70 bg-gradient-to-r from-[#00F0FF]/18 to-[#FF0055]/12 text-white ring-1 ring-[#00F0FF]/30'
+                        : 'border-white/[.06] bg-white/[.03] text-white/55'
+                    }`}
                   >
                     {s.title || `Season ${s.seasonNumber}`}
                   </button>
@@ -253,11 +370,11 @@ export function TVPlayerOSD({
             <section className="flex-1 overflow-y-auto p-7">
               <div className="mb-5 flex items-center justify-between">
                 <div>
-                  <div className="text-xs font-black uppercase tracking-[0.2em] text-white/45">Episodes</div>
-                  <div className="text-lg font-black text-white">{season?.title || `Season ${currentSeason}`}</div>
+                  <div className="text-[11px] font-black uppercase tracking-[0.22em] text-white/40">Episodes</div>
+                  <div className="text-xl font-black">{season?.title || `Season ${currentSeason}`}</div>
                 </div>
-                <button onClick={closeDrawer} className="rounded-xl border border-white/10 bg-white/5 p-2 text-white/70 hover:text-white focus:outline-none focus:ring-2 focus:ring-[#00F0FF]">
-                  <X className="w-5 h-5" />
+                <button type="button" onClick={() => setDrawer(null)} className="rounded-xl border border-white/10 bg-white/5 p-2 text-white/60 hover:text-white">
+                  <X className="h-5 w-5" />
                 </button>
               </div>
 
@@ -267,17 +384,22 @@ export function TVPlayerOSD({
                   const current = String(ep.number) === String(episodeNumber).replace(/^E/i, '');
                   return (
                     <button
+                      type="button"
                       key={ep.id || idx}
                       onClick={() => onPlayEpisode(ep.id, 0)}
-                      className={`w-full flex items-center gap-4 rounded-2xl border px-4 py-3 text-left transition-all focus:outline-none ${focused ? 'border-[#00F0FF]/70 bg-gradient-to-r from-[#00F0FF]/15 to-[#FF0055]/10 scale-[1.015] shadow-[0_0_25px_rgba(0,240,255,.12)]' : 'border-white/5 bg-white/[.03]'}`}
+                      className={`flex w-full items-center gap-4 rounded-2xl border p-3 text-left outline-none transition-all ${
+                        focused
+                          ? 'scale-[1.015] border-[#00F0FF]/70 bg-gradient-to-r from-[#00F0FF]/14 to-[#FF0055]/10 ring-1 ring-[#00F0FF]/30'
+                          : 'border-white/[.06] bg-white/[.03]'
+                      }`}
                     >
-                      <img src={ep.image || ''} alt="" className="h-16 w-28 rounded-xl object-cover bg-black/40" />
+                      <img src={ep.image || ''} alt="" className="h-16 w-28 rounded-xl bg-black/40 object-cover" />
                       <div className="min-w-0 flex-1">
-                        <div className="text-xs font-black uppercase tracking-wider text-white/45">Episode {ep.number}</div>
+                        <div className="text-[10px] font-black uppercase tracking-wider text-white/40">Episode {ep.number}</div>
                         <div className="truncate text-base font-black text-white">{ep.title || `Episode ${ep.number}`}</div>
-                        <div className="mt-1 text-xs text-white/45">{ep.duration ? `${Math.round(ep.duration / 60)} min` : ''}</div>
+                        <div className="mt-1 text-xs font-semibold text-white/40">{ep.duration ? `${Math.round(ep.duration / 60)} min` : ''}</div>
                       </div>
-                      {current && <span className="rounded-full bg-[#00F0FF]/15 px-2 py-1 text-[10px] font-black text-[#00F0FF]">NOW</span>}
+                      {current && <span className="rounded-full bg-[#00F0FF]/10 px-2 py-1 text-[10px] font-black text-[#00F0FF]">NOW</span>}
                     </button>
                   );
                 })}
@@ -288,21 +410,31 @@ export function TVPlayerOSD({
       )}
 
       {drawer === 'more' && (
-        <div className="absolute inset-x-0 bottom-0 h-[58%] bg-[#0B0C10]/96 border-t border-white/10 backdrop-blur-2xl p-7 pointer-events-auto shadow-[0_-30px_80px_rgba(0,0,0,.75)]">
-          <div className="mb-5 flex items-center justify-between">
+        <div className="pointer-events-auto absolute inset-x-0 bottom-0 h-[60%] overflow-y-auto border-t border-white/10 bg-[#0B0C10]/97 p-7 shadow-[0_-30px_90px_rgba(0,0,0,.8)] backdrop-blur-2xl">
+          <div className="mb-6 flex items-center justify-between">
             <div>
-              <div className="text-xs font-black uppercase tracking-[0.2em] text-white/45">Discovery</div>
-              <div className="text-xl font-black">More Like This</div>
+              <div className="text-[11px] font-black uppercase tracking-[0.22em] text-white/40">Discovery</div>
+              <div className="text-2xl font-black">More Like This</div>
             </div>
-            <button onClick={closeDrawer} className="rounded-xl border border-white/10 bg-white/5 p-2 text-white/70 focus:outline-none focus:ring-2 focus:ring-[#00F0FF]"><X className="w-5 h-5" /></button>
+            <button type="button" onClick={() => setDrawer(null)} className="rounded-xl border border-white/10 bg-white/5 p-2 text-white/60 hover:text-white">
+              <X className="h-5 w-5" />
+            </button>
           </div>
-          <div className="grid grid-cols-4 lg:grid-cols-6 gap-4 overflow-y-auto">
-            {recommendations.slice(0, 8).map((item: any) => (
-              <button key={item.id} onClick={() => onBack()} className="group text-left focus:outline-none">
-                <div className="overflow-hidden rounded-2xl border border-white/5 bg-white/[.03] transition-all group-focus:ring-2 group-focus:ring-[#00F0FF] group-focus:scale-[1.04]">
-                  <img src={item.image} alt="" className="aspect-[2/3] w-full object-cover" />
+
+          <div className="grid grid-cols-4 gap-5 lg:grid-cols-6">
+            {recommendations.slice(0, 12).map((item: any, idx: number) => (
+              <button
+                type="button"
+                key={item.id || idx}
+                onClick={() => onBack()}
+                className={`group text-left outline-none ${episodeFocus === idx ? 'scale-[1.04]' : ''}`}
+              >
+                <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[.03] transition-all group-focus:ring-2 group-focus:ring-[#00F0FF]">
+                  <img src={item.image || ''} alt="" className="aspect-[2/3] w-full object-cover" />
                 </div>
-                <div className="mt-2 truncate text-xs font-bold text-white/80">{typeof item.title === 'string' ? item.title : item.title?.english || item.title?.romaji}</div>
+                <div className="mt-2 truncate text-xs font-bold text-white/80">
+                  {typeof item.title === 'string' ? item.title : item.title?.english || item.title?.romaji || 'Anime'}
+                </div>
               </button>
             ))}
           </div>
@@ -310,13 +442,15 @@ export function TVPlayerOSD({
       )}
 
       {drawer === 'settings' && (
-        <div className="absolute right-0 top-0 bottom-0 w-[42%] min-w-[420px] bg-[#0B0C10]/98 border-l border-white/10 backdrop-blur-2xl p-8 pointer-events-auto shadow-[-30px_0_80px_rgba(0,0,0,.7)]">
+        <div className="pointer-events-auto absolute inset-y-0 right-0 w-[42%] min-w-[430px] border-l border-white/10 bg-[#0B0C10]/98 p-8 shadow-[-30px_0_90px_rgba(0,0,0,.75)] backdrop-blur-2xl">
           <div className="mb-8 flex items-center justify-between">
             <div>
-              <div className="text-xs font-black uppercase tracking-[0.2em] text-white/45">Player</div>
+              <div className="text-[11px] font-black uppercase tracking-[0.22em] text-white/40">Player</div>
               <div className="text-2xl font-black">Settings</div>
             </div>
-            <button onClick={closeDrawer} className="rounded-xl border border-white/10 bg-white/5 p-2 focus:outline-none focus:ring-2 focus:ring-[#00F0FF]"><X className="w-5 h-5" /></button>
+            <button type="button" onClick={() => setDrawer(null)} className="rounded-xl border border-white/10 bg-white/5 p-2 text-white/60 hover:text-white">
+              <X className="h-5 w-5" />
+            </button>
           </div>
 
           <div className="space-y-3">
@@ -329,6 +463,7 @@ export function TVPlayerOSD({
               const Icon = item.icon;
               return (
                 <button
+                  type="button"
                   key={item.label}
                   onClick={() => {
                     if (idx === 0) onSelectType(selectedType === 'sub' ? 'dub' : 'sub');
@@ -338,18 +473,34 @@ export function TVPlayerOSD({
                       if (next) onSelectServer(next.serverName);
                     }
                   }}
-                  className={`w-full flex items-center gap-4 rounded-2xl border p-5 text-left transition-all focus:outline-none ${settingsFocus === idx ? 'border-[#00F0FF]/70 bg-gradient-to-r from-[#00F0FF]/15 to-[#FF0055]/10 scale-[1.02]' : 'border-white/5 bg-white/[.03]'}`}
+                  className={`flex w-full items-center gap-4 rounded-2xl border p-5 text-left outline-none transition-all ${
+                    settingsFocus === idx
+                      ? 'scale-[1.02] border-[#00F0FF]/70 bg-gradient-to-r from-[#00F0FF]/14 to-[#FF0055]/10 ring-1 ring-[#00F0FF]/30'
+                      : 'border-white/[.06] bg-white/[.03]'
+                  }`}
                 >
-                  <Icon className="w-6 h-6 text-[#00F0FF]" />
+                  <Icon className="h-6 w-6 text-[#00F0FF]" />
                   <div className="flex-1">
                     <div className="font-black">{item.label}</div>
-                    <div className="text-xs text-white/45">{item.value}</div>
+                    <div className="text-xs text-white/40">{item.value}</div>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-white/30" />
+                  <ChevronRight className="h-5 w-5 text-white/25" />
                 </button>
               );
             })}
           </div>
+        </div>
+      )}
+
+      {focusZone === 'timeline' && drawer === null && (
+        <div className="pointer-events-none absolute bottom-28 left-1/2 -translate-x-1/2 rounded-full border border-[#00F0FF]/30 bg-black/65 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#8ff7ff] backdrop-blur-xl">
+          D-pad Left / Right · Seek
+        </div>
+      )}
+
+      {focusZone === 'timeline' && drawer === null && duration > 0 && (
+        <div className="pointer-events-none absolute bottom-36 left-1/2 -translate-x-1/2 rounded-full bg-black/70 p-2 text-white">
+          {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
         </div>
       )}
     </div>
