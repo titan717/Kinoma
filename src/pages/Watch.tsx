@@ -42,6 +42,7 @@ export function Watch() {
   const [playerDuration, setPlayerDuration] = useState(0);
   const [isPlayerPlaying, setIsPlayerPlaying] = useState(false);
   const [playerEnded, setPlayerEnded] = useState(false);
+  const lastUiTimeUpdateRef = useRef(0);
   
   // Decoding parameter
   const rawId = decodeURIComponent((isMatch && params) ? params.id : '');
@@ -236,7 +237,7 @@ export function Watch() {
     let hls: Hls | null = null;
 
     if (isHls && Hls.isSupported()) {
-      hls = new Hls({ enableWorker: true, lowLatencyMode: false });
+      hls = new Hls({ enableWorker: true, lowLatencyMode: false, maxBufferLength: 20, backBufferLength: 30, maxBufferHole: 0.5, capLevelToPlayerSize: true });
       hls.loadSource(streamUrl);
       hls.attachMedia(video);
     } else if (isHls && video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -400,7 +401,13 @@ export function Watch() {
                     const start = Number(new URLSearchParams(window.location.search).get('t') || 0);
                     if (start > 0 && Number.isFinite(start)) e.currentTarget.currentTime = start;
                   }}
-                  onTimeUpdate={(e) => setPlayerCurrentTime(e.currentTarget.currentTime || 0)}
+                  onTimeUpdate={(e) => {
+                    const now = performance.now();
+                    if (now - lastUiTimeUpdateRef.current >= 250) {
+                      lastUiTimeUpdateRef.current = now;
+                      setPlayerCurrentTime(e.currentTarget.currentTime || 0);
+                    }
+                  }}
                   onPlay={() => setIsPlayerPlaying(true)}
                   onPause={() => setIsPlayerPlaying(false)}
                   onEnded={() => {
