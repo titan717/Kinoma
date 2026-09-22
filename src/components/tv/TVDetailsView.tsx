@@ -99,7 +99,7 @@ export function TVDetailsView({
   const [focusedSeasonIdx, setFocusedSeasonIdx] = useState(0);
   const [focusedEpIdx, setFocusedEpIdx] = useState(0);
 
-  const epRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const epRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   useEffect(() => {
     if (anime) {
