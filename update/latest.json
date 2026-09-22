@@ -1,8 +1,9 @@
 {
-  "versionCode": 1,
-  "versionName": "1.0.0",
-  "apkUrl": "https://github.com/titan717/Kinoma/releases/latest/download/Kinoma.apk",
-  "releaseNotes": "Initial release of Kinoma Native Android TV App.",
-  "sha256": "PENDING",
+  "latestVersionCode": 1,
+  "latestVersionName": "1.0.0",
+  "releaseTag": "v1.0.0",
+  "releaseNotes": "Production release manifest will be updated automatically by GitHub Actions.",
+  "apkUrl": "https://github.com/titan717/Kinoma/releases/latest/download/Kinoma-Android-TV.apk",
+  "sha256": "PENDING_FIRST_PRODUCTION_RELEASE",
   "mandatory": false
 }
