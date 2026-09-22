@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import useSWR from 'swr';
-import { Play, Plus, Check, ArrowLeft, Star, Clock, Calendar } from 'lucide-react';
+import { Play, Plus, Check, ArrowLeft, Star, ListVideo } from 'lucide-react';
 import { api } from '../../lib/api';
 import { AnimeItem, AnimeDetails, Episode, DEFAULT_BANNER, DEFAULT_POSTER } from '../../types';
 import { libraryManager } from '../../lib/library';
@@ -158,7 +158,7 @@ export function TVDetailsView({
   // Spatial TV D-pad navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' || e.key === 'Backspace' || e.keyCode === 10009 || e.keyCode === 461) {
         onBack();
         return;
       }
@@ -317,7 +317,7 @@ export function TVDetailsView({
             className={`flex items-center gap-2.5 px-8 py-3.5 rounded-2xl font-black text-base transition-all duration-200 cursor-pointer outline-none ${
               focusZone === 'cta' && focusedCtaIdx === 0
                 ? 'bg-white text-black scale-105 shadow-[0_0_28px_rgba(255,255,255,0.55)] ring-3 ring-white'
-                : 'bg-white/90 hover:bg-white text-black shadow-lg'
+                : 'bg-gradient-to-r from-white via-[#e9d5ff] to-[#c084fc] hover:brightness-105 text-black shadow-lg'
             }`}
           >
             <Play className="w-5 h-5 fill-current" />
@@ -358,120 +358,84 @@ export function TVDetailsView({
         </div>
       </div>
 
-      {/* 4. Seasons Navigation (if multiple) */}
-      {seasonGroups.length > 1 && (
-        <div className="relative z-10 px-8 lg:px-14 mb-4">
-          <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
-            {seasonGroups.map((grp, idx) => {
-              const isSelected = selectedSeasonIdx === idx;
-              const isFocused = focusZone === 'seasons' && focusedSeasonIdx === idx;
-
-              return (
-                <button
-                  key={grp.title}
-                  onClick={() => {
-                    setSelectedSeasonIdx(idx);
-                    setFocusedSeasonIdx(idx);
-                  }}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-black transition-all duration-150 cursor-pointer outline-none whitespace-nowrap ${
-                    isFocused
-                      ? 'bg-white text-black scale-105 shadow-[0_0_20px_rgba(255,255,255,0.5)] ring-2 ring-white'
-                      : isSelected
-                      ? 'bg-purple-900/60 text-white border border-purple-500/50 shadow-sm'
-                      : 'bg-[#151622] text-gray-400 hover:text-white border border-white/5'
-                  }`}
-                >
-                  {grp.title}
-                </button>
-              );
-            })}
+      {/* 4. Reference-style 10-foot season + episode layout */}
+      <section className="relative z-10 px-8 lg:px-14 pb-20">
+        <div className="flex items-center gap-3 mb-5">
+          <ListVideo className="w-5 h-5 text-white/70" />
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black font-['Outfit']">Seasons & Episodes</h2>
+            <p className="text-xs text-white/40 mt-0.5">Use the left rail for seasons and the right panel for episodes.</p>
           </div>
         </div>
-      )}
 
-      {/* 5. Episodes Section: Large TV-Friendly Cards */}
-      <div className="relative z-10 px-8 lg:px-14 pb-20">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl sm:text-2xl font-black text-white font-['Outfit']">
-            Episodes
-          </h2>
-          <span className="text-xs text-gray-400">
-            {currentSeasonEpisodes.length} episodes available
-          </span>
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-5 rounded-3xl border border-white/10 bg-[#0b0c12]/90 overflow-hidden shadow-2xl">
+          <aside className="border-b lg:border-b-0 lg:border-r border-white/10 p-5 bg-white/[.025]">
+            <div className="text-[10px] font-black uppercase tracking-[0.22em] text-white/35 mb-3">Seasons</div>
+            <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0">
+              {seasonGroups.map((grp, idx) => {
+                const selected = selectedSeasonIdx === idx;
+                const focused = focusZone === 'seasons' && focusedSeasonIdx === idx;
+                return (
+                  <button
+                    key={grp.title}
+                    onClick={() => { setSelectedSeasonIdx(idx); setFocusedSeasonIdx(idx); }}
+                    className={`shrink-0 lg:w-full text-left rounded-2xl border px-4 py-4 transition-all outline-none ${
+                      focused ? 'bg-white text-black border-white scale-[1.02] shadow-lg' :
+                      selected ? 'bg-white/10 text-white border-white/25' : 'bg-white/[.03] text-white/55 border-white/[.06] hover:bg-white/[.06]'
+                    }`}
+                  >
+                    <div className="font-black text-sm">{grp.title}</div>
+                    <div className={`text-[11px] mt-1 ${focused ? 'text-black/60' : 'text-white/35'}`}>{grp.episodes.length || 0} episodes</div>
+                  </button>
+                );
+              })}
+            </div>
+          </aside>
 
-        {isLoading ? (
-          <div className="flex items-center gap-3 py-10 text-gray-400">
-            <div className="w-6 h-6 border-2 border-purple-500/20 border-t-purple-500 rounded-full animate-spin" />
-            <span>Loading episodes catalog...</span>
-          </div>
-        ) : (
-          <div 
-            className="flex items-center gap-5 overflow-x-auto py-4 scrollbar-none scroll-smooth"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          >
-            {currentSeasonEpisodes.map((ep, idx) => {
-              const isFocused = focusZone === 'episodes' && focusedEpIdx === idx;
-              const isCurrent = ctaInfo?.episode?.id === ep.id;
+          <section className="p-5 lg:p-7 min-w-0">
+            <div className="flex items-center justify-between gap-4 mb-5">
+              <div>
+                <div className="text-[10px] font-black uppercase tracking-[0.22em] text-white/35">Episode List</div>
+                <h3 className="text-lg font-black">{seasonGroups[selectedSeasonIdx]?.title || 'Season 1'}</h3>
+              </div>
+              <span className="text-xs text-white/40">{currentSeasonEpisodes.length} available</span>
+            </div>
 
-              return (
-                <div
-                  key={ep.id}
-                  ref={el => (epRefs.current[idx] = el)}
-                  onClick={() => onPlayEpisode(ep.id, 0)}
-                  className={`shrink-0 w-64 sm:w-72 flex flex-col rounded-2xl overflow-hidden transition-all duration-200 cursor-pointer outline-none ${
-                    isFocused
-                      ? 'scale-[1.06] z-20 ring-3 ring-white shadow-[0_12px_32px_rgba(0,0,0,0.9),0_0_24px_rgba(255,255,255,0.35)]'
-                      : isCurrent
-                      ? 'ring-1 ring-purple-500/50'
-                      : 'opacity-90 hover:opacity-100'
-                  } bg-[#11121b] border border-[#20212f]`}
-                >
-                  {/* Thumbnail */}
-                  <div className="relative aspect-video w-full bg-[#0a0b12] overflow-hidden">
-                    <img
-                      src={ep.image || anime?.image || DEFAULT_POSTER}
-                      alt={`Episode ${ep.number}`}
-                      loading={isFocused ? "eager" : "lazy"}
-                      decoding="async"
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover object-center filter brightness-[0.9]"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-
-                    {/* Play button overlay when focused */}
-                    <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
-                      isFocused ? 'opacity-100' : 'opacity-0'
-                    }`}>
-                      <div className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center shadow-xl">
-                        <Play className="w-5 h-5 fill-black ml-0.5" />
+            {isLoading ? (
+              <div className="flex items-center gap-3 py-10 text-white/45">
+                <div className="w-6 h-6 border-2 border-white/15 border-t-white rounded-full animate-spin" />
+                <span>Loading episodes...</span>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 max-h-[52vh] overflow-y-auto pr-1">
+                {currentSeasonEpisodes.map((ep, idx) => {
+                  const isFocused = focusZone === 'episodes' && focusedEpIdx === idx;
+                  const isCurrent = ctaInfo?.episode?.id === ep.id;
+                  return (
+                    <button
+                      key={ep.id}
+                      ref={el => (epRefs.current[idx] = el)}
+                      onClick={() => onPlayEpisode(ep.id, 0)}
+                      className={`group flex items-center gap-3 rounded-2xl border p-3 text-left transition-all outline-none ${
+                        isFocused ? 'bg-white text-black border-white scale-[1.015] shadow-lg' :
+                        isCurrent ? 'bg-white/[.08] border-white/25 text-white' : 'bg-white/[.025] border-white/[.06] text-white/75 hover:bg-white/[.05]'
+                      }`}
+                    >
+                      <img src={ep.image || anime?.image || DEFAULT_POSTER} alt="" loading={isFocused ? 'eager' : 'lazy'} decoding="async" className="w-32 aspect-video rounded-xl object-cover bg-black/30" />
+                      <div className="min-w-0 flex-1">
+                        <div className={`text-[10px] font-black uppercase tracking-wider ${isFocused ? 'text-black/50' : 'text-white/35'}`}>Episode {ep.number}</div>
+                        <div className="truncate font-black text-sm mt-1">{ep.title || `Episode ${ep.number}`}</div>
+                        <div className={`text-[11px] mt-1 ${isFocused ? 'text-black/50' : 'text-white/35'}`}>{ep.duration ? `${Math.round(ep.duration / 60)} min` : '24 min'}</div>
                       </div>
-                    </div>
-
-                    <div className="absolute bottom-2 left-2.5">
-                      <span className="text-[11px] font-black uppercase tracking-wider bg-black/70 text-white border border-white/20 px-2 py-0.5 rounded-md backdrop-blur-md">
-                        Episode {ep.number}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Title */}
-                  <div className="p-3.5 flex flex-col gap-1 bg-[#0f1017]">
-                    <h3 className={`text-sm font-bold truncate ${
-                      isFocused ? 'text-white' : 'text-gray-300'
-                    }`}>
-                      {ep.title || `Episode ${ep.number}`}
-                    </h3>
-                    <span className="text-xs text-gray-500">
-                      {ep.duration ? `${Math.round(ep.duration / 60)} mins` : '24 mins'}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                      {isCurrent && <span className={`text-[10px] font-black px-2 py-1 rounded-full ${isFocused ? 'bg-black/10' : 'bg-white/10 text-white/60'}`}>RESUME</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        </div>
+      </section>
     </div>
   );
 }
