@@ -1,108 +1,21 @@
 import React from 'react';
-import { Star } from 'lucide-react';
-import { AnimeItem, DEFAULT_POSTER } from '../../types';
-import { HistoryItem, formatPlaybackTimestamp } from '../../lib/history';
+import { Play } from 'lucide-react';
+import { AnimeItem } from '../../types';
+import { HistoryItem } from '../../lib/history';
 
-const prefetchedUrls = new Set<string>();
-
-export function prefetchImage(url?: string) {
-  if (!url || prefetchedUrls.has(url)) return;
-  prefetchedUrls.add(url);
-  const img = new Image();
-  img.src = url;
-}
-
-export interface TVCardProps {
-  key?: React.Key;
-  item?: AnimeItem;
-  historyItem?: HistoryItem;
-  isContinueWatching?: boolean;
-  isFocused: boolean;
-  onSelect: () => void;
-  index: number;
-}
-
-export function TVCard({ item, historyItem, isContinueWatching = false, isFocused, onSelect }: TVCardProps) {
-  if (isContinueWatching && historyItem) {
-    const progressPct = Math.min(100, Math.max(0, historyItem.completionPercentage || Math.round((historyItem.playbackTimestamp / Math.max(1, historyItem.duration || 1440)) * 100)));
-    const remainingSeconds = Math.max(0, (historyItem.duration || 1440) - historyItem.playbackTimestamp);
-    const remainingMinutes = Math.ceil(remainingSeconds / 60);
-
-    return (
-      <button
-        type="button"
-        onClick={onSelect}
-        className={`group relative shrink-0 w-64 sm:w-72 overflow-hidden rounded-2xl border bg-[#11141b] text-left outline-none transition-all duration-200 ${
-          isFocused
-            ? 'z-20 scale-[1.05] border-[#ffffff] shadow-[0_14px_40px_rgba(0,0,0,.7),0_0_28px_rgba(255,255,255,.12)] ring-2 ring-[#ffffff]/70'
-            : 'border-white/[0.08] opacity-90'
-        }`}
-      >
-        <div className="relative aspect-video overflow-hidden bg-black">
-          <img
-            src={historyItem.image || DEFAULT_POSTER}
-            alt={historyItem.title}
-            referrerPolicy="no-referrer"
-            className="h-full w-full object-cover transition-transform duration-300 group-focus:scale-105"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-white/15">
-            <div className="h-full bg-gradient-to-r from-[#ffffff] to-[#FF0055]" style={{ width: `${progressPct}%` }} />
-          </div>
-          <span className="absolute left-3 top-3 rounded-md border border-white/15 bg-black/65 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-white/85">
-            S{historyItem.seasonNumber || 1}:E{historyItem.episodeNumber}
-          </span>
-          {remainingMinutes > 0 && (
-            <span className="absolute bottom-3 right-3 rounded-md bg-black/65 px-2 py-1 text-[10px] font-bold text-white/80">
-              {remainingMinutes}m left
-            </span>
-          )}
-        </div>
-        <div className="p-4">
-          <h3 className={`truncate text-sm font-black ${isFocused ? 'text-white' : 'text-white/85'}`}>{historyItem.title}</h3>
-          <p className="mt-1 text-xs text-white/45">
-            Resume from {formatPlaybackTimestamp(historyItem.playbackTimestamp)}
-          </p>
-        </div>
-      </button>
-    );
-  }
-
-  if (!item) return null;
-
-  const titleString = typeof item.title === 'string' ? item.title : item.title?.english || item.title?.romaji || 'Anime';
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={`group relative shrink-0 w-48 sm:w-56 overflow-hidden rounded-2xl border bg-[#11141b] text-left outline-none transition-all duration-200 ${
-        isFocused
-          ? 'z-20 scale-[1.06] border-[#ffffff] shadow-[0_14px_40px_rgba(0,0,0,.7),0_0_28px_rgba(255,255,255,.12)] ring-2 ring-[#ffffff]/70'
-          : 'border-white/[0.08] opacity-90'
-      }`}
-    >
-      <div className="relative aspect-[2/3] overflow-hidden bg-black">
-        <img
-          src={item.image || DEFAULT_POSTER}
-          alt={titleString}
-          referrerPolicy="no-referrer"
-          className="h-full w-full object-cover object-center transition-transform duration-300 group-focus:scale-105"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#11141b] via-transparent to-black/20" />
-        {item.rating !== undefined && item.rating !== null && (
-          <span className="absolute left-3 top-3 flex items-center gap-1 rounded-md border border-white/15 bg-black/65 px-2 py-1 text-[10px] font-black text-white">
-            <Star className="h-3 w-3 fill-[#ffffff] text-[#ffffff]" />
-            {typeof item.rating === 'number' ? Math.round(item.rating) : item.rating}
-          </span>
-        )}
-      </div>
-      <div className="p-4">
-        <h3 className={`truncate text-sm font-black ${isFocused ? 'text-white' : 'text-white/82'}`}>{titleString}</h3>
-        <div className="mt-1 flex items-center justify-between text-[10px] font-bold text-white/40">
-          <span>{item.type || 'TV'}</span>
-          {item.releaseDate && <span>{item.releaseDate}</span>}
-        </div>
-      </div>
-    </button>
-  );
-}
+export function prefetchImage(src?:string){if(!src)return;const i=new Image();i.decoding='async';i.src=src;}
+interface Props{item?:AnimeItem;historyItem?:HistoryItem;isContinueWatching?:boolean;isFocused:boolean;onSelect:()=>void;index:number;}
+export const TVCard=React.memo(function TVCard({item,historyItem,isContinueWatching,isFocused,onSelect}:Props){
+ const title=item?(typeof item.title==='string'?item.title:item.title?.english||item.title?.romaji||'Anime'):historyItem?.title||'Anime';
+ const image=item?.image||item?.cover||historyItem?.image||'';
+ const progress=historyItem?.duration?Math.min(100,Math.max(0,(historyItem.playbackTimestamp/historyItem.duration)*100)):0;
+ return <button onClick={onSelect} className={`group relative w-[210px] shrink-0 overflow-hidden rounded-[22px] text-left outline-none transition-all duration-200 ${isFocused?'z-10 scale-[1.055] shadow-[0_22px_55px_rgba(0,0,0,.55)]':'opacity-90'}`}>
+  <div className={`relative aspect-[2/3] overflow-hidden rounded-[22px] border bg-[#11131b] ${isFocused?'border-white/80 ring-2 ring-white/30':'border-white/8'}`}>
+   {image?<img src={image} alt="" loading="lazy" decoding="async" className={`h-full w-full object-cover transition-transform duration-500 ${isFocused?'scale-105':''}`}/>:<div className="h-full w-full bg-gradient-to-br from-violet-900/50 to-cyan-900/30"/>}
+   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/5 to-transparent"/>
+   {isFocused&&<div className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white text-black"><Play className="h-4 w-4 fill-current"/></div>}
+   <div className="absolute inset-x-3 bottom-3"><div className="line-clamp-2 text-sm font-black leading-tight text-white">{title}</div>{isContinueWatching&&<div className="mt-1 text-[10px] font-bold text-white/55">S{historyItem?.seasonNumber||1} • E{historyItem?.episodeNumber||1}</div>}</div>
+   {isContinueWatching&&<div className="absolute inset-x-0 bottom-0 h-1 bg-white/15"><div className="h-full bg-gradient-to-r from-fuchsia-400 to-cyan-300" style={{width:`${progress}%`}}/></div>}
+  </div>
+ </button>;
+});
