@@ -122,11 +122,11 @@ export const TVContentRow = React.memo(function TVContentRow({
   if (count === 0) return null;
 
   return (
-    <div className="w-full flex flex-col py-3 select-none">
+    <div className="w-full flex flex-col py-5 select-none">
       {/* Row Header */}
-      <div className="flex items-baseline justify-between px-8 lg:px-14 mb-3">
+      <div className="flex items-baseline justify-between px-10 lg:px-16 mb-4">
         <div className="flex items-center gap-3">
-          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight drop-shadow-sm font-['Outfit']">
+          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
             {title}
           </h2>
           {subtitle && (
@@ -138,7 +138,7 @@ export const TVContentRow = React.memo(function TVContentRow({
       </div>
 
       {/* Virtualized Horizontal Card Carousel using react-window */}
-      <div ref={containerRef} className="w-full px-8 lg:px-14">
+      <div ref={containerRef} className="w-full px-10 lg:px-16">
         <Grid
           gridRef={gridRef}
           columnCount={count}
