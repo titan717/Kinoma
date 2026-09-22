@@ -57,13 +57,13 @@ function groupFranchises(items: AnimeItem[]): AnimeItem[] {
     // Keep the richest representative so the card points at the franchise
     // while retaining the best available artwork/metadata.
     const existingScore =
-      Number(existing.popularity || 0) +
-      Number(existing.season_year || 0) +
+      Number((existing as any).popularity || 0) +
+      Number((existing as any).season_year || 0) +
       (existing.description ? 10 : 0);
 
     const itemScore =
-      Number(item.popularity || 0) +
-      Number(item.season_year || 0) +
+      Number((item as any).popularity || 0) +
+      Number((item as any).season_year || 0) +
       (item.description ? 10 : 0);
 
     if (itemScore > existingScore) groups.set(key, item);
