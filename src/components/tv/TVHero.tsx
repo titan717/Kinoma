@@ -33,7 +33,7 @@ export function TVHero({ item, isFocused, focusedButtonIndex, onPlay, onMoreInfo
   if (!item) {
     return (
       <div className="h-[68vh] min-h-[520px] bg-[#0B0C10] flex items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-2 border-[#00F0FF]/20 border-t-[#00F0FF]" />
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-white/60" />
       </div>
     );
   }
@@ -42,7 +42,7 @@ export function TVHero({ item, isFocused, focusedButtonIndex, onPlay, onMoreInfo
     ? item.title
     : item.title?.english || item.title?.romaji || 'Featured Anime';
 
-  const backdropImage = item.cover || item.image || DEFAULT_BANNER;
+  const backdropImage = item.banner || item.cover || item.image || DEFAULT_BANNER;
   const cleanDescription = item.description?.replace(/<[^>]*>?/gm, '').trim();
   const description = cleanDescription
     ? cleanDescription.slice(0, 260) + (cleanDescription.length > 260 ? '…' : '')
@@ -69,17 +69,17 @@ export function TVHero({ item, isFocused, focusedButtonIndex, onPlay, onMoreInfo
           src={backdropImage}
           alt={titleString}
           referrerPolicy="no-referrer"
-          className="h-full w-full object-cover object-center scale-[1.015] transition-transform duration-700"
+          className="h-full w-full object-cover object-center scale-[1.03] brightness-[0.76] saturate-[0.72] transition-transform duration-[1200ms] ease-out"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0B0C10] via-[#0B0C10]/82 via-40% to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0B0C10] via-[#0B0C10]/78 via-40% to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0B0C10] via-[#0B0C10]/72 via-24% to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-transparent" />
       </div>
 
-      <div className="relative z-10 flex h-full max-w-4xl flex-col justify-end px-8 pb-14 lg:px-14">
-        <div className="mb-3 flex flex-wrap items-center gap-2.5">
+      <div className="relative z-10 flex h-full max-w-5xl flex-col justify-end px-8 pb-14 lg:px-14">
+        <div className="absolute right-10 bottom-14 hidden xl:block h-[290px] w-[194px] overflow-hidden rounded-[24px] border border-white/15 shadow-[0_24px_70px_rgba(0,0,0,.5)] rotate-[1.5deg]"><img src={item.image || item.cover || DEFAULT_POSTER} alt="" className="h-full w-full object-cover" loading="eager" decoding="async" /><div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" /></div>\n\n        <div className="mb-3 flex flex-wrap items-center gap-2.5">
           {item.rating !== undefined && item.rating !== null && (
-            <span className="flex items-center gap-1 rounded-md border border-[#00F0FF]/30 bg-[#00F0FF]/10 px-2.5 py-1 text-xs font-black text-[#8ff7ff]">
+            <span className="flex items-center gap-1 rounded-md border border-white/15 bg-white/[0.08] px-2.5 py-1 text-xs font-black text-white/80">
               <Star className="h-3 w-3 fill-current" />
               {typeof item.rating === 'number' ? `${Math.round(item.rating)}% Match` : item.rating}
             </span>
@@ -101,9 +101,9 @@ export function TVHero({ item, isFocused, focusedButtonIndex, onPlay, onMoreInfo
           <button
             type="button"
             onClick={() => onPlay(item)}
-            className={`flex items-center gap-3 rounded-2xl bg-gradient-to-r from-[#00F0FF] to-[#FF0055] px-7 py-4 text-sm font-black text-[#071014] transition-all outline-none sm:text-base ${
+            className={`flex items-center gap-3 rounded-2xl bg-white text-black px-7 py-4 text-sm font-black text-[#071014] transition-all outline-none sm:text-base ${
               isFocused && focusedButtonIndex === 0
-                ? 'scale-[1.05] ring-2 ring-white shadow-[0_0_34px_rgba(0,240,255,.35)]'
+                ? 'scale-[1.05] ring-2 ring-white shadow-[0_10px_30px_rgba(0,0,0,.28)]'
                 : 'shadow-[0_8px_24px_rgba(0,0,0,.28)]'
             }`}
           >
@@ -116,11 +116,11 @@ export function TVHero({ item, isFocused, focusedButtonIndex, onPlay, onMoreInfo
             onClick={handleToggleList}
             className={`flex items-center gap-2.5 rounded-2xl border px-6 py-4 text-sm font-black text-white backdrop-blur-md transition-all outline-none sm:text-base ${
               isFocused && focusedButtonIndex === 1
-                ? 'scale-[1.05] border-[#00F0FF] bg-white/12 ring-2 ring-[#00F0FF]'
+                ? 'scale-[1.05] border-white/35 bg-white/10 ring-2 ring-white/30'
                 : 'border-white/15 bg-black/30'
             }`}
           >
-            {isInList ? <Check className="h-5 w-5 text-[#00F0FF]" /> : <Plus className="h-5 w-5" />}
+            {isInList ? <Check className="h-5 w-5 text-white/80" /> : <Plus className="h-5 w-5" />}
             {isInList ? 'In My List' : 'Add to My List'}
           </button>
 
@@ -129,7 +129,7 @@ export function TVHero({ item, isFocused, focusedButtonIndex, onPlay, onMoreInfo
             onClick={() => onMoreInfo(item)}
             className={`flex items-center gap-2.5 rounded-2xl border px-6 py-4 text-sm font-black text-white backdrop-blur-md transition-all outline-none ${
               isFocused && focusedButtonIndex === 2
-                ? 'scale-[1.05] border-[#FF0055] bg-white/12 ring-2 ring-[#FF0055]'
+                ? 'scale-[1.05] border-white/35 bg-white/10 ring-2 ring-white/30'
                 : 'border-white/15 bg-black/30'
             }`}
           >
