@@ -8,8 +8,8 @@ on:
         required: false
         type: string
   push:
-    tags:
-      - "v*.*.*"
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -29,11 +29,11 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
-            VERSION_NAME="${GITHUB_REF_NAME#v}"
-          elif [[ -n "${{ inputs.version_name }}" ]]; then
+          if [[ -n "${{ inputs.version_name }}" ]]; then
             VERSION_NAME="${{ inputs.version_name }}"
           else
+            # Every main-branch commit gets a monotonically increasing
+            # production version based on the GitHub Actions run number.
             VERSION_NAME="1.0.${GITHUB_RUN_NUMBER}"
           fi
 
