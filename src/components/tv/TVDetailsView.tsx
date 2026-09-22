@@ -5,6 +5,7 @@ import { api } from '../../lib/api';
 import { AnimeItem, AnimeDetails, Episode, DEFAULT_BANNER, DEFAULT_POSTER } from '../../types';
 import { libraryManager } from '../../lib/library';
 import { historyUtil } from '../../lib/history';
+import { prefetchImage } from './TVCard';
 
 interface TVDetailsViewProps {
   animeId: string;
@@ -138,7 +139,7 @@ export function TVDetailsView({
     setIsInList(updated);
   };
 
-  // Auto-scroll focused episode into view
+  // Auto-scroll focused episode into view & prefetch next episode thumbnail
   useEffect(() => {
     if (focusZone === 'episodes' && epRefs.current[focusedEpIdx]) {
       epRefs.current[focusedEpIdx]?.scrollIntoView({
@@ -146,8 +147,13 @@ export function TVDetailsView({
         block: 'nearest',
         inline: 'center'
       });
+      // Prefetch images for focused and next 2 episodes
+      const currEp = currentSeasonEpisodes[focusedEpIdx];
+      const nextEp = currentSeasonEpisodes[focusedEpIdx + 1];
+      if (currEp?.image) prefetchImage(currEp.image);
+      if (nextEp?.image) prefetchImage(nextEp.image);
     }
-  }, [focusZone, focusedEpIdx]);
+  }, [focusZone, focusedEpIdx, currentSeasonEpisodes]);
 
   // Spatial TV D-pad navigation
   useEffect(() => {
@@ -426,6 +432,8 @@ export function TVDetailsView({
                     <img
                       src={ep.image || anime?.image || DEFAULT_POSTER}
                       alt={`Episode ${ep.number}`}
+                      loading={isFocused ? "eager" : "lazy"}
+                      decoding="async"
                       referrerPolicy="no-referrer"
                       className="w-full h-full object-cover object-center filter brightness-[0.9]"
                     />

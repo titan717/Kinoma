@@ -21,6 +21,7 @@ import { useAuth } from '../../../lib/AuthContext';
 import { useTVMode } from '../../../lib/TVModeContext';
 import { ModernNotifications } from './ModernNotifications';
 import { KinomaLogo } from '../KinomaLogo';
+import { Button } from '../Button';
 import { preferencesUtil } from '../../../lib/preferences';
 import { AnimatePresence, motion } from 'motion/react';
 
@@ -111,10 +112,10 @@ export function ModernNavbar({ onSelectCategory, onOpenAuth }: ModernNavbarProps
               </div>
             </Link>
 
-            {/* Desktop & Laptop Navigation Links (Matching Reference Image) */}
-            <nav className="hidden md:flex items-center gap-1 lg:gap-2.5 text-xs lg:text-sm font-medium">
+            {/* Desktop & Laptop Navigation Links */}
+            <nav className="hidden md:flex items-center gap-1 lg:gap-2 text-xs lg:text-sm font-medium">
               <Link href="/">
-                <span className={`px-3 py-1.5 rounded-full transition-all cursor-pointer select-none ${
+                <span className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer select-none kinoma-focus ${
                   location === '/' 
                     ? 'text-white font-bold bg-white/10 shadow-sm' 
                     : 'text-gray-300 hover:text-white hover:bg-white/5'
@@ -124,8 +125,8 @@ export function ModernNavbar({ onSelectCategory, onOpenAuth }: ModernNavbarProps
               </Link>
 
               <Link href="/search">
-                <span className={`px-3 py-1.5 rounded-full transition-all cursor-pointer select-none ${
-                  location === '/search' 
+                <span className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer select-none kinoma-focus ${
+                  location === '/search' || location === '/explore'
                     ? 'text-white font-bold bg-white/10 shadow-sm' 
                     : 'text-gray-300 hover:text-white hover:bg-white/5'
                 }`}>
@@ -134,7 +135,7 @@ export function ModernNavbar({ onSelectCategory, onOpenAuth }: ModernNavbarProps
               </Link>
 
               <Link href="/whats-new">
-                <span className={`px-3 py-1.5 rounded-full transition-all cursor-pointer select-none ${
+                <span className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer select-none kinoma-focus ${
                   location === '/whats-new' 
                     ? 'text-white font-bold bg-white/10 shadow-sm' 
                     : 'text-gray-300 hover:text-white hover:bg-white/5'
@@ -144,7 +145,7 @@ export function ModernNavbar({ onSelectCategory, onOpenAuth }: ModernNavbarProps
               </Link>
 
               <Link href="/library">
-                <span className={`px-3 py-1.5 rounded-full transition-all cursor-pointer select-none ${
+                <span className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer select-none kinoma-focus ${
                   location === '/library' 
                     ? 'text-white font-bold bg-white/10 shadow-sm' 
                     : 'text-gray-300 hover:text-white hover:bg-white/5'
@@ -158,20 +159,20 @@ export function ModernNavbar({ onSelectCategory, onOpenAuth }: ModernNavbarProps
           {/* RIGHT: Search Pill, Notifications, Profile & Controls */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             
-            {/* Desktop/Tablet Frosted Pill Search Input (Matching Reference Image) */}
+            {/* Desktop/Tablet Frosted Pill Search Input */}
             <form 
               onSubmit={handleSearchSubmit}
               className="hidden sm:flex relative items-center"
             >
-              <div className="relative flex items-center bg-white/5 hover:bg-white/10 focus-within:bg-white/10 border border-white/10 focus-within:border-[#c084fc]/60 rounded-full transition-all backdrop-blur-md px-3.5 py-1.5 sm:w-44 md:w-56 lg:w-72 shadow-inner">
+              <div className="relative flex items-center bg-white/5 hover:bg-white/10 focus-within:bg-white/10 border border-white/10 focus-within:border-purple-400/70 rounded-full transition-all backdrop-blur-md px-3.5 py-1.5 sm:w-48 md:w-60 lg:w-72 shadow-inner">
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search here ..."
+                  placeholder="Search anime, genres..."
                   className="w-full bg-transparent text-xs text-white placeholder-gray-400 focus:outline-none tracking-wide pr-6"
                 />
-                <button type="submit" className="absolute right-3 text-gray-400 hover:text-white transition-colors" aria-label="Search">
+                <button type="submit" className="absolute right-3 text-gray-400 hover:text-white transition-colors kinoma-focus" aria-label="Search">
                   <Search className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -180,115 +181,119 @@ export function ModernNavbar({ onSelectCategory, onOpenAuth }: ModernNavbarProps
             {/* Mobile Search Icon Toggle Button */}
             <button
               onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
-              className="sm:hidden w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-gray-300 hover:text-white transition-all backdrop-blur-md"
+              className="sm:hidden min-w-[44px] min-h-[44px] rounded-full bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 flex items-center justify-center text-gray-300 hover:text-white transition-all backdrop-blur-md kinoma-focus"
               aria-label="Toggle Mobile Search"
             >
               <Search className="w-4 h-4" />
             </button>
 
-            {/* Notification Bell (Matching Reference Image) */}
+            {/* Notification Bell */}
             <ModernNotifications />
 
             {/* Android TV App Option Pill */}
             <button
               onClick={() => openAndroidTVModal()}
-              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 text-gray-200 hover:text-white border border-white/10 transition-all cursor-pointer backdrop-blur-md"
+              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 text-gray-200 hover:text-white border border-white/10 transition-all cursor-pointer backdrop-blur-md kinoma-focus"
               title="Add Kinoma as an app on Android TV or Google TV"
             >
               <Tv className="w-3.5 h-3.5 text-[#c084fc]" />
               <span>Android TV</span>
             </button>
 
-            {/* User Profile Avatar (Matching Reference Image with Anime Avatar Style) */}
-            <div className="relative" ref={userMenuRef}>
-              <button
-                onClick={() => {
-                  if (user) {
-                    setIsUserMenuOpen(!isUserMenuOpen);
-                  } else if (onOpenAuth) {
-                    onOpenAuth();
-                  }
-                }}
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full ring-2 ring-white/15 hover:ring-[#c084fc] transition-all p-0.5 overflow-hidden flex items-center justify-center bg-[#181922] cursor-pointer"
-                title={user ? (profile?.username || user.displayName || 'Profile') : 'Sign In'}
-                aria-label="User profile"
+            {/* User Profile or Sign In Button */}
+            {!user ? (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={onOpenAuth}
+                className="text-xs px-3.5 py-1.5 hidden sm:inline-flex"
               >
-                {/* Default or Custom Anime Avatar (matches blue-haired avatar in reference image) */}
-                <img
-                  src="https://api.dicebear.com/7.x/bottts/svg?seed=KinomaAnime&backgroundColor=b6e3f4"
-                  alt="Avatar"
-                  className="w-full h-full object-cover rounded-full"
-                />
-              </button>
+                Sign In
+              </Button>
+            ) : (
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="w-9 h-9 rounded-full ring-2 ring-white/15 hover:ring-[#c084fc] transition-all p-0.5 overflow-hidden flex items-center justify-center bg-[#181922] cursor-pointer kinoma-focus"
+                  title={profile?.username || user.displayName || 'Profile'}
+                  aria-label="User profile"
+                >
+                  <img
+                    src="https://api.dicebear.com/7.x/bottts/svg?seed=KinomaAnime&backgroundColor=b6e3f4"
+                    alt="Avatar"
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                </button>
 
-              {/* User Dropdown */}
-              {isUserMenuOpen && user && (
-                <div className="absolute right-0 mt-2 w-52 bg-[#111218]/95 border border-[#242533] backdrop-blur-xl rounded-2xl shadow-2xl p-2 z-50 overflow-hidden text-xs">
-                  <div className="px-3 py-2 border-b border-[#1f202c]">
-                    <p className="font-bold text-white truncate">{profile?.username || user.displayName || 'Kinoma User'}</p>
-                    <p className="text-[10px] text-gray-400 truncate">{user.email}</p>
+                {/* User Dropdown */}
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-52 bg-[#0e1017]/95 border border-white/10 backdrop-blur-xl rounded-2xl shadow-2xl p-2 z-50 overflow-hidden text-xs">
+                    <div className="px-3 py-2 border-b border-white/10">
+                      <p className="font-bold text-white truncate">{profile?.username || user.displayName || 'Kinoma User'}</p>
+                      <p className="text-[10px] text-gray-400 truncate">{user.email}</p>
+                    </div>
+
+                    <div className="py-1 space-y-0.5">
+                      <Link href="/library" onClick={() => setIsUserMenuOpen(false)}>
+                        <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 cursor-pointer">
+                          <Bookmark className="w-3.5 h-3.5 text-[#c084fc]" />
+                          <span>My List & History</span>
+                        </div>
+                      </Link>
+
+                      <button
+                        onClick={() => {
+                          setIsUserMenuOpen(false);
+                          openSettingsModal('appearance');
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 text-left cursor-pointer"
+                      >
+                        <Sliders className="w-3.5 h-3.5 text-[#c084fc]" />
+                        <span>Appearance & Settings</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setIsUserMenuOpen(false);
+                          openAndroidTVModal();
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 text-left cursor-pointer"
+                      >
+                        <Tv className="w-3.5 h-3.5 text-[#c084fc]" />
+                        <span>Add to Android TV</span>
+                      </button>
+
+                      <button
+                        onClick={handleReplayIntro}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 text-left cursor-pointer"
+                      >
+                        <PlaySquare className="w-3.5 h-3.5 text-purple-400" />
+                        <span>Replay Kinoma Intro</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setIsUserMenuOpen(false);
+                          logout();
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-rose-400 hover:text-rose-300 hover:bg-rose-950/20 text-left mt-1 border-t border-white/10 cursor-pointer"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
                   </div>
-
-                  <div className="py-1 space-y-0.5">
-                    <Link href="/library" onClick={() => setIsUserMenuOpen(false)}>
-                      <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 cursor-pointer">
-                        <Bookmark className="w-3.5 h-3.5 text-[#c084fc]" />
-                        <span>My List & History</span>
-                      </div>
-                    </Link>
-
-                    <button
-                      onClick={() => {
-                        setIsUserMenuOpen(false);
-                        openSettingsModal('appearance');
-                      }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 text-left cursor-pointer"
-                    >
-                      <Sliders className="w-3.5 h-3.5 text-[#c084fc]" />
-                      <span>Appearance & Settings</span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setIsUserMenuOpen(false);
-                        openAndroidTVModal();
-                      }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 text-left cursor-pointer"
-                    >
-                      <Tv className="w-3.5 h-3.5 text-[#c084fc]" />
-                      <span>Add to Android TV</span>
-                    </button>
-
-                    <button
-                      onClick={handleReplayIntro}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 text-left cursor-pointer"
-                    >
-                      <PlaySquare className="w-3.5 h-3.5 text-purple-400" />
-                      <span>Replay Kinoma Intro</span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setIsUserMenuOpen(false);
-                        logout();
-                      }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-950/20 text-left mt-1 border-t border-[#1f202c] cursor-pointer"
-                    >
-                      <LogOut className="w-3.5 h-3.5" />
-                      <span>Sign Out</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             {/* Mobile Drawer Trigger Button */}
             <button
               onClick={() => setIsMobileDrawerOpen(true)}
-              className="md:hidden w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-gray-300 hover:text-white transition-all backdrop-blur-md"
+              className="md:hidden min-w-[44px] min-h-[44px] rounded-full bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 flex items-center justify-center text-gray-300 hover:text-white transition-all backdrop-blur-md kinoma-focus"
               aria-label="Open Navigation Drawer"
             >
-              <Menu className="w-4 h-4" />
+              <Menu className="w-5 h-5" />
             </button>
 
           </div>
@@ -400,20 +405,6 @@ export function ModernNavbar({ onSelectCategory, onOpenAuth }: ModernNavbarProps
                   >
                     <PlaySquare className="w-5 h-5" />
                     <span>Replay Kinoma Intro</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setIsMobileDrawerOpen(false);
-                      openAndroidTVModal();
-                    }}
-                    className="px-4 py-3 rounded-2xl flex items-center gap-3 text-white bg-gradient-to-r from-purple-950/50 to-white/5 hover:from-purple-900/50 border border-purple-500/30 text-left cursor-pointer transition-all mt-1"
-                  >
-                    <Tv className="w-5 h-5 text-[#c084fc] shrink-0" />
-                    <div className="flex flex-col">
-                      <span className="font-bold text-xs">Add to Android TV</span>
-                      <span className="text-[10px] text-gray-400">Install app on Google TV & Android TV</span>
-                    </div>
                   </button>
                 </div>
               </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Play, Star } from 'lucide-react';
 import { AnimeItem, DEFAULT_POSTER } from '../../types';
 import { HistoryItem, formatPlaybackTimestamp } from '../../lib/history';
@@ -13,13 +13,36 @@ export interface TVCardProps {
   index: number;
 }
 
-export function TVCard({
+// Global cache for prefetched images to avoid redundant browser requests
+const prefetchedUrls = new Set<string>();
+
+export function prefetchImage(url?: string) {
+  if (!url || prefetchedUrls.has(url)) return;
+  prefetchedUrls.add(url);
+  const img = new Image();
+  img.src = url;
+}
+
+export const TVCard = React.memo(function TVCard({
   item,
   historyItem,
   isContinueWatching = false,
   isFocused,
   onSelect
 }: TVCardProps) {
+
+  // Prefetch high-res artwork when card becomes focused
+  useEffect(() => {
+    if (isFocused) {
+      if (item) {
+        if (item.cover) prefetchImage(item.cover);
+        if (item.image) prefetchImage(item.image);
+      } else if (historyItem) {
+        if (historyItem.image) prefetchImage(historyItem.image);
+      }
+    }
+  }, [isFocused, item, historyItem]);
+
   if (isContinueWatching && historyItem) {
     const progressPct = Math.min(100, Math.max(5, historyItem.completionPercentage || Math.round((historyItem.playbackTimestamp / (historyItem.duration || 1440)) * 100) || 10));
     const remainingSeconds = Math.max(0, (historyItem.duration || 1440) - historyItem.playbackTimestamp);
@@ -39,6 +62,8 @@ export function TVCard({
           <img
             src={historyItem.image || DEFAULT_POSTER}
             alt={historyItem.title}
+            loading={isFocused ? "eager" : "lazy"}
+            decoding="async"
             referrerPolicy="no-referrer"
             className="w-full h-full object-cover object-center filter brightness-[0.95] group-hover:scale-105 transition-transform duration-300"
           />
@@ -113,6 +138,8 @@ export function TVCard({
         <img
           src={posterImage}
           alt={titleString}
+          loading={isFocused ? "eager" : "lazy"}
+          decoding="async"
           referrerPolicy="no-referrer"
           className="w-full h-full object-cover object-center filter brightness-[0.95]"
         />
@@ -153,4 +180,5 @@ export function TVCard({
       </div>
     </div>
   );
-}
+});
+

@@ -86,8 +86,8 @@ export default function App() {
       value={{ 
         provider: localCache.getSwrStorageProvider(),
         revalidateOnFocus: false,
-        revalidateIfStale: true,
-        dedupingInterval: 10000
+        revalidateIfStale: false,
+        dedupingInterval: 30000
       }}
     >
       <AuthProvider>

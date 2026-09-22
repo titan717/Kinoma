@@ -80,7 +80,7 @@ export function ModernCarousel({
             <button
               onClick={() => scroll('left')}
               disabled={!canScrollLeft}
-              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all backdrop-blur-md ${
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all backdrop-blur-md kinoma-focus ${
                 !canScrollLeft ? 'opacity-25 cursor-not-allowed' : 'opacity-80 hover:opacity-100 cursor-pointer'
               }`}
               aria-label="Scroll left"
@@ -91,7 +91,7 @@ export function ModernCarousel({
             <button
               onClick={() => scroll('right')}
               disabled={!canScrollRight}
-              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all backdrop-blur-md ${
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all backdrop-blur-md kinoma-focus ${
                 !canScrollRight ? 'opacity-25 cursor-not-allowed' : 'opacity-80 hover:opacity-100 cursor-pointer'
               }`}
               aria-label="Scroll right"

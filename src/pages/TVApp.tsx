@@ -9,9 +9,11 @@ import { useTVMode } from '../lib/TVModeContext';
 import { TVSidebar, TVNavSection, TV_NAV_ITEMS } from '../components/tv/TVSidebar';
 import { TVHero } from '../components/tv/TVHero';
 import { TVContentRow } from '../components/tv/TVContentRow';
+import { TVCard, prefetchImage } from '../components/tv/TVCard';
 import { TVSearchView } from '../components/tv/TVSearchView';
 import { TVDetailsView } from '../components/tv/TVDetailsView';
 import { TVVirtualRemote } from '../components/tv/TVVirtualRemote';
+import { groupFranchises } from '../lib/franchise';
 import { 
   Compass, 
   Settings as SettingsIcon, 
@@ -24,53 +26,6 @@ import {
   ArrowLeft,
   Tv
 } from 'lucide-react';
-
-function franchiseKey(item: AnimeItem): string {
-  const raw = typeof item.title === 'string'
-    ? item.title
-    : item.title?.english || item.title?.romaji || item.id;
-
-  return raw
-    .toLowerCase()
-    .replace(/[:\-–—]/g, ' ')
-    .replace(/\b(the\s+)?final\s+(season|chapters?)\b/g, ' ')
-    .replace(/\bseason\s*\d+(?:\s*part\s*\d+)?\b/g, ' ')
-    .replace(/\bpart\s*\d+\b/g, ' ')
-    .replace(/\b(?:cour|arc)\s*\d+\b/g, ' ')
-    .replace(/\b(?:ova|ona|special)\b/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function groupFranchises(items: AnimeItem[]): AnimeItem[] {
-  const groups = new Map<string, AnimeItem>();
-
-  for (const item of items) {
-    const key = franchiseKey(item);
-    const existing = groups.get(key);
-
-    if (!existing) {
-      groups.set(key, item);
-      continue;
-    }
-
-    // Keep the richest representative so the card points at the franchise
-    // while retaining the best available artwork/metadata.
-    const existingScore =
-      Number((existing as any).popularity || 0) +
-      Number((existing as any).season_year || 0) +
-      (existing.description ? 10 : 0);
-
-    const itemScore =
-      Number((item as any).popularity || 0) +
-      Number((item as any).season_year || 0) +
-      (item.description ? 10 : 0);
-
-    if (itemScore > existingScore) groups.set(key, item);
-  }
-
-  return Array.from(groups.values());
-}
 
 export function TVApp() {
   const [, setLocation] = useLocation();
@@ -116,7 +71,7 @@ export function TVApp() {
   const trending = useMemo(() => groupFranchises(trendingData?.results || []), [trendingData]);
   const popular = useMemo(() => groupFranchises(popularData?.results || []), [popularData]);
   const newEpisodes = useMemo(() => groupFranchises(newSeasonData?.results || []), [newSeasonData]);
-  const movies = useMemo(() => moviesData?.results || [], [moviesData]);
+  const movies = useMemo(() => groupFranchises(moviesData?.results || []), [moviesData]);
 
   // Transform Watchlist items to AnimeItem format for TV rows
   const watchlistAsAnime: AnimeItem[] = useMemo(() => {
@@ -129,21 +84,30 @@ export function TVApp() {
     }));
   }, [savedWatchlist]);
 
-  // Dynamic hero: use live catalog metadata, never a hardcoded title.
-  // Prefer currently airing/recently released high-popularity series.
-  const heroItem = useMemo(() => {
-    const list = [...trending, ...popular];
-    const unique = Array.from(new Map(list.map(item => [item.id, item])).values());
-    const seriesOnly = unique.filter(item => {
-      const format = String((item as any).format || (item as any).type || '').toLowerCase();
-      return format !== 'movie' && format !== 'special' && format !== 'ova' && format !== 'ona';
+  // 5 Popular series released after 2024 for the TV Hero, rotating every 4.2 seconds
+  const heroItems = useMemo(() => {
+    const pool = [...popular, ...trending];
+    const filtered = pool.filter(item => {
+      const format = (item.type || '').toUpperCase();
+      const isMovie = format === 'MOVIE' || format === 'Movie' || format === 'OVA' || format === 'SPECIAL';
+      const year = item.releaseDate ? parseInt(String(item.releaseDate).slice(0, 4)) : 2024;
+      return !isMovie && year >= 2024;
     });
-    return [...seriesOnly].sort((a: any, b: any) => {
-      const yearDiff = Number(b.season_year || 0) - Number(a.season_year || 0);
-      if (yearDiff !== 0) return yearDiff;
-      return Number(b.popularity || 0) - Number(a.popularity || 0);
-    })[0] || seriesOnly[0] || unique[0] || null;
-  }, [trending, popular]);
+    const unique = Array.from(new Map(filtered.map(item => [item.id, item])).values());
+    return (unique.length > 0 ? unique : pool).slice(0, 5);
+  }, [popular, trending]);
+
+  const [heroIndex, setHeroIndex] = useState(0);
+
+  useEffect(() => {
+    if (heroItems.length <= 1) return;
+    const interval = setInterval(() => {
+      setHeroIndex(prev => (prev + 1) % heroItems.length);
+    }, 4200);
+    return () => clearInterval(interval);
+  }, [heroItems]);
+
+  const heroItem = heroItems[heroIndex] || heroItems[0] || null;
 
   // Dynamic Row Configuration for Current Section
   const contentRows = useMemo(() => {
@@ -254,6 +218,32 @@ export function TVApp() {
 
     return [];
   }, [activeSection, continueWatchingItems, trending, newEpisodes, popular, movies, watchlistAsAnime]);
+
+  // High-performance image prefetching for focused and adjacent items in rows
+  useEffect(() => {
+    if (focusArea !== 'rows') return;
+    const currentRow = contentRows[focusedRowIndex];
+    if (!currentRow) return;
+
+    if (currentRow.isContinueWatching) {
+      const items = currentRow.historyItems || [];
+      const current = items[focusedCardIndex];
+      const next = items[focusedCardIndex + 1];
+      if (current?.image) prefetchImage(current.image);
+      if (next?.image) prefetchImage(next.image);
+    } else {
+      const items = currentRow.items || [];
+      const current = items[focusedCardIndex];
+      const next1 = items[focusedCardIndex + 1];
+      const next2 = items[focusedCardIndex + 2];
+      if (current) {
+        if (current.cover) prefetchImage(current.cover);
+        if (current.image) prefetchImage(current.image);
+      }
+      if (next1?.image) prefetchImage(next1.image);
+      if (next2?.image) prefetchImage(next2.image);
+    }
+  }, [focusArea, focusedRowIndex, focusedCardIndex, contentRows]);
 
   // Navigate to Player with Default Fullscreen
   const handleLaunchWatch = (episodeOrAnimeId: string, timestamp = 0) => {

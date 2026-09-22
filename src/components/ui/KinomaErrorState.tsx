@@ -1,5 +1,6 @@
 import React from 'react';
-import { AlertTriangle, RefreshCw, WifiOff } from 'lucide-react';
+import { RefreshCw, WifiOff } from 'lucide-react';
+import { Button } from './Button';
 
 interface KinomaErrorStateProps {
   onRetry?: () => void;
@@ -14,46 +15,51 @@ export function KinomaErrorState({
 }: KinomaErrorStateProps) {
   if (compact) {
     return (
-      <div className="w-full py-8 px-4 rounded-2xl bg-[#0f1016] border border-white/10 flex items-center justify-between gap-4">
+      <div className="w-full py-6 px-4 rounded-2xl bg-[#0e1017] border border-white/10 flex items-center justify-between gap-4 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
+          <div className="w-8 h-8 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 shrink-0">
             <WifiOff className="w-4 h-4" />
           </div>
           <span className="text-sm font-medium text-gray-300">{message}</span>
         </div>
         {onRetry && (
-          <button
+          <Button
+            size="sm"
+            variant="primary"
             onClick={onRetry}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#7b1fa2] hover:bg-[#9c27b0] text-white text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
+            leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
           >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Retry</span>
-          </button>
+            Retry
+          </Button>
         )}
       </div>
     );
   }
 
   return (
-    <div className="w-full min-h-[340px] flex flex-col items-center justify-center p-8 text-center bg-[#0d0e14] border border-white/10 rounded-3xl my-6">
-      <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 mb-4 shadow-lg shadow-red-500/5">
+    <div className="w-full min-h-[320px] flex flex-col items-center justify-center p-8 text-center bg-[#0e1017] border border-white/10 rounded-3xl my-6 shadow-md">
+      <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 mb-4 shadow-lg shadow-rose-500/5">
         <WifiOff className="w-7 h-7" />
       </div>
       <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
         {message}
       </h3>
       <p className="text-sm text-gray-400 max-w-md mt-2 leading-relaxed">
-        Please check your connection and try again. Kinoma connects exclusively to our verified high-speed anime services.
+        Please check your network and try again. Kinoma streaming operates continuously with our verified high-speed anime services.
       </p>
       {onRetry && (
-        <button
-          onClick={onRetry}
-          className="mt-6 flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#7b1fa2] hover:bg-[#9c27b0] text-white text-sm font-bold transition-all shadow-[0_4px_16px_rgba(123,31,162,0.4)] active:scale-95 cursor-pointer"
-        >
-          <RefreshCw className="w-4 h-4" />
-          <span>Retry</span>
-        </button>
+        <div className="mt-6">
+          <Button
+            size="md"
+            variant="primary"
+            onClick={onRetry}
+            leftIcon={<RefreshCw className="w-4 h-4" />}
+          >
+            Retry Connection
+          </Button>
+        </div>
       )}
     </div>
   );
 }
+

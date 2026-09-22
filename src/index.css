@@ -1,13 +1,22 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #0e0f11;
-  --color-foreground: #ffffff;
-  --color-muted: #1c1c22;
-  --color-muted-foreground: #8b8b92;
-  --color-accent: #151518;
-  --color-primary: #5c2d91;
+  --color-background: #08090d;
+  --color-background-elevated: #0e1017;
+  --color-surface: #141620;
+  --color-surface-hover: #1c1f2e;
+  --color-card: #12141c;
+  --color-card-hover: #191b26;
+  --color-foreground: #f9fafb;
+  --color-muted: #181924;
+  --color-muted-foreground: #9ca3af;
+  --color-accent: #9333ea;
+  --color-accent-hover: #a855f7;
+  --color-accent-light: #c084fc;
+  --color-primary: #9333ea;
   --color-primary-foreground: #ffffff;
+  --color-border-subtle: rgba(255, 255, 255, 0.05);
+  --color-border-default: rgba(255, 255, 255, 0.08);
 }
 
 @layer base {
@@ -96,3 +105,40 @@
   );
   animation: shimmer 2s infinite;
 }
+
+/* Accessible Web Focus Utility */
+.kinoma-focus {
+  outline: none;
+  transition: box-shadow 150ms ease, border-color 150ms ease;
+}
+.kinoma-focus:focus-visible {
+  box-shadow: 0 0 0 2px #08090d, 0 0 0 4px rgba(168, 85, 247, 0.7);
+  border-color: rgba(168, 85, 247, 0.8) !important;
+}
+
+/* TV Remote D-Pad Focus State */
+.kinoma-tv-focus {
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, box-shadow;
+}
+.kinoma-tv-focus.is-focused,
+.tv-mode .kinoma-tv-focus:focus,
+.tv-mode .kinoma-tv-focus:focus-visible {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 3px #ffffff, 0 12px 32px rgba(0, 0, 0, 0.85), 0 0 24px rgba(255, 255, 255, 0.35);
+  z-index: 30;
+  outline: none;
+}
+
+/* Accessibility: Respect Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+

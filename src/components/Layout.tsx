@@ -55,17 +55,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#07080c] text-white flex flex-col items-center justify-start relative font-sans selection:bg-[#7b1fa2] selection:text-white w-full overflow-x-hidden">
+    <div className="min-h-screen bg-[#08090d] text-white flex flex-col items-center justify-start relative font-sans selection:bg-[#9333ea] selection:text-white w-full overflow-x-hidden">
       
+      {/* Subtle Top Ambient Lighting (Cinema Atmosphere) */}
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-15%,rgba(147,51,234,0.07),rgba(8,9,13,0))] pointer-events-none z-0" />
+
       {/* 
         Responsive Application Shell:
-        - Large Desktop & Ultra-wide: Sits in an elegant rounded container matching the reference screenshot (rounded-[32px], subtle border, soft drop-shadow, max width).
-        - Tablet & Mobile: Fills viewport seamlessly edge-to-edge (rounded-none, zero outer margins).
+        - Large Desktop & Ultra-wide: Sits in an elegant container (rounded-[28px] lg:rounded-[36px], subtle border, soft drop-shadow, max width).
+        - Tablet & Mobile: Fills viewport seamlessly edge-to-edge.
       */}
-      <div className={`w-full flex-1 flex flex-col ${
+      <div className={`relative z-10 w-full flex-1 flex flex-col ${
         resolvedTheme === 'modern'
-          ? 'max-w-[1720px] 2xl:max-w-[1800px] md:my-3 lg:my-6 md:rounded-[28px] lg:rounded-[36px] bg-[#121318] md:ring-1 md:ring-white/5 md:shadow-[0_25px_80px_rgba(0,0,0,0.85)] overflow-hidden'
-          : 'w-full bg-[#0e0f11]'
+          ? 'max-w-[1720px] 2xl:max-w-[1800px] md:my-3 lg:my-6 md:rounded-[28px] lg:rounded-[36px] bg-[#0e1017] md:border md:border-white/5 md:shadow-[0_25px_80px_rgba(0,0,0,0.85)] overflow-hidden'
+          : 'w-full bg-[#08090d]'
       }`}>
 
         {/* Top Navbar: Modern (matching reference image) or Preserved Classic */}
@@ -246,37 +249,67 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Mobile Bottom Navigation Bar (Dock) */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0c0d12]/95 backdrop-blur-xl border-t border-white/10 px-3 py-1.5 flex items-center justify-around safe-area-pb shadow-[0_-4px_25px_rgba(0,0,0,0.7)]">
+      <nav 
+        aria-label="Mobile navigation" 
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#08090d]/95 backdrop-blur-xl border-t border-white/10 px-2 py-1.5 flex items-center justify-around safe-area-pb shadow-[0_-4px_25px_rgba(0,0,0,0.7)]"
+      >
         <Link href="/">
-          <div className={`flex flex-col items-center justify-center w-14 h-11 rounded-xl transition-all duration-200 active:scale-90 cursor-pointer ${location === '/' ? 'text-[#c084fc] bg-white/10' : 'text-gray-400 hover:text-white'}`}>
+          <div 
+            role="button"
+            tabIndex={0}
+            className={`flex flex-col items-center justify-center min-w-[52px] min-h-[44px] px-2 py-1 rounded-xl transition-all duration-150 active:scale-90 cursor-pointer kinoma-focus ${
+              location === '/' ? 'text-purple-400 bg-white/10 font-bold' : 'text-gray-400 hover:text-white'
+            }`}
+          >
             <Home className="w-5 h-5 mb-0.5" />
-            <span className="text-[10px] font-bold tracking-tight">Home</span>
+            <span className="text-[10px] tracking-tight">Home</span>
           </div>
         </Link>
         <Link href="/search">
-          <div className={`flex flex-col items-center justify-center w-14 h-11 rounded-xl transition-all duration-200 active:scale-90 cursor-pointer ${location === '/search' ? 'text-[#c084fc] bg-white/10' : 'text-gray-400 hover:text-white'}`}>
+          <div 
+            role="button"
+            tabIndex={0}
+            className={`flex flex-col items-center justify-center min-w-[52px] min-h-[44px] px-2 py-1 rounded-xl transition-all duration-150 active:scale-90 cursor-pointer kinoma-focus ${
+              location === '/search' || location === '/explore' ? 'text-purple-400 bg-white/10 font-bold' : 'text-gray-400 hover:text-white'
+            }`}
+          >
             <SearchIcon className="w-5 h-5 mb-0.5" />
-            <span className="text-[10px] font-bold tracking-tight">Search</span>
-          </div>
-        </Link>
-        <div onClick={handleRandom} className="flex flex-col items-center justify-center w-14 h-11 rounded-xl text-gray-400 hover:text-white transition-all duration-200 active:scale-90 cursor-pointer">
-          <Shuffle className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px] font-bold tracking-tight">Random</span>
-        </div>
-        <Link href="/library">
-          <div className={`flex flex-col items-center justify-center w-14 h-11 rounded-xl transition-all duration-200 active:scale-90 cursor-pointer ${location === '/library' ? 'text-[#c084fc] bg-white/10' : 'text-gray-400 hover:text-white'}`}>
-            <Bookmark className="w-5 h-5 mb-0.5" />
-            <span className="text-[10px] font-bold tracking-tight">Library</span>
+            <span className="text-[10px] tracking-tight">Explore</span>
           </div>
         </Link>
         <div 
+          role="button"
+          tabIndex={0}
+          onClick={handleRandom} 
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleRandom(); }}
+          className="flex flex-col items-center justify-center min-w-[52px] min-h-[44px] px-2 py-1 rounded-xl text-gray-400 hover:text-white transition-all duration-150 active:scale-90 cursor-pointer kinoma-focus"
+        >
+          <Shuffle className="w-5 h-5 mb-0.5" />
+          <span className="text-[10px] font-medium tracking-tight">Random</span>
+        </div>
+        <Link href="/library">
+          <div 
+            role="button"
+            tabIndex={0}
+            className={`flex flex-col items-center justify-center min-w-[52px] min-h-[44px] px-2 py-1 rounded-xl transition-all duration-150 active:scale-90 cursor-pointer kinoma-focus ${
+              location === '/library' ? 'text-purple-400 bg-white/10 font-bold' : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            <Bookmark className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px] tracking-tight">Library</span>
+          </div>
+        </Link>
+        <div 
+          role="button"
+          tabIndex={0}
           onClick={() => openSettingsModal('appearance')} 
-          className="flex flex-col items-center justify-center w-14 h-11 rounded-xl text-gray-400 hover:text-white transition-all duration-200 active:scale-90 cursor-pointer"
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openSettingsModal('appearance'); }}
+          className="flex flex-col items-center justify-center min-w-[52px] min-h-[44px] px-2 py-1 rounded-xl text-gray-400 hover:text-white transition-all duration-150 active:scale-90 cursor-pointer kinoma-focus"
         >
           <SettingsIcon className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px] font-bold tracking-tight">Settings</span>
+          <span className="text-[10px] font-medium tracking-tight">Settings</span>
         </div>
-      </div>
+      </nav>
 
     </div>
   );

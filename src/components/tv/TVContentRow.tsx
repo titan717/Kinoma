@@ -1,5 +1,4 @@
-import React, { useRef, useEffect } from 'react';
-import { ChevronRight } from 'lucide-react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { AnimeItem } from '../../types';
 import { HistoryItem } from '../../lib/history';
 import { TVCard } from './TVCard';
@@ -18,7 +17,7 @@ interface TVContentRowProps {
   rowIndex: number;
 }
 
-export function TVContentRow({
+export const TVContentRow = React.memo(function TVContentRow({
   title,
   subtitle,
   items = [],
@@ -32,6 +31,16 @@ export function TVContentRow({
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const count = isContinueWatching ? historyItems.length : items.length;
+
+  // Windowing range around the focused card (4 items left, 8 items right buffer)
+  const windowRange = useMemo(() => {
+    if (count <= 10) return { start: 0, end: count - 1 };
+    const bufferLeft = 4;
+    const bufferRight = 8;
+    const start = Math.max(0, focusedCardIndex - bufferLeft);
+    const end = Math.min(count - 1, focusedCardIndex + bufferRight);
+    return { start, end };
+  }, [count, focusedCardIndex]);
 
   // Auto-scroll row so the focused card remains smoothly within viewport
   useEffect(() => {
@@ -63,7 +72,7 @@ export function TVContentRow({
         </div>
       </div>
 
-      {/* Horizontal Cards Scroller */}
+      {/* Horizontal Cards Scroller with Windowed Virtualization */}
       <div 
         ref={containerRef}
         className="flex items-center gap-4 sm:gap-6 overflow-x-auto px-8 lg:px-14 py-4 scrollbar-none scroll-smooth"
@@ -72,6 +81,18 @@ export function TVContentRow({
         {isContinueWatching
           ? historyItems.map((hItem, idx) => {
               const isFocused = isRowFocused && focusedCardIndex === idx;
+              const inWindow = idx >= windowRange.start && idx <= windowRange.end;
+
+              if (!inWindow) {
+                return (
+                  <div
+                    key={`tv-history-stub-${idx}`}
+                    ref={el => (cardRefs.current[idx] = el)}
+                    className="shrink-0 w-64 sm:w-72 aspect-[16/11] bg-[#0a0b12]/40 rounded-2xl border border-white/5"
+                  />
+                );
+              }
+
               return (
                 <div
                   key={`tv-history-${hItem.animeId || hItem.slug}-${idx}`}
@@ -89,6 +110,18 @@ export function TVContentRow({
             })
           : items.map((item, idx) => {
               const isFocused = isRowFocused && focusedCardIndex === idx;
+              const inWindow = idx >= windowRange.start && idx <= windowRange.end;
+
+              if (!inWindow) {
+                return (
+                  <div
+                    key={`tv-card-stub-${idx}`}
+                    ref={el => (cardRefs.current[idx] = el)}
+                    className="shrink-0 w-44 sm:w-52 aspect-[2/3] bg-[#0a0b12]/40 rounded-2xl border border-white/5"
+                  />
+                );
+              }
+
               return (
                 <div
                   key={`tv-card-${item.id}-${idx}`}
@@ -107,4 +140,5 @@ export function TVContentRow({
       </div>
     </div>
   );
-}
+});
+

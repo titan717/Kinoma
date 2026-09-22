@@ -57,9 +57,14 @@ export function Watch() {
     initialSlug = rawId;
   }
 
+  // Parse query parameters for ep or anilist if present
+  const queryParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+  const searchEp = queryParams.get('ep') || queryParams.get('episode');
+  const searchAnilist = queryParams.get('anilist') || queryParams.get('anilist_id');
+
   const slug = initialSlug;
-  const epNum = initialEpNum;
-  const anilistId = initialAnilistId;
+  const epNum = searchEp || initialEpNum;
+  const anilistId = (searchAnilist && searchAnilist !== '0') ? searchAnilist : initialAnilistId;
 
   // Local preferences: Audio (sub/dub) and Server with per-anime memory
   const [selectedType, setSelectedType] = useState<'sub' | 'dub'>(() => {
@@ -99,10 +104,21 @@ export function Watch() {
   // Fetch stream URL
   const { data: streamData, isLoading: loadingStream } = useSWR(
     slug && epNum && currentServer ? `stream-${slug}-${epNum}-${currentServer.serverName}-${currentServer.dataType || selectedType}-${effectiveAnilistId}` : null,
-    () => animeApi.getStream(slug, epNum, currentServer.serverName, currentServer.dataType || selectedType, effectiveAnilistId)
+    () => animeApi.getStream(
+      slug, 
+      epNum, 
+      currentServer.serverName, 
+      currentServer.dataType || selectedType, 
+      effectiveAnilistId,
+      currentServer.dataLink
+    ),
+    {
+      revalidateOnFocus: false,
+      shouldRetryOnError: false
+    }
   );
 
-  const streamUrl = streamData?.url || currentServer?.dataLink || '';
+  const streamUrl = (streamData && streamData.url) ? streamData.url : (currentServer?.dataLink || '');
 
   const episodes = animeData?.episodes || [];
   const currentEpIndex = episodes.findIndex((e: any) => e.number.toString() === epNum || e.id === rawId);
@@ -346,13 +362,7 @@ export function Watch() {
               </button>
             )}
 
-            {/* TV Mode: Down indicator hint */}
-            {isTVMode && !isTVDrawerOpen && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-xs text-gray-300 pointer-events-none">
-                <ChevronDown className="w-3.5 h-3.5 text-[#c084fc]" />
-                <span>Press Down for Seasons & Episodes</span>
-              </div>
-            )}
+
           </div>
 
           {/* Minimalist Web Player Controls Bar */}

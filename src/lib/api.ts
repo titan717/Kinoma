@@ -5,8 +5,23 @@ import { AnimeItem, AnimeDetails, DEFAULT_POSTER, DEFAULT_BANNER } from '../type
 // Memory cache to preserve anilist_id and other metadata between views
 const itemCache = new Map<string, AnimeItem>();
 
+function isTvSeries(item: any): boolean {
+  const format = (item.format || item.type || '').toUpperCase();
+  if (format === 'MOVIE' || format === 'Movie' || format === 'OVA' || format === 'SPECIAL' || format === 'MUSIC' || format === 'MANGA') {
+    return false;
+  }
+  const titleStr = (typeof item.title === 'string' ? item.title : item.title?.english || item.title?.romaji || '').toLowerCase();
+  if (titleStr.includes('movie') || titleStr.includes('ova') || titleStr.includes('special edition') || titleStr.includes('recaps')) {
+    return false;
+  }
+  return true;
+}
+
 function mapItem(item: any): AnimeItem {
   const title = item.title?.english || item.title?.romaji || item.title?.native || 'Unknown';
+  const imgUrl = item.cover_image?.large || item.cover_image?.extra_large || item.image || DEFAULT_POSTER;
+  const coverUrl = item.cover_image?.extra_large || item.cover_image?.large || item.cover || DEFAULT_BANNER;
+
   const mapped: AnimeItem = {
     id: item.anime_id || item.id,
     anilist_id: item.anilist_id,
@@ -15,13 +30,13 @@ function mapItem(item: any): AnimeItem {
       romaji: item.title?.romaji || title,
       native: item.title?.native || ''
     },
-    image: item.cover_image?.large || item.cover_image?.extra_large || item.image || DEFAULT_POSTER,
-    cover: item.cover_image?.extra_large || item.cover_image?.large || item.cover || DEFAULT_BANNER,
+    image: imgUrl && imgUrl.startsWith('http') ? imgUrl : DEFAULT_POSTER,
+    cover: coverUrl && coverUrl.startsWith('http') ? coverUrl : DEFAULT_BANNER,
     rating: item.average_score,
     contentRating: typeof item.rating === 'string' ? item.rating : undefined,
-    type: item.format,
+    type: item.format || 'TV',
     releaseDate: item.season_year ? String(item.season_year) : (item.year ? String(item.year) : undefined),
-    description: item.rating ? `Rating: ${item.rating}` : undefined,
+    description: item.description || (item.rating ? `Rating: ${item.rating}` : undefined),
     genres: item.genres || [],
     totalEpisodes: item.episodes || item.episodeCount || 0,
     status: item.status
@@ -64,21 +79,23 @@ function getSeasonTitle(titleStr: string, index: number): string {
 export const api = {
   getTrending: async () => {
     return localCache.getOrFetch('api_trending', async () => {
-      const res = await animeApi.search('action', 24, 0);
-      const mapped = (res.results || []).map(mapItem);
+      const res = await animeApi.search('action', 30, 0);
+      const filtered = (res.results || []).filter(isTvSeries);
+      const mapped = filtered.map(mapItem);
       const unique = deduplicate(mapped, 'id');
       if (unique.length > 0) return { results: unique };
-      return { results: [] };
+      return { results: (res.results || []).map(mapItem) };
     }, 1000 * 60 * 30); // 30 mins TTL
   },
 
   getPopular: async () => {
     return localCache.getOrFetch('api_popular', async () => {
-      const res = await animeApi.search('adventure', 24, 0);
-      const mapped = (res.results || []).map(mapItem);
+      const res = await animeApi.search('adventure', 30, 0);
+      const filtered = (res.results || []).filter(isTvSeries);
+      const mapped = filtered.map(mapItem);
       const unique = deduplicate(mapped, 'id');
       if (unique.length > 0) return { results: unique };
-      return { results: [] };
+      return { results: (res.results || []).map(mapItem) };
     }, 1000 * 60 * 30); // 30 mins TTL
   },
 
@@ -89,7 +106,7 @@ export const api = {
         const res = await animeApi.getSchedule(tz, week);
         const allEpisodes: AnimeItem[] = [];
         (res.schedule || []).forEach(day => {
-          (day.episodes || []).forEach(ep => {
+          (day.episodes || []).filter(isTvSeries).forEach(ep => {
             allEpisodes.push(mapItem(ep));
           });
         });
@@ -109,7 +126,7 @@ export const api = {
       try {
         const res = await animeApi.getSchedule();
         const firstDay = res.schedule?.[0];
-        const eps = (firstDay?.episodes || []).map(mapItem);
+        const eps = (firstDay?.episodes || []).filter(isTvSeries).map(mapItem);
         return { results: deduplicate(eps, 'id'), day: firstDay?.day || 'Today' };
       } catch (e) {
         console.error('Airing today error:', e);
@@ -118,12 +135,13 @@ export const api = {
     }, 1000 * 60 * 20);
   },
 
-  getGenreAnime: async (genre: string, limit = 20) => {
+  getGenreAnime: async (genre: string, limit = 25) => {
     const cleanKey = `api_genre_${genre.toLowerCase().trim()}_${limit}`;
     return localCache.getOrFetch(cleanKey, async () => {
       try {
         const res = await animeApi.search(genre, limit, 0);
-        const mapped = (res.results || []).map(mapItem);
+        const filtered = (res.results || []).filter(isTvSeries);
+        const mapped = filtered.map(mapItem);
         return { results: deduplicate(mapped, 'id') };
       } catch (e) {
         console.error(`Genre fetch error for ${genre}:`, e);
@@ -140,8 +158,9 @@ export const api = {
     const cleanKey = `api_search_${query.toLowerCase().trim()}`;
     return localCache.getOrFetch(cleanKey, async () => {
       try {
-        const res = await animeApi.search(query, 20, 0);
-        const mapped = (res.results || []).map(mapItem);
+        const res = await animeApi.search(query, 25, 0);
+        const filtered = (res.results || []).filter(isTvSeries);
+        const mapped = filtered.map(mapItem);
         return { results: deduplicate(mapped, 'id') };
       } catch (e) {
         console.error('Search error:', e);
@@ -150,12 +169,13 @@ export const api = {
     }, 1000 * 60 * 20); // 20 mins TTL
   },
 
-  searchPaged: async (query: string, limit = 20, offset = 0) => {
+  searchPaged: async (query: string, limit = 25, offset = 0) => {
     const cleanKey = `api_searchpaged_${query.toLowerCase().trim()}_${limit}_${offset}`;
     return localCache.getOrFetch(cleanKey, async () => {
       try {
         const res = await animeApi.search(query, limit, offset);
-        const mapped = (res.results || []).map(mapItem);
+        const filtered = (res.results || []).filter(isTvSeries);
+        const mapped = filtered.map(mapItem);
         return { 
           results: deduplicate(mapped, 'id'),
           total: res.total || 0 
@@ -172,7 +192,8 @@ export const api = {
     return localCache.getOrFetch(cleanKey, async () => {
       try {
         const res = await animeApi.getRecommendations(id);
-        const mapped = (res.recommendations || []).map(mapItem);
+        const filtered = (res.recommendations || []).filter(isTvSeries);
+        const mapped = filtered.map(mapItem);
         return { results: deduplicate(mapped, 'id') as AnimeItem[] };
       } catch (e) {
         console.error('Recommendations error:', e);
@@ -386,12 +407,15 @@ export const api = {
         episodeNumber,
         primaryServer.serverName,
         primaryServer.dataType || 'sub',
-        anilistId
+        anilistId,
+        primaryServer.dataLink
       );
+
+      const resolvedUrl = streamRes.url || primaryServer.dataLink || '';
 
       return {
         sources: [
-          { url: streamRes.url, quality: 'auto' }
+          { url: resolvedUrl, quality: 'auto' }
         ],
         servers,
         activeServer: primaryServer

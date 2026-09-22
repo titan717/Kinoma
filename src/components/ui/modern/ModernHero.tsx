@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'wouter';
-import { Play, Info, Star } from 'lucide-react';
+import { Play, Info, Star, Plus, Check, Calendar, Film } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AnimeItem, DEFAULT_BANNER } from '../../../types';
 import { libraryManager } from '../../../lib/library';
+import { historyUtil, HistoryItem } from '../../../lib/history';
 
 interface ModernHeroProps {
   items: AnimeItem[];
@@ -11,15 +12,48 @@ interface ModernHeroProps {
 
 export function ModernHero({ items }: ModernHeroProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [inWatchlist, setInWatchlist] = useState(false);
 
-  // Auto-rotate hero every 9 seconds
+  // Load history to detect if user has active progress in the current hero item
   useEffect(() => {
-    if (!items || items.length <= 1) return;
+    const loadHistory = () => setHistory(historyUtil.getHistory());
+    loadHistory();
+    window.addEventListener('kinoma_progress_update', loadHistory);
+    return () => window.removeEventListener('kinoma_progress_update', loadHistory);
+  }, []);
+
+  // Auto-rotate hero every 4.2 seconds if not hovered/paused
+  useEffect(() => {
+    if (!items || items.length <= 1 || isPaused) return;
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % Math.min(items.length, 6));
-    }, 9000);
+    }, 4200);
     return () => clearInterval(interval);
-  }, [items]);
+  }, [items, isPaused]);
+
+  const currentItem = items[currentIndex] || items[0];
+
+  // Watchlist status tracking for currentItem
+  useEffect(() => {
+    if (currentItem?.id) {
+      setInWatchlist(libraryManager.isInWatchlist(currentItem.id));
+    }
+  }, [currentItem?.id]);
+
+  const handleToggleWatchlist = () => {
+    if (!currentItem) return;
+    const title = typeof currentItem.title === 'string'
+      ? currentItem.title
+      : currentItem.title?.english || currentItem.title?.romaji || 'Anime';
+    const newState = libraryManager.toggleWatchlist({
+      id: currentItem.id,
+      title,
+      image: currentItem.image || currentItem.cover
+    });
+    setInWatchlist(newState);
+  };
 
   if (!items || items.length === 0) {
     return (
@@ -27,7 +61,6 @@ export function ModernHero({ items }: ModernHeroProps) {
     );
   }
 
-  const currentItem = items[currentIndex] || items[0];
   const title = typeof currentItem.title === 'string'
     ? currentItem.title
     : currentItem.title?.english || currentItem.title?.romaji || 'Featured Anime';
@@ -36,8 +69,32 @@ export function ModernHero({ items }: ModernHeroProps) {
     .replace(/<[^>]*>?/gm, '')
     .trim() || 'An unforgettable anime journey featuring extraordinary worlds, heartfelt bonds, and legendary encounters.';
 
+  // Check if user has active history for this anime
+  const activeHistory = history.find(h => h.animeId === currentItem.id || h.slug === currentItem.id);
+  const hasHistory = Boolean(activeHistory && (activeHistory.playbackTimestamp ?? activeHistory.progress ?? 0) > 0);
+
+  const watchUrl = hasHistory && activeHistory
+    ? (activeHistory.episodeId 
+        ? `/watch/${encodeURIComponent(activeHistory.episodeId)}?t=${Math.floor(activeHistory.playbackTimestamp ?? activeHistory.progress ?? 0)}`
+        : `/watch/${encodeURIComponent(activeHistory.slug || activeHistory.animeId)}?t=${Math.floor(activeHistory.playbackTimestamp ?? activeHistory.progress ?? 0)}`)
+    : `/watch/${encodeURIComponent(currentItem.id)}?ep=1&fs=1`;
+
+  const primaryLabel = hasHistory && activeHistory
+    ? `Continue Watching (Ep ${activeHistory.episodeNumber || 1})`
+    : 'Watch Now';
+
+  // Format rating percentage (0-100 or 0-10)
+  const numRating = currentItem.rating ? Number(currentItem.rating) : NaN;
+  const ratingDisplay = !isNaN(numRating) && numRating > 0
+    ? (numRating > 10 ? `${(numRating / 10).toFixed(1)}` : `${numRating.toFixed(1)}`)
+    : null;
+
   return (
-    <div className="relative w-full h-[52vh] sm:h-[66vh] md:h-[76vh] lg:h-[84vh] min-h-[460px] max-h-[880px] overflow-hidden bg-[#0a0b10] flex items-end">
+    <div 
+      className="relative w-full h-[52vh] sm:h-[66vh] md:h-[76vh] lg:h-[84vh] min-h-[460px] max-h-[880px] overflow-hidden bg-[#08090d] flex items-end select-none"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
       
       {/* Background Cinematic Backdrop Artwork with Breakpoint-Optimized Focal Cropping */}
       <AnimatePresence mode="popLayout">
@@ -54,63 +111,90 @@ export function ModernHero({ items }: ModernHeroProps) {
             alt={title}
             className="w-full h-full object-cover object-[center_20%] sm:object-[center_25%] md:object-top opacity-90 brightness-95"
             loading="eager"
+            referrerPolicy="no-referrer"
           />
         </motion.div>
       </AnimatePresence>
 
-      {/* Responsive Gradient Masks (Matching Reference Image) */}
+      {/* Responsive Cinematic Gradient Masks */}
       {/* 1. Mobile vertical scrim: Dark gradient on bottom half protecting text */}
-      <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#121318] via-[#121318]/90 md:via-[#121318]/50 to-transparent" />
+      <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#0e1017] via-[#0e1017]/85 md:via-[#0e1017]/40 to-transparent" />
       
       {/* 2. Desktop horizontal scrim: Left-to-right fade for wide desktop text clarity */}
-      <div className="hidden md:block absolute inset-0 z-0 bg-gradient-to-r from-[#121318] via-[#121318]/80 to-transparent w-[65%]" />
+      <div className="hidden md:block absolute inset-0 z-0 bg-gradient-to-r from-[#0e1017] via-[#0e1017]/75 to-transparent w-[68%]" />
       
       {/* 3. Top subtle scrim: Protects navigation */}
-      <div className="absolute inset-x-0 top-0 z-0 h-32 bg-gradient-to-b from-[#0b0c10]/90 to-transparent" />
+      <div className="absolute inset-x-0 top-0 z-0 h-36 bg-gradient-to-b from-[#08090d]/90 to-transparent" />
 
       {/* Hero Content Area */}
-      <div className="relative z-10 w-full max-w-[1680px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 pb-10 sm:pb-14 lg:pb-18">
+      <div className="relative z-10 w-full max-w-[1680px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 pb-8 sm:pb-12 lg:pb-16">
         <AnimatePresence mode="wait">
           <motion.div
             key={`modern-hero-content-${currentItem.id || currentIndex}`}
-            initial={{ opacity: 0, y: 22 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-            className="max-w-2xl flex flex-col gap-2.5 sm:gap-3.5 md:gap-4"
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="max-w-2xl flex flex-col gap-2.5 sm:gap-3.5"
           >
-            {/* Title (Matching Reference Image Typography) */}
-            <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-[1.12] tracking-tight drop-shadow-lg font-['Outfit']">
+            {/* Title */}
+            <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-[1.12] tracking-tight drop-shadow-xl font-['Outfit']">
               {title}
             </h1>
 
-            {/* Synopsis Description (Clean 2-3 lines of text) */}
+            {/* Synopsis Description */}
             <p className="text-xs sm:text-sm md:text-base text-gray-200 line-clamp-2 sm:line-clamp-3 leading-relaxed drop-shadow max-w-xl font-normal opacity-90">
               {cleanDescription}
             </p>
 
-            {/* Action Buttons: Solid White Play Pill & Translucent Dark More Info Pill */}
-            <div className="flex items-center gap-3 pt-1.5 sm:pt-2">
+            {/* Action Buttons: Primary Watch/Resume, My List, More Info */}
+            <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 pt-2">
               
-              {/* Play Button (White pill, black play icon & black text) */}
-              <Link href={`/watch/${currentItem.id}?ep=1&fs=1`}>
+              {/* Primary CTA (Continue Watching or Watch Now) */}
+              <Link href={watchUrl}>
                 <motion.button
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.96 }}
-                  className="flex items-center justify-center gap-2 bg-white hover:bg-gray-100 text-black px-6 sm:px-8 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-bold shadow-[0_4px_20px_rgba(255,255,255,0.25)] transition-all cursor-pointer"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-5 sm:px-7 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-semibold shadow-sm transition-all cursor-pointer kinoma-focus"
                 >
-                  <Play className="w-4 h-4 fill-black text-black ml-0.5" />
-                  <span>Play</span>
+                  <Play className="w-4 h-4 fill-white text-white ml-0.5" />
+                  <span>{primaryLabel}</span>
                 </motion.button>
               </Link>
 
-              {/* More Info Button (Dark translucent pill with white text) */}
+              {/* Secondary CTA (Add to My List / In My List) */}
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleToggleWatchlist}
+                className={`flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-semibold backdrop-blur-md border transition-all cursor-pointer kinoma-focus ${
+                  inWatchlist
+                    ? 'bg-purple-600/30 border-purple-500/60 text-purple-200 hover:bg-purple-600/40'
+                    : 'bg-white/10 hover:bg-white/15 border-white/20 text-white'
+                }`}
+                title={inWatchlist ? 'Remove from My List' : 'Add to My List'}
+              >
+                {inWatchlist ? (
+                  <>
+                    <Check className="w-4 h-4 text-purple-300" />
+                    <span>In My List</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4" />
+                    <span>My List</span>
+                  </>
+                )}
+              </motion.button>
+
+              {/* Tertiary CTA: More Info */}
               <Link href={`/details/${currentItem.id}`}>
                 <motion.button
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.96 }}
-                  className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white px-5 sm:px-7 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-semibold backdrop-blur-md transition-all cursor-pointer"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="flex items-center justify-center gap-1.5 bg-white/10 hover:bg-white/15 border border-white/20 text-white px-4 sm:px-5 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-semibold backdrop-blur-md transition-all cursor-pointer kinoma-focus"
                 >
+                  <Info className="w-4 h-4 text-gray-300" />
                   <span>More Info</span>
                 </motion.button>
               </Link>
@@ -120,14 +204,14 @@ export function ModernHero({ items }: ModernHeroProps) {
           </motion.div>
         </AnimatePresence>
 
-        {/* Hero Carousel Navigation Dots (Subtle) */}
+        {/* Hero Carousel Navigation Dots */}
         {items.length > 1 && (
-          <div className="hidden sm:flex items-center gap-1.5 mt-6">
+          <div className="flex items-center gap-1.5 mt-5">
             {items.slice(0, 6).map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => setCurrentIndex(idx)}
-                className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer kinoma-focus ${
                   currentIndex === idx ? 'w-6 bg-white' : 'w-1.5 bg-white/30 hover:bg-white/60'
                 }`}
                 aria-label={`Slide ${idx + 1}`}

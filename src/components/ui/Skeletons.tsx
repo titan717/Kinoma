@@ -73,3 +73,32 @@ export function SidebarSkeleton() {
     </div>
   );
 }
+
+export interface CardSkeletonProps {
+  key?: React.Key;
+  aspectRatio?: 'poster' | 'landscape';
+}
+
+export function CardSkeleton({ aspectRatio = 'poster' }: CardSkeletonProps) {
+  return (
+    <div className="flex flex-col w-full">
+      <Skeleton className={`${aspectRatio === 'poster' ? 'aspect-[2/3]' : 'aspect-video'} w-full rounded-2xl`} />
+      <Skeleton className="h-4 w-3/4 mt-2.5 rounded-md" />
+      <Skeleton className="h-3 w-1/2 mt-1.5 rounded-md" />
+    </div>
+  );
+}
+
+export function RowSkeleton({ count = 6, title = true }: { count?: number; title?: boolean }) {
+  return (
+    <div className="w-full my-6 flex flex-col gap-3">
+      {title && <Skeleton className="h-6 w-48 rounded-lg mb-1" />}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+        {Array.from({ length: count }).map((_, i) => (
+          <CardSkeleton key={i} />
+        ))}
+      </div>
+    </div>
+  );
+}
+

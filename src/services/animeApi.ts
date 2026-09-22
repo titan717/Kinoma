@@ -1,6 +1,4 @@
-const API_BASE_URL =
-  (import.meta as any).env?.VITE_ANIME_API_URL ||
-  "https://kinomaapi.vercel.app";
+const API_BASE_URL = "https://kinomaapi.vercel.app";
 
 export interface AnimeTitle {
   english?: string;
@@ -144,19 +142,19 @@ export interface ServersResponse {
 }
 
 export interface StreamResponse {
-  success: boolean;
+  success?: boolean;
 
-  anime_id: string;
+  anime_id?: string;
 
-  anilist_id: number;
+  anilist_id?: number;
 
-  episode: number;
+  episode?: number;
 
-  server: string;
+  server?: string;
 
-  type: string;
+  type?: string;
 
-  dataType: string;
+  dataType?: string;
 
   url: string;
 }
@@ -347,7 +345,6 @@ async function fetchApi<T>(
     return await response.json();
 
   } catch (error) {
-    console.error("fetchApi inner error:", error, "URL:", url);
     if (
       error instanceof AnimeApiError
     ) {
@@ -547,23 +544,41 @@ export const animeApi = {
    * The API returns an authorized embed URL.
    */
 
-  getStream: (
+  getStream: async (
     animeId: string,
     episode: number | string,
     server: string,
     type: "sub" | "dub" | string,
-    anilistId: number | string
+    anilistId: number | string,
+    fallbackUrl?: string
   ): Promise<StreamResponse> => {
-
-    return fetchApi<StreamResponse>(
-      `/stream/${encodeURIComponent(animeId)}/${encodeURIComponent(String(episode))}`,
-      {},
-      {
-        server,
-        type,
-        anilist_id: anilistId,
+    try {
+      const res = await fetchApi<StreamResponse>(
+        `/stream/${encodeURIComponent(animeId)}/${encodeURIComponent(String(episode))}`,
+        {},
+        {
+          server,
+          type,
+          anilist_id: anilistId,
+        }
+      );
+      if (res && res.url) {
+        return res;
       }
-    );
+    } catch (err) {
+      // Upstream stream endpoint may be temporarily down or returning 500;
+      // Seamlessly fallback to the direct server embed (dataLink)
+      console.warn(
+        `Stream endpoint unavailable for ${animeId} ep ${episode}. Using direct server embed:`,
+        err
+      );
+    }
+
+    return {
+      url: fallbackUrl || "",
+      server,
+      type,
+    };
   },
 
 
@@ -625,14 +640,24 @@ export const animeApi = {
    * /stream/from-link?link=...
    */
 
-  getStreamFromLink: (link: string): Promise<StreamResponse> => {
-    return fetchApi<StreamResponse>(
-      "/stream/from-link",
-      {},
-      {
-        link,
+  getStreamFromLink: async (link: string): Promise<StreamResponse> => {
+    try {
+      const res = await fetchApi<StreamResponse>(
+        "/stream/from-link",
+        {},
+        {
+          link,
+        }
+      );
+      if (res && res.url) {
+        return res;
       }
-    );
+    } catch (err) {
+      console.warn("Stream from link endpoint unavailable, using original link:", err);
+    }
+    return {
+      url: link,
+    };
   },
 };
 
