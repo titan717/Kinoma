@@ -98,10 +98,10 @@ jobs:
           KINOMA_KEYSTORE_BASE64: ${{ secrets.KINOMA_KEYSTORE_BASE64 }}
         run: |
           set -euo pipefail
-          mkdir -p android/app/build
-          printf '%s' "$KINOMA_KEYSTORE_BASE64" | base64 --decode > android/app/build/release.keystore
-          test -s android/app/build/release.keystore
-          chmod 600 android/app/build/release.keystore
+          mkdir -p android/keystore
+          printf '%s' "$KINOMA_KEYSTORE_BASE64" | base64 --decode > android/keystore/kinoma-release.keystore
+          test -s android/keystore/kinoma-release.keystore
+          chmod 600 android/keystore/kinoma-release.keystore
 
       - name: Configure Gradle signing and release version
         shell: bash
