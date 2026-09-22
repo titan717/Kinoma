@@ -29,6 +29,7 @@ import { updateSEO } from '../lib/seo';
 import { useTVMode } from '../lib/TVModeContext';
 import { AnimeGrid } from '../components/ui/AnimeGrid';
 import { AnimeItem, DEFAULT_POSTER } from '../types';
+import { TVPlayerOSD } from '../components/tv/TVPlayerOSD';
 
 export function Watch() {
   const [isMatch, params] = useRoute<{id: string}>('/watch/:id');
@@ -229,42 +230,37 @@ export function Watch() {
     }
   }, [isTVMode]);
 
-  // Keyboard navigation for Fullscreen & Escape
+  // TV remote: any D-pad interaction reveals the master OSD.
+  // The OSD itself owns drawer navigation. Back closes the OSD/drawer first.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'f' || e.key === 'F') {
         if (!isTVMode) toggleFullscreen();
-      } else if (e.key === 'Escape' && isCinemaFullscreen) {
-        if (isTVDrawerOpen) {
-          setIsTVDrawerOpen(false);
-          e.preventDefault();
-        } else if (!isTVMode) {
-          setIsCinemaFullscreen(false);
-        }
-      } else if (isTVMode) {
-        // TV Remote D-Pad Navigation
-        if (e.key === 'ArrowDown') {
-          if (!isTVDrawerOpen) {
-            setIsTVDrawerOpen(true);
-            e.preventDefault();
-          }
-        } else if (e.key === 'ArrowUp') {
-          if (isTVDrawerOpen && tvFocusedEpIndex === 0) {
-            setIsTVDrawerOpen(false);
-            e.preventDefault();
-          }
-        } else if (e.keyCode === 10009 || e.keyCode === 461 || e.key === 'Backspace') {
-          if (isTVDrawerOpen) {
-            setIsTVDrawerOpen(false);
-            e.preventDefault();
-          }
-        }
+        return;
+      }
+
+      if (e.key === 'Escape' && isCinemaFullscreen && !isTVMode) {
+        setIsCinemaFullscreen(false);
+        return;
+      }
+
+      if (!isTVMode) return;
+
+      const tvKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Enter', ' '];
+      const isBack = e.key === 'Escape' || e.key === 'Backspace' || e.keyCode === 10009 || e.keyCode === 461;
+
+      if (tvKeys.includes(e.key)) {
+        setIsTVDrawerOpen(true);
+      }
+
+      if (isBack && isTVDrawerOpen) {
+        setIsTVDrawerOpen(false);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isCinemaFullscreen, isTVMode, isTVDrawerOpen, tvFocusedEpIndex]);
+  }, [isCinemaFullscreen, isTVMode, isTVDrawerOpen]);
 
   const toggleFullscreen = () => {
     if (!isCinemaFullscreen) {
@@ -439,89 +435,31 @@ export function Watch() {
         </div>
       </div>
 
-      {/* TV OSD / ACCORDION DRAWER (When down is pressed in TV mode) */}
-      {isTVMode && isTVDrawerOpen && (
-        <div className="fixed inset-x-0 bottom-0 top-1/3 z-50 bg-[#07080c]/95 backdrop-blur-2xl border-t border-white/15 p-6 overflow-y-auto flex flex-col gap-6 shadow-[0_-20px_50px_rgba(0,0,0,0.9)] animate-in slide-in-from-bottom duration-200">
-          
-          <div className="flex items-center justify-between border-b border-white/10 pb-3">
-            <div>
-              <span className="text-xs font-bold text-[#c084fc] uppercase tracking-wider">{animeTitle}</span>
-              <h3 className="text-xl font-black text-white">{isMovie ? 'More Like This' : 'Seasons & Episodes'}</h3>
-            </div>
-            <button
-              onClick={() => setIsTVDrawerOpen(false)}
-              className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white flex items-center gap-1 cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-              <span>Close (Back)</span>
-            </button>
-          </div>
-
-          {/* If Series: Vertical Season/Episode Accordion */}
-          {!isMovie && (
-            <div className="flex flex-col gap-4">
-              {seasonsList.map((s: any) => {
-                const isExpanded = expandedTVSeason === s.seasonNumber;
-                return (
-                  <div key={`tv-season-${s.seasonNumber}`} className="flex flex-col rounded-2xl bg-[#0f1018] border border-white/10 overflow-hidden">
-                    
-                    {/* Season Accordion Header */}
-                    <button
-                      onClick={() => setExpandedTVSeason(isExpanded ? 0 : s.seasonNumber)}
-                      className="w-full p-4 flex items-center justify-between text-left hover:bg-white/5 transition-colors focus:ring-2 focus:ring-[#c084fc] outline-none"
-                    >
-                      <div className="flex items-center gap-3">
-                        {isExpanded ? <ChevronDown className="w-5 h-5 text-[#c084fc]" /> : <ChevronRight className="w-5 h-5 text-gray-400" />}
-                        <span className="text-base font-bold text-white">{s.title || `Season ${s.seasonNumber}`}</span>
-                      </div>
-                      <span className="text-xs text-gray-400">{episodes.length} Episodes</span>
-                    </button>
-
-                    {/* Season Episodes List */}
-                    {isExpanded && (
-                      <div className="p-4 pt-0 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                        {episodes.map((ep: any, idx: number) => {
-                          const isCurrent = ep.number.toString() === epNum;
-                          return (
-                            <Link key={ep.id} href={`/watch/${encodeURIComponent(ep.id)}`}>
-                              <div
-                                onFocus={() => setTvFocusedEpIndex(idx)}
-                                className={`p-2.5 rounded-xl transition-all cursor-pointer border ${
-                                  isCurrent
-                                    ? 'bg-[#7b1fa2] text-white border-[#ba68c8] shadow-lg ring-2 ring-white'
-                                    : 'bg-[#151622] hover:bg-[#1e1f30] text-gray-300 border-white/5 focus:border-[#c084fc] focus:ring-2 focus:ring-[#c084fc]'
-                                }`}
-                              >
-                                <div className="text-xs font-bold">Episode {ep.number}</div>
-                                <div className="text-[11px] text-gray-400 truncate mt-0.5">{ep.title || `Episode ${ep.number}`}</div>
-                              </div>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* If Movie: Horizontal More Like This Cards */}
-          {isMovie && recommendationsData?.results && (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-              {recommendationsData.results.slice(0, 6).map((item) => (
-                <Link key={item.id} href={`/details/${item.id}`}>
-                  <div className="rounded-xl overflow-hidden bg-[#151622] border border-white/10 hover:scale-105 transition-all p-2 focus:ring-2 focus:ring-[#c084fc]">
-                    <img src={item.image || DEFAULT_POSTER} alt="cover" className="w-full aspect-[2/3] object-cover rounded-lg mb-1.5" />
-                    <div className="text-xs font-bold text-white truncate">{typeof item.title === 'string' ? item.title : item.title?.english}</div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-
-        </div>
+      {/* MASTER 10-FOOT TV PLAYER OSD */}
+      {isTVMode && (
+        <TVPlayerOSD
+          animeTitle={animeTitle}
+          episodeNumber={`E${epNum}`}
+          episodeTitle={currentEpObj?.title}
+          currentEpisodeIndex={currentEpIndex}
+          episodes={episodes}
+          seasons={seasonsList}
+          currentSeason={Number(detectedSeason) || 1}
+          recommendations={recommendationsData?.results || []}
+          isMovie={isMovie}
+          isOpen={isTVDrawerOpen}
+          onClose={() => setIsTVDrawerOpen(false)}
+          onBack={() => setLocation(`/details/${encodeURIComponent(slug)}`)}
+          onPlayEpisode={(episodeId, timestamp = 0) => {
+            setIsTVDrawerOpen(false);
+            setLocation(`/watch/${encodeURIComponent(episodeId)}?t=${Math.floor(timestamp)}&fs=1`);
+          }}
+          selectedType={selectedType}
+          onSelectType={handleSelectType}
+          servers={servers}
+          selectedServer={selectedServer}
+          onSelectServer={handleSelectServer}
+        />
       )}
 
       {/* WEB PLAYER: DETAIL & EPISODE SELECTOR SECTION */}
