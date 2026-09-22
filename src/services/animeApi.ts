@@ -430,6 +430,10 @@ export const animeApi = {
   },
 
 
+  getTrailer: (animeId: string): Promise<{ available: boolean; trailer?: { id: string; site?: string; thumbnail?: string } | null }> => {
+    return fetchApi(`/trailer/${encodeURIComponent(animeId)}`);
+  },
+
   getRecommendations: (
     animeId: string
   ): Promise<any> => {
