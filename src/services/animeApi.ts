@@ -309,9 +309,10 @@ async function fetchApi<T>(
           controller.signal,
 
         headers: {
-          Accept:
-            "application/json",
-
+          Accept: "application/json",
+          ...(import.meta as any).env?.VITE_KINOMA_API_KEY
+            ? { "X-Kinoma-API-Key": (import.meta as any).env.VITE_KINOMA_API_KEY }
+            : {},
           ...(options.headers || {}),
         },
       }
