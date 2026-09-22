@@ -26,6 +26,7 @@ interface TVPlayerOSDProps {
   recommendations?: any[];
   isMovie?: boolean;
   isOpen: boolean;
+  initialDrawer?: 'episodes' | 'settings' | 'more' | null;
   onClose: () => void;
   onBack: () => void;
   onPlayEpisode: (episodeId: string, timestamp?: number) => void;
@@ -66,6 +67,7 @@ export function TVPlayerOSD({
   recommendations = [],
   isMovie = false,
   isOpen,
+  initialDrawer = null,
   onClose,
   onBack,
   onPlayEpisode,
@@ -104,6 +106,12 @@ export function TVPlayerOSD({
   useEffect(() => {
     setSeekPreview(currentTime);
   }, [currentTime]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setDrawer(initialDrawer);
+    setFocusZone(initialDrawer ? 'drawer' : 'top');
+  }, [isOpen, initialDrawer]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -181,9 +189,9 @@ export function TVPlayerOSD({
         if (drawer) return;
 
         if (focusZone === 'top') {
-          if (topFocus === 0 || topFocus === 1) {
-            setFocusZone('timeline');
-          }
+          // Reference behavior: Down from the player opens the season/episode drawer directly.
+          setDrawer(isMovie ? 'more' : 'episodes');
+          setFocusZone('drawer');
         } else if (focusZone === 'timeline') {
           setDrawer(isMovie ? 'more' : 'episodes');
           setFocusZone('drawer');
@@ -254,11 +262,11 @@ export function TVPlayerOSD({
           onClick={onBack}
           className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left  outline-none transition-all ${
             focusZone === 'top' && topFocus === 0
-              ? 'scale-[1.05] border-[#00F0FF] bg-[#00F0FF]/12 ring-2 ring-[#00F0FF]/60'
+              ? 'scale-[1.05] border-white/60 bg-white/10 ring-2 ring-white/30'
               : 'border-white/10 bg-black/45'
           }`}
         >
-          <ArrowLeft className="h-5 w-5 text-[#00F0FF]" />
+          <ArrowLeft className="h-5 w-5 text-white" />
           <div>
             <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45">Back</div>
             <div className="max-w-[55vw] truncate text-base font-black text-white">{animeTitle}</div>
@@ -277,7 +285,7 @@ export function TVPlayerOSD({
             onClick={() => setDrawer('settings')}
             className={`rounded-2xl border p-3 text-white  outline-none transition-all ${
               focusZone === 'top' && topFocus === 1
-                ? 'scale-[1.08] border-[#00F0FF] bg-[#00F0FF]/12 ring-2 ring-[#00F0FF]/60'
+                ? 'scale-[1.08] border-white/60 bg-white/10 ring-2 ring-white/30'
                 : 'border-white/10 bg-black/45'
             }`}
             aria-label="Settings"
@@ -313,11 +321,11 @@ export function TVPlayerOSD({
           aria-label="Playback timeline"
         >
           <div
-            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[#00F0FF] to-[#FF0055]"
+            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-white to-[#c084fc]"
             style={{ width: `${progress}%` }}
           />
           <div
-            className="absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-white shadow-[0_0_18px_rgba(0,240,255,.75)]"
+            className="absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-white shadow-[0_0_18px_rgba(255,255,255,.35)]"
             style={{ left: `calc(${progress}% - 10px)` }}
           />
         </div>
@@ -335,7 +343,7 @@ export function TVPlayerOSD({
           <button
             type="button"
             onClick={() => setDrawer(isMovie ? 'more' : 'episodes')}
-            className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/45 px-4 py-3 text-xs font-black text-white  outline-none transition-all focus:ring-2 focus:ring-[#00F0FF]"
+            className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/45 px-4 py-3 text-xs font-black text-white  outline-none transition-all focus:ring-2 focus:ring-white/40"
           >
             <ListVideo className="h-4 w-4 text-[#00F0FF]" />
             {isMovie ? 'More Like This' : 'Episodes'}
@@ -357,7 +365,7 @@ export function TVPlayerOSD({
                     onClick={() => { setSeasonFocus(idx); setEpisodeFocus(0); }}
                     className={`w-full rounded-2xl border px-5 py-4 text-left text-sm font-black outline-none transition-all ${
                       seasonFocus === idx
-                        ? 'scale-[1.02] border-[#00F0FF]/70 bg-gradient-to-r from-[#00F0FF]/18 to-[#FF0055]/12 text-white ring-1 ring-[#00F0FF]/30'
+                        ? 'scale-[1.02] border-white/40 bg-white/10 text-white ring-1 ring-white/20'
                         : 'border-white/[.06] bg-white/[.03] text-white/55'
                     }`}
                   >
@@ -389,7 +397,7 @@ export function TVPlayerOSD({
                       onClick={() => onPlayEpisode(ep.id, 0)}
                       className={`flex w-full items-center gap-4 rounded-2xl border p-3 text-left outline-none transition-all ${
                         focused
-                          ? 'scale-[1.015] border-[#00F0FF]/70 bg-gradient-to-r from-[#00F0FF]/14 to-[#FF0055]/10 ring-1 ring-[#00F0FF]/30'
+                          ? 'scale-[1.015] border-white/40 bg-white/10 ring-1 ring-white/20'
                           : 'border-white/[.06] bg-white/[.03]'
                       }`}
                     >
@@ -429,7 +437,7 @@ export function TVPlayerOSD({
                 onClick={() => onBack()}
                 className={`group text-left outline-none ${episodeFocus === idx ? 'scale-[1.04]' : ''}`}
               >
-                <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[.03] transition-all group-focus:ring-2 group-focus:ring-[#00F0FF]">
+                <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[.03] transition-all group-focus:ring-2 group-focus:ring-white/40">
                   <img src={item.image || ''} alt="" loading="lazy" decoding="async" className="aspect-[2/3] w-full object-cover" />
                 </div>
                 <div className="mt-2 truncate text-xs font-bold text-white/80">
