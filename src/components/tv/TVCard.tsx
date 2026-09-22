@@ -3,6 +3,15 @@ import { Star } from 'lucide-react';
 import { AnimeItem, DEFAULT_POSTER } from '../../types';
 import { HistoryItem, formatPlaybackTimestamp } from '../../lib/history';
 
+const prefetchedUrls = new Set<string>();
+
+export function prefetchImage(url?: string) {
+  if (!url || prefetchedUrls.has(url)) return;
+  prefetchedUrls.add(url);
+  const img = new Image();
+  img.src = url;
+}
+
 export interface TVCardProps {
   key?: React.Key;
   item?: AnimeItem;

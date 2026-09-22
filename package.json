@@ -15,6 +15,7 @@
     "@consumet/extensions": "^1.8.8",
     "@google/genai": "^2.4.0",
     "@tailwindcss/vite": "^4.1.14",
+    "@types/react-window": "^2.0.0",
     "@vitejs/plugin-react": "^5.0.4",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
@@ -26,6 +27,7 @@
     "node-cache": "^5.1.2",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
+    "react-window": "^2.3.2",
     "swr": "^2.5.1",
     "vite": "^6.2.3",
     "wouter": "^3.10.0"

@@ -1,4 +1,5 @@
-import React, { useRef, useEffect, useMemo } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { Grid, GridImperativeAPI } from 'react-window';
 import { AnimeItem } from '../../types';
 import { HistoryItem } from '../../lib/history';
 import { TVCard } from './TVCard';
@@ -28,37 +29,101 @@ export const TVContentRow = React.memo(function TVContentRow({
   onSelectCard
 }: TVContentRowProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const gridRef = useRef<GridImperativeAPI | null>(null);
+
+  const [containerWidth, setContainerWidth] = useState<number>(() =>
+    typeof window !== 'undefined' ? Math.max(300, window.innerWidth - 64) : 1200
+  );
 
   const count = isContinueWatching ? historyItems.length : items.length;
 
-  // Windowing range around the focused card (4 items left, 8 items right buffer)
-  const windowRange = useMemo(() => {
-    if (count <= 10) return { start: 0, end: count - 1 };
-    const bufferLeft = 4;
-    const bufferRight = 8;
-    const start = Math.max(0, focusedCardIndex - bufferLeft);
-    const end = Math.min(count - 1, focusedCardIndex + bufferRight);
-    return { start, end };
-  }, [count, focusedCardIndex]);
-
-  // Auto-scroll row so the focused card remains smoothly within viewport
+  // Measure container width for responsive virtualized list
   useEffect(() => {
-    if (isRowFocused && cardRefs.current[focusedCardIndex]) {
-      const cardEl = cardRefs.current[focusedCardIndex];
-      cardEl?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'center'
+    if (!containerRef.current) return;
+    const updateWidth = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.clientWidth);
+      }
+    };
+    updateWidth();
+    const observer = new ResizeObserver(updateWidth);
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Scroll virtualized grid to center the focused card on D-pad navigation
+  useEffect(() => {
+    if (isRowFocused && gridRef.current && count > 0) {
+      gridRef.current.scrollToColumn({
+        index: Math.max(0, Math.min(focusedCardIndex, count - 1)),
+        align: 'center',
+        behavior: 'smooth'
       });
     }
-  }, [isRowFocused, focusedCardIndex]);
+  }, [isRowFocused, focusedCardIndex, count]);
+
+  const itemSize = isContinueWatching ? 300 : 230;
+  const listHeight = isContinueWatching ? 230 : 360;
+
+  const CellComponent = useCallback(
+    ({ columnIndex, style }: { columnIndex: number; style: React.CSSProperties }) => {
+      const isFocused = isRowFocused && focusedCardIndex === columnIndex;
+
+      if (isContinueWatching) {
+        const hItem = historyItems[columnIndex];
+        if (!hItem) return null;
+        return (
+          <div
+            style={{
+              ...style,
+              paddingRight: 20,
+              display: 'flex',
+              alignItems: 'center'
+            }}
+            key={`tv-v-history-${columnIndex}`}
+          >
+            <TVCard
+              historyItem={hItem}
+              isContinueWatching={true}
+              isFocused={isFocused}
+              onSelect={() => onSelectCard(columnIndex)}
+              index={columnIndex}
+            />
+          </div>
+        );
+      }
+
+      const item = items[columnIndex];
+      if (!item) return null;
+
+      return (
+        <div
+          style={{
+            ...style,
+            paddingRight: 18,
+            display: 'flex',
+            alignItems: 'center'
+          }}
+          key={`tv-v-card-${columnIndex}`}
+        >
+          <TVCard
+            item={item}
+            isContinueWatching={false}
+            isFocused={isFocused}
+            onSelect={() => onSelectCard(columnIndex)}
+            index={columnIndex}
+          />
+        </div>
+      );
+    },
+    [isRowFocused, focusedCardIndex, isContinueWatching, historyItems, items, onSelectCard]
+  );
 
   if (count === 0) return null;
 
   return (
     <div className="w-full flex flex-col py-3 select-none">
-      {/* Row Header with high-contrast TV-safe typography */}
+      {/* Row Header */}
       <div className="flex items-baseline justify-between px-8 lg:px-14 mb-3">
         <div className="flex items-center gap-3">
           <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight drop-shadow-sm font-['Outfit']">
@@ -72,73 +137,20 @@ export const TVContentRow = React.memo(function TVContentRow({
         </div>
       </div>
 
-      {/* Horizontal Cards Scroller with Windowed Virtualization */}
-      <div 
-        ref={containerRef}
-        className="flex items-center gap-4 sm:gap-6 overflow-x-auto px-8 lg:px-14 py-4 scrollbar-none scroll-smooth"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-      >
-        {isContinueWatching
-          ? historyItems.map((hItem, idx) => {
-              const isFocused = isRowFocused && focusedCardIndex === idx;
-              const inWindow = idx >= windowRange.start && idx <= windowRange.end;
-
-              if (!inWindow) {
-                return (
-                  <div
-                    key={`tv-history-stub-${idx}`}
-                    ref={el => (cardRefs.current[idx] = el)}
-                    className="shrink-0 w-64 sm:w-72 aspect-[16/11] bg-[#0a0b12]/40 rounded-2xl border border-white/5"
-                  />
-                );
-              }
-
-              return (
-                <div
-                  key={`tv-history-${hItem.animeId || hItem.slug}-${idx}`}
-                  ref={el => (cardRefs.current[idx] = el)}
-                >
-                  <TVCard
-                    historyItem={hItem}
-                    isContinueWatching={true}
-                    isFocused={isFocused}
-                    onSelect={() => onSelectCard(idx)}
-                    index={idx}
-                  />
-                </div>
-              );
-            })
-          : items.map((item, idx) => {
-              const isFocused = isRowFocused && focusedCardIndex === idx;
-              const inWindow = idx >= windowRange.start && idx <= windowRange.end;
-
-              if (!inWindow) {
-                return (
-                  <div
-                    key={`tv-card-stub-${idx}`}
-                    ref={el => (cardRefs.current[idx] = el)}
-                    className="shrink-0 w-44 sm:w-52 aspect-[2/3] bg-[#0a0b12]/40 rounded-2xl border border-white/5"
-                  />
-                );
-              }
-
-              return (
-                <div
-                  key={`tv-card-${item.id}-${idx}`}
-                  ref={el => (cardRefs.current[idx] = el)}
-                >
-                  <TVCard
-                    item={item}
-                    isContinueWatching={false}
-                    isFocused={isFocused}
-                    onSelect={() => onSelectCard(idx)}
-                    index={idx}
-                  />
-                </div>
-              );
-            })}
+      {/* Virtualized Horizontal Card Carousel using react-window */}
+      <div ref={containerRef} className="w-full px-8 lg:px-14">
+        <Grid
+          gridRef={gridRef}
+          columnCount={count}
+          columnWidth={itemSize}
+          rowCount={1}
+          rowHeight={listHeight}
+          cellProps={{}}
+          style={{ overflowY: 'hidden', width: containerWidth }}
+          className="scrollbar-none"
+          cellComponent={CellComponent}
+        />
       </div>
     </div>
   );
 });
-
