@@ -76,6 +76,13 @@ export function TVApp() {
 
   useEffect(() => {
     refreshUserData();
+    const refresh = () => refreshUserData();
+    window.addEventListener('kinoma_library_update', refresh);
+    window.addEventListener('kinoma_search_update', refresh);
+    return () => {
+      window.removeEventListener('kinoma_library_update', refresh);
+      window.removeEventListener('kinoma_search_update', refresh);
+    };
   }, [refreshUserData, activeSection]);
 
   const trending = useMemo(() => groupFranchises(trendingData?.results || []), [trendingData]);
