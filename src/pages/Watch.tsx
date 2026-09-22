@@ -205,9 +205,23 @@ export function Watch() {
       });
     };
 
-    save();
-    const interval = window.setInterval(save, 5000);
-    return () => window.clearInterval(interval);
+    const scheduleSave = () => {
+      if (document.visibilityState === 'hidden') return;
+      const idle = (window as any).requestIdleCallback;
+      if (typeof idle === 'function') idle(save, { timeout: 1500 });
+      else window.setTimeout(save, 250);
+    };
+
+    scheduleSave();
+    const interval = window.setInterval(scheduleSave, 10000);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'hidden') save();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [slug, epNum, rawId, animeData, currentEpObj, detectedSeason, animeTitle]);
 
   // Use hls.js for real HLS playback so the TV OSD can expose
@@ -263,8 +277,14 @@ export function Watch() {
       }
     };
 
-    checkNetwork();
-    const netInterval = setInterval(checkNetwork, 45000);
+    const runInitialCheck = () => {
+      if (document.visibilityState !== 'hidden') checkNetwork();
+    };
+    const initialIdle = (window as any).requestIdleCallback;
+    if (typeof initialIdle === 'function') initialIdle(runInitialCheck, { timeout: 2000 });
+    else window.setTimeout(runInitialCheck, 1000);
+
+    const netInterval = setInterval(runInitialCheck, 120000);
     return () => {
       active = false;
       clearInterval(netInterval);
@@ -367,6 +387,7 @@ export function Watch() {
                   className="h-full w-full bg-black object-contain"
                   playsInline
                   autoPlay
+                  preload="metadata"
                   controls={false}
                   onLoadedMetadata={(e) => {
                     setPlayerDuration(e.currentTarget.duration || 0);
