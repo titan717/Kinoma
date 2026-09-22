@@ -17,6 +17,8 @@ const DEFAULT_TTL = 1000 * 60 * 30; // 30 minutes
 
 // In-memory hot cache to prevent repeated JSON.parse overhead
 const memoryCache = new Map<string, CacheEntry<any>>();
+const inflightRequests = new Map<string, Promise<any>>();
+const STALE_GRACE = 1000 * 60 * 60 * 24; // Keep yesterday's data usable while fresh data loads.
 
 export const localCache = {
   /**
@@ -115,16 +117,47 @@ export const localCache = {
     fetcher: () => Promise<T>,
     ttl = DEFAULT_TTL
   ): Promise<T> => {
-    const cached = localCache.get<T>(key);
-    if (cached !== null && cached !== undefined) {
-      return cached;
+    const now = Date.now();
+    const memoryEntry = memoryCache.get(key);
+
+    // Hot cache: return immediately. If it is only slightly stale, refresh in the background.
+    if (memoryEntry) {
+      const age = now - memoryEntry.timestamp;
+      if (age < memoryEntry.ttl) return memoryEntry.data as T;
+      if (age < memoryEntry.ttl + STALE_GRACE) {
+        if (!inflightRequests.has(key)) {
+          const request = fetcher()
+            .then(fresh => {
+              if (fresh !== undefined && fresh !== null) localCache.set(key, fresh, ttl);
+              return fresh;
+            })
+            .catch(error => {
+              console.warn(`[LocalCache] Background refresh failed for ${key}`, error);
+              return memoryEntry.data;
+            })
+            .finally(() => inflightRequests.delete(key));
+          inflightRequests.set(key, request);
+        }
+        return memoryEntry.data as T;
+      }
     }
 
-    const fresh = await fetcher();
-    if (fresh !== undefined && fresh !== null) {
-      localCache.set(key, fresh, ttl);
-    }
-    return fresh;
+    const cached = localCache.get<T>(key);
+    if (cached !== null && cached !== undefined) return cached;
+
+    // Request coalescing: multiple components asking for the same resource share one network request.
+    const existing = inflightRequests.get(key);
+    if (existing) return existing as Promise<T>;
+
+    const request = fetcher()
+      .then(fresh => {
+        if (fresh !== undefined && fresh !== null) localCache.set(key, fresh, ttl);
+        return fresh;
+      })
+      .finally(() => inflightRequests.delete(key));
+
+    inflightRequests.set(key, request);
+    return request;
   },
 
   /**
