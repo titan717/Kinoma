@@ -45,18 +45,19 @@ export function IntroSplash({ forceShow = false, onComplete }: IntroSplashProps)
     // Trigger audio immediately (if audio policy allows)
     kinomaAudio.playIntroSound();
 
-    // Auto-dismiss after 2.6 seconds
+    // Cinematic studio-style timing: brief reveal, then a soft fade to the app.
     const timer = setTimeout(() => {
       completeIntro();
     }, 2600);
 
-    // Any key press (e.g. TV remote DPAD or Enter) dismisses immediately
+    // Any key press (including an Android TV remote button) dismisses immediately.
     const handleKey = () => completeIntro();
     window.addEventListener('keydown', handleKey, { once: true });
 
     return () => {
       clearTimeout(timer);
       window.removeEventListener('keydown', handleKey);
+    };
     };
   }, [isVisible, completeIntro]);
 
@@ -75,12 +76,17 @@ export function IntroSplash({ forceShow = false, onComplete }: IntroSplashProps)
           key="kinoma-splash-screen"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } }}
-          className="fixed inset-0 z-[100] bg-[#06070a] flex flex-col items-center justify-center overflow-hidden select-none cursor-pointer"
+          className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center overflow-hidden select-none cursor-pointer"
           onClick={handleScreenClick}
         >
-          {/* Ambient Cinematic Deep Obsidian Space */}
-          <div className="absolute inset-0 bg-[#050608] pointer-events-none" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(147,51,234,0.18)_0%,rgba(5,6,8,0.98)_80%)] pointer-events-none" />
+          {/* Netflix-style cinematic black stage — adapted to Kinoma's purple identity. */
+          <div className="absolute inset-0 bg-black pointer-events-none" />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.7 }}
+            animate={{ opacity: [0, 0.55, 0], scale: [0.7, 1.15, 1.5] }}
+            transition={{ duration: 2.1, ease: 'easeOut' }}
+            className="absolute w-[55vw] h-[55vw] max-w-[720px] max-h-[720px] rounded-full bg-[radial-gradient(circle,rgba(168,85,247,0.20),transparent_68%)] blur-2xl pointer-events-none"
+          />
 
           {/* Anamorphic Horizontal Laser Beam (Netflix / Disney flare) */}
           <motion.div
@@ -110,14 +116,14 @@ export function IntroSplash({ forceShow = false, onComplete }: IntroSplashProps)
             ))}
           </div>
 
-          {/* Central Streaming Wordmark & Ribbon Hero */}
+          {/* Netflix-inspired central studio wordmark reveal */}
           <motion.div
-            initial={{ scale: 0.88, opacity: 0, filter: 'blur(12px)' }}
+            initial={{ scale: 0.68, opacity: 0, filter: 'blur(16px)' }}
             animate={{ 
-              scale: [0.88, 1.0, 1.08], 
-              opacity: [0, 1, 1],
+              scale: [0.68, 0.94, 1.0, 1.04], 
+              opacity: [0, 1, 1, 0.92],
               filter: ['blur(12px)', 'blur(0px)', 'blur(0px)'],
-              transition: { duration: 2.4, times: [0, 0.4, 1], ease: [0.16, 1, 0.3, 1] } 
+              transition: { duration: 2.35, times: [0, 0.38, 0.78, 1], ease: [0.16, 1, 0.3, 1] } 
             }}
             className="relative z-10 flex flex-col items-center justify-center text-center px-4"
           >
@@ -144,7 +150,7 @@ export function IntroSplash({ forceShow = false, onComplete }: IntroSplashProps)
               e.stopPropagation();
               completeIntro();
             }}
-            className="absolute bottom-8 sm:bottom-10 right-6 sm:right-10 z-20 px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 text-[11px] font-medium tracking-wider uppercase text-gray-300 hover:text-white backdrop-blur-md transition-all active:scale-95"
+            className="absolute bottom-8 sm:bottom-10 right-6 sm:right-10 z-20 px-4 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-medium tracking-wider uppercase text-gray-400 hover:text-white backdrop-blur-md transition-all active:scale-95"
           >
             Skip &rarr;
           </button>
