@@ -87,6 +87,7 @@ export function Watch() {
 
   // TV Player Accordion OSD State
   const [isTVDrawerOpen, setIsTVDrawerOpen] = useState(false);
+  const [tvInitialDrawer, setTvInitialDrawer] = useState<'episodes' | 'settings' | 'more' | null>(null);
   const [expandedTVSeason, setExpandedTVSeason] = useState<number>(1);
   const [tvFocusedEpIndex, setTvFocusedEpIndex] = useState<number>(0);
 
@@ -330,7 +331,8 @@ export function Watch() {
       }
 
       if (isDpad) {
-        // Any D-pad press wakes the OSD. The OSD maps Down directly to Seasons/Episodes.
+        // First Down opens Seasons/Episodes immediately; other D-pad input just wakes the OSD.
+        setTvInitialDrawer(e.key === 'ArrowDown' ? (isMovie ? 'more' : 'episodes') : null);
         setIsTVDrawerOpen(true);
         return;
       }
@@ -345,7 +347,7 @@ export function Watch() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isCinemaFullscreen, isTVMode, isTVDrawerOpen, isDirectMedia, slug, setLocation]);
+  }, [isCinemaFullscreen, isTVMode, isTVDrawerOpen, isDirectMedia, slug, setLocation, isMovie]);
 
   const toggleFullscreen = () => {
     if (!isCinemaFullscreen) {
@@ -558,10 +560,15 @@ export function Watch() {
           recommendations={recommendationsData?.results || []}
           isMovie={isMovie}
           isOpen={isTVDrawerOpen}
-          onClose={() => setIsTVDrawerOpen(false)}
+          initialDrawer={tvInitialDrawer}
+          onClose={() => {
+            setIsTVDrawerOpen(false);
+            setTvInitialDrawer(null);
+          }}
           onBack={() => setLocation(`/details/${encodeURIComponent(slug)}`)}
           onPlayEpisode={(episodeId, timestamp = 0) => {
             setIsTVDrawerOpen(false);
+            setTvInitialDrawer(null);
             setLocation(`/watch/${encodeURIComponent(episodeId)}?t=${Math.floor(timestamp)}&fs=1`);
           }}
           selectedType={selectedType}
