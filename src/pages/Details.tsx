@@ -1,30 +1,44 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useRoute, Link } from 'wouter';
+import { useRoute, Link, useLocation } from 'wouter';
 import useSWR from 'swr';
 import { api } from '../lib/api';
-import { Play, Bookmark, Heart, Plus, Star, Film, Globe, RotateCcw, Check, Sparkles, ChevronRight } from 'lucide-react';
+import { Play, Bookmark, Heart, Star, Sparkles, CheckCircle2, ChevronRight, Layers, Film } from 'lucide-react';
 import { motion } from 'motion/react';
-import { Skeleton } from '../components/ui/Skeleton';
-import { AnimeLoader } from '../components/ui/AnimeLoader';
-import { historyUtil, HistoryItem, formatPlaybackTimestamp, parseSeasonNumber, WatchCTAInfo } from '../lib/history';
+import { historyUtil, WatchCTAInfo, parseSeasonNumber } from '../lib/history';
 import { libraryManager } from '../lib/library';
-import { DEFAULT_POSTER, DEFAULT_BANNER, AnimeDetails, Episode } from '../types';
+import { preferencesUtil } from '../lib/preferences';
+import { updateSEO } from '../lib/seo';
+import { KinomaErrorState } from '../components/ui/KinomaErrorState';
+import { AnimeGrid } from '../components/ui/AnimeGrid';
+import { AnimeDetails, Episode, DEFAULT_POSTER, DEFAULT_BANNER } from '../types';
 
 export function Details() {
   const [isMatch, params] = useRoute<{id: string}>('/details/:id');
-  const id = (isMatch && params) ? params.id : '';
+  const [, setLocation] = useLocation();
+  const id = (isMatch && params) ? decodeURIComponent(params.id) : '';
+
   const [selectedSeasonNumber, setSelectedSeasonNumber] = useState<number>(1);
   const [isBookmarked, setIsBookmarked] = useState(false);
-  const [isCompleted, setIsCompleted] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [selectedChunk, setSelectedChunk] = useState(0);
-  const [progressVersion, setProgressVersion] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
   const [seasonEpisodesMap, setSeasonEpisodesMap] = useState<Record<number, Episode[]>>({});
   const [isLoadingSeasonEps, setIsLoadingSeasonEps] = useState<boolean>(false);
-  
-  const { data, isLoading } = useSWR<AnimeDetails>(id ? `info-${id}` : null, () => api.getDetails(id));
+  const [progressVersion, setProgressVersion] = useState(0);
 
-  // Listen to live watch progress updates
+  // Fetch Anime Details
+  const { data, isLoading, error, mutate: retryDetails } = useSWR<AnimeDetails>(
+    id ? `info-${id}` : null,
+    () => api.getDetails(id),
+    { dedupingInterval: 60000 }
+  );
+
+  // Fetch Recommendations
+  const { data: recsData } = useSWR(
+    id ? `recs-${id}` : null,
+    () => api.getRecommendations(id),
+    { dedupingInterval: 60000 }
+  );
+
+  // Listen for progress updates
   useEffect(() => {
     const handleProgressUpdate = () => setProgressVersion(v => v + 1);
     window.addEventListener('kinoma_progress_update', handleProgressUpdate);
@@ -32,19 +46,36 @@ export function Details() {
   }, []);
 
   const episodes = data?.episodes || [];
-  const firstEp = episodes[0];
 
-  // Dynamic Watch CTA calculation based on progress across episodes & seasons
+  // Update SEO & genre personalization when data loads
+  useEffect(() => {
+    if (data) {
+      const titleStr = typeof data.title === 'string' 
+        ? data.title 
+        : data.title?.english || data.title?.romaji || id;
+      const cleanDesc = (data.description || '').replace(/<[^>]*>?/gm, '');
+
+      updateSEO({
+        title: titleStr,
+        description: cleanDesc.slice(0, 160) || `Watch ${titleStr} streaming in HD on Kinoma.`,
+        image: data.cover || data.image,
+        type: 'video.tv_show'
+      });
+
+      if (data.genres && data.genres.length > 0) {
+        preferencesUtil.recordGenreInteraction(data.genres);
+      }
+
+      setIsBookmarked(libraryManager.isInWatchlist(data.id || id));
+    }
+  }, [data, id]);
+
+  // Compute Dynamic Watch CTA
   const watchCTA: WatchCTAInfo = useMemo(() => {
     return historyUtil.calculateWatchCTA(id, episodes, data?.title, data?._reanimeSlug || data?.id);
   }, [id, episodes, data, progressVersion]);
 
-  // Map of per-episode progress
-  const epProgressMap = useMemo(() => {
-    return historyUtil.getAnimeEpisodesProgress(id, data?._reanimeSlug || data?.id);
-  }, [id, data, progressVersion]);
-
-  // Multi-season identification & grouping (preferring real API seasons)
+  // Handle canonical Season Structure
   const seasons = useMemo(() => {
     if (data?.seasons && data.seasons.length > 0) {
       return data.seasons.map(s => ({
@@ -85,7 +116,7 @@ export function Details() {
       }));
   }, [data?.seasons, episodes, seasonEpisodesMap, id, data?.anilist_id, data?.title]);
 
-  // Fetch season episodes when a new season tab is selected
+  // Fetch season episodes on season tab change
   useEffect(() => {
     if (!id || !selectedSeasonNumber) return;
     if (seasonEpisodesMap[selectedSeasonNumber] && seasonEpisodesMap[selectedSeasonNumber].length > 0) return;
@@ -99,586 +130,338 @@ export function Details() {
     }
 
     setIsLoadingSeasonEps(true);
-    api.getSeasonEpisodes(id, selectedSeasonNumber, seasonObj.animeId, seasonObj.anilistId)
+    api.getSeasonEpisodes(seasonObj.animeId || id, selectedSeasonNumber)
       .then(res => {
-        if (res?.episodes) {
-          setSeasonEpisodesMap(prev => ({ ...prev, [selectedSeasonNumber]: res.episodes }));
-        }
+        const rawList = res.episodes || [];
+        const formatted: Episode[] = rawList.map((ep: any) => ({
+          id: ep.id || `${seasonObj.animeId || id}$episode$${ep.number || 1}`,
+          number: ep.number || 1,
+          title: ep.title || `Episode ${ep.number || 1}`,
+          seasonNumber: selectedSeasonNumber,
+          image: ep.image || data?.image || DEFAULT_POSTER
+        }));
+        setSeasonEpisodesMap(prev => ({ ...prev, [selectedSeasonNumber]: formatted }));
       })
-      .catch(err => {
-        console.error('Failed to load season episodes:', err);
+      .catch(() => {
+        setSeasonEpisodesMap(prev => ({ ...prev, [selectedSeasonNumber]: [] }));
       })
       .finally(() => {
         setIsLoadingSeasonEps(false);
       });
-  }, [id, selectedSeasonNumber, seasons, episodes, seasonEpisodesMap]);
+  }, [id, selectedSeasonNumber, seasons, episodes, seasonEpisodesMap, data?.image]);
 
-  // Automatically select the season of the next unwatched episode
-  useEffect(() => {
-    if (watchCTA.seasonNumber) {
-      setSelectedSeasonNumber(watchCTA.seasonNumber);
-    } else if (seasons.length > 0) {
-      setSelectedSeasonNumber(seasons[0].seasonNumber);
-    }
-  }, [watchCTA.seasonNumber, seasons.length]);
-
-  useEffect(() => {
-    setSelectedChunk(0);
-  }, [id, selectedSeasonNumber]);
-
-  useEffect(() => {
-    if (data && data._reanimeSlug) {
-      const animTitle = typeof data.title === 'string'
-        ? data.title
-        : data.title?.english || data.title?.romaji || id;
-      const animImage = data.image || DEFAULT_POSTER;
-      const animId = String(data.id || id);
-
-      historyUtil.saveMeta(data._reanimeSlug, {
-        title: animTitle,
-        image: animImage,
-        animeId: animId,
-        seasonNumber: watchCTA.seasonNumber
-      });
-      
-      if (data?.id) {
-        setIsBookmarked(libraryManager.isInWatchlist(data.id));
-        setIsCompleted(libraryManager.isCompleted(data.id));
-        setIsFavorite(libraryManager.isFavorite(data.id));
+  const activeEpisodes = useMemo(() => {
+    if (seasons.length > 0) {
+      const target = seasons.find(s => s.seasonNumber === selectedSeasonNumber);
+      if (target && seasonEpisodesMap[selectedSeasonNumber]) {
+        return seasonEpisodesMap[selectedSeasonNumber];
+      }
+      if (target && target.episodes && target.episodes.length > 0) {
+        return target.episodes;
       }
     }
-  }, [data, watchCTA.seasonNumber, id]);
-
-  // Listen to library updates (sync across tabs/windows)
-  useEffect(() => {
-    const handleLibUpdate = () => {
-      if (data?.id) {
-        setIsBookmarked(libraryManager.isInWatchlist(data.id));
-        setIsCompleted(libraryManager.isCompleted(data.id));
-        setIsFavorite(libraryManager.isFavorite(data.id));
-      }
-    };
-    window.addEventListener('kinoma_library_update', handleLibUpdate);
-    return () => window.removeEventListener('kinoma_library_update', handleLibUpdate);
-  }, [data?.id]);
-
-  const handleClearProgress = () => {
-    if (data?._reanimeSlug) historyUtil.removeHistory(data._reanimeSlug);
-    if (data?.id) historyUtil.removeHistory(data.id);
-    if (id) historyUtil.removeHistory(id);
-    setProgressVersion(v => v + 1);
-  };
+    return episodes;
+  }, [seasons, selectedSeasonNumber, seasonEpisodesMap, episodes]);
 
   const toggleWatchlist = () => {
     if (!data) return;
-    const itemTitle = typeof data.title === 'string' ? data.title : (data.title?.english || data.title?.romaji || id);
-    const inWatch = libraryManager.toggleWatchlist({
-      id: data.id,
-      title: itemTitle,
+    const titleStr = typeof data.title === 'string' ? data.title : data.title?.english || data.title?.romaji || id;
+    const added = libraryManager.toggleWatchlist({
+      id: data.id || id,
+      title: titleStr,
       image: data.image || DEFAULT_POSTER
     });
-    setIsBookmarked(inWatch);
+    setIsBookmarked(added);
   };
 
-  const toggleFavorite = () => {
-    if (!data) return;
-    const itemTitle = typeof data.title === 'string' ? data.title : (data.title?.english || data.title?.romaji || id);
-    const inFav = libraryManager.toggleFavorite({
-      id: data.id,
-      title: itemTitle,
-      image: data.image || DEFAULT_POSTER
-    });
-    setIsFavorite(inFav);
+  const animeTitle = data 
+    ? (typeof data.title === 'string' ? data.title : data.title?.english || data.title?.romaji || id)
+    : id;
+
+  const altTitle = data && typeof data.title === 'object'
+    ? (data.title.romaji !== animeTitle ? data.title.romaji : data.title.native)
+    : undefined;
+
+  const firstEp = activeEpisodes[0] || episodes[0] || null;
+
+  const handleLaunchCTA = () => {
+    if (watchCTA.episode?.id) {
+      const startParam = watchCTA.playbackTimestamp > 15 ? `?t=${Math.floor(watchCTA.playbackTimestamp)}` : '';
+      setLocation(`/watch/${encodeURIComponent(watchCTA.episode.id)}${startParam}`);
+    } else if (firstEp?.id) {
+      setLocation(`/watch/${encodeURIComponent(firstEp.id)}`);
+    } else {
+      setLocation(`/watch/${encodeURIComponent(id)}`);
+    }
   };
 
-  const toggleCompleted = () => {
-    if (!data) return;
-    const itemTitle = typeof data.title === 'string' ? data.title : (data.title?.english || data.title?.romaji || id);
-    const inComp = libraryManager.toggleCompleted({
-      id: data.id,
-      title: itemTitle,
-      image: data.image || DEFAULT_POSTER
-    });
-    setIsCompleted(inComp);
-  };
-
-  // Filter episodes by currently selected season
-  const currentSeasonObj = seasons.find(s => s.seasonNumber === selectedSeasonNumber) || seasons[0];
-  const seasonEpisodes = currentSeasonObj?.episodes || episodes;
-
-  const CHUNK_SIZE = 100;
-  const totalChunks = Math.ceil(seasonEpisodes.length / CHUNK_SIZE);
-  const displayedEpisodes = seasonEpisodes.slice(selectedChunk * CHUNK_SIZE, (selectedChunk + 1) * CHUNK_SIZE);
-
-  const title = typeof data?.title === 'string' 
-    ? data.title 
-    : data?.title?.english || data?.title?.romaji || 'Anime Details';
-    
-  const altTitle = typeof data?.title !== 'string' ? data?.title?.romaji : '';
-
-  if (isLoading) {
+  if (error) {
     return (
-      <div className="w-full min-h-screen bg-[#0e0f11] text-white flex flex-col items-center justify-center p-8">
-        <AnimeLoader text="Summoning Anime Episodes..." size="lg" />
+      <div className="w-full max-w-[1680px] mx-auto px-4 sm:px-6 py-12">
+        <KinomaErrorState onRetry={retryDetails} />
       </div>
     );
   }
 
-  if (!data) {
+  if (isLoading || !data) {
     return (
-      <div className="w-full min-h-[60vh] flex flex-col items-center justify-center gap-4 text-white">
-        <h2 className="text-2xl font-bold">Anime Not Found</h2>
-        <Link href="/">
-          <button className="px-6 py-2.5 bg-[#7b1fa2] hover:bg-[#9c27b0] rounded-xl font-bold transition-colors">
-            Return Home
-          </button>
-        </Link>
+      <div className="w-full min-h-[70vh] flex items-center justify-center bg-[#07080c]">
+        <div className="w-12 h-12 border-3 border-[#7b1fa2]/30 border-t-[#7b1fa2] rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="w-full bg-[#0e0f11] min-h-screen text-white pb-24">
-      {/* Hero Banner Section */}
-      <div className="relative w-full h-[60vh] min-h-[450px] max-h-[600px] overflow-hidden">
-        <div className="absolute inset-0 bg-[#0e0f11]">
-          <img 
-            src={data.cover || data.image || DEFAULT_BANNER} 
-            alt={title} 
-            className="w-full h-full object-cover opacity-35 filter blur-sm scale-105" 
+    <div className="w-full min-h-screen bg-[#07080c] pb-24 text-white font-sans selection:bg-[#7b1fa2] selection:text-white">
+      
+      {/* 1. CINEMATIC HERO SECTION */}
+      <div className="relative w-full min-h-[55vh] lg:min-h-[65vh] flex items-end overflow-hidden pb-10">
+        
+        {/* Backdrop Artwork */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src={data.cover || data.image || DEFAULT_BANNER}
+            alt={animeTitle}
+            className="w-full h-full object-cover object-center filter brightness-60 scale-105"
           />
+          {/* Subtle multi-layer cinematic gradient scrim */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#07080c] via-[#07080c]/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#07080c] via-[#07080c]/80 to-transparent" />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0e0f11] via-[#0e0f11]/70 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0e0f11] via-[#0e0f11]/50 to-transparent" />
 
-        {/* Hero Content */}
-        <div className="relative max-w-7xl mx-auto h-full flex flex-col md:flex-row items-end gap-6 sm:gap-8 px-4 sm:px-6 lg:px-8 pb-10 z-10">
+        {/* Hero Content Container */}
+        <div className="relative z-10 w-full max-w-[1680px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 flex flex-col md:flex-row gap-6 lg:gap-10 items-start md:items-end">
           
-          {/* Poster (Left) */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="w-[180px] sm:w-[220px] md:w-[260px] shrink-0 mx-auto md:mx-0 shadow-2xl rounded-xl overflow-hidden border border-white/10 hidden md:block"
-          >
-            <img src={data.image || DEFAULT_POSTER} alt={title} className="w-full aspect-[3/4] object-cover" />
-          </motion.div>
+          {/* Cover Poster */}
+          <div className="hidden sm:block w-36 sm:w-44 md:w-52 lg:w-60 aspect-[2/3] rounded-2xl overflow-hidden bg-[#12131c] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.8)] shrink-0">
+            <img
+              src={data.image || DEFAULT_POSTER}
+              alt={animeTitle}
+              className="w-full h-full object-cover"
+            />
+          </div>
 
-          {/* Info (Right) */}
-          <motion.div 
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex-1 flex flex-col gap-4 justify-end"
-          >
-            <div>
-              {altTitle && <p className="text-gray-400 font-medium tracking-widest text-sm mb-1">{altTitle}</p>}
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-tight drop-shadow-2xl">
-                {title}
-              </h1>
-            </div>
-
-            {/* Metadata Tags */}
-            <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm font-semibold drop-shadow-md mt-2">
-              <span className="flex items-center gap-1 bg-white/10 backdrop-blur-md px-2 py-1 rounded text-white border border-white/10">
-                <Star className="w-4 h-4 text-yellow-400 fill-current" /> {typeof data.rating === 'number' && !isNaN(data.rating) ? `${(data.rating / 10).toFixed(1)}/10` : (typeof data.rating === 'string' ? data.rating : 'N/A')}
-              </span>
-              {data.contentRating && (
-                <span className="bg-[#7b1fa2]/30 border border-[#9c27b0]/50 px-2 py-1 rounded text-[#e1bee7] text-xs font-bold">
-                  {data.contentRating}
+          {/* Details & Metadata Hierarchy */}
+          <div className="flex-1 min-w-0 flex flex-col gap-3 max-w-3xl">
+            
+            {/* Meta Tags: Year, Rating, Status, Quality */}
+            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-gray-300">
+              {data.releaseDate && (
+                <span className="px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10">
+                  {data.releaseDate}
                 </span>
               )}
-              <span className="flex items-center gap-1 text-gray-200 bg-white/5 px-2 py-1 rounded">
-                <Film className="w-4 h-4 text-gray-400" /> {data.type || 'TV'} • {data.releaseDate || 'Unknown'}
-              </span>
-              <span className="flex items-center gap-1 text-gray-200 bg-white/5 px-2 py-1 rounded text-emerald-400">
-                {data.status || 'Finished'}
-              </span>
-              <span className="flex items-center gap-1 text-gray-200">
-                <Globe className="w-4 h-4 text-gray-400" /> Sub/Dub
-              </span>
-            </div>
-
-            <div className="flex flex-wrap gap-2 mt-1">
-              {(data.genres || []).map((genre: string) => (
-                <span key={genre} className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-300 border border-gray-600/50 px-2 py-0.5 rounded-full">
-                  {genre}
+              {data.rating && (
+                <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold">
+                  <Star className="w-3 h-3 fill-amber-400" />
+                  <span>{data.rating}%</span>
                 </span>
-              ))}
+              )}
+              {data.status && (
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300">
+                  {data.status}
+                </span>
+              )}
+              {data.type && (
+                <span className="px-2.5 py-0.5 rounded-full bg-[#7b1fa2]/20 border border-[#7b1fa2]/40 text-[#c084fc]">
+                  {data.type}
+                </span>
+              )}
             </div>
 
+            {/* Anime Title */}
+            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
+              {animeTitle}
+            </h1>
+
+            {/* Alternative Title */}
+            {altTitle && (
+              <p className="text-xs sm:text-sm text-gray-400 font-medium -mt-1 line-clamp-1">
+                {altTitle}
+              </p>
+            )}
+
+            {/* Genres List */}
+            {data.genres && data.genres.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {data.genres.map(g => (
+                  <span key={g} className="text-[11px] font-semibold text-gray-300 bg-[#161724]/80 backdrop-blur-md px-2.5 py-0.5 rounded-lg border border-white/10">
+                    {g}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Synopsis Description */}
             <p 
-              className="text-sm sm:text-base text-gray-300 line-clamp-3 leading-relaxed max-w-3xl drop-shadow-lg mt-2" 
-              dangerouslySetInnerHTML={{ __html: data.description || 'No synopsis available.' }} 
+              className="text-xs sm:text-sm text-gray-300 leading-relaxed line-clamp-3 md:line-clamp-4 pt-1 max-w-2xl"
+              dangerouslySetInnerHTML={{ __html: data.description || 'No description provided.' }}
             />
 
-            {/* Cinematic CTA Buttons */}
-            <div className="mt-4 flex flex-wrap items-center gap-3 sm:gap-4">
+            {/* Action Bar: Primary Play Button + Secondary Actions */}
+            <div className="flex flex-wrap items-center gap-3 pt-3">
               
-              {/* 1. NEVER WATCHED: Watch Now */}
-              {watchCTA.type === 'watch_now' && (
-                <Link href={`/watch/${encodeURIComponent(watchCTA.episode?.id || firstEp?.id || '')}?t=0&fs=1`}>
-                  <motion.button 
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="flex items-center justify-center gap-2.5 bg-gradient-to-r from-[#7b1fa2] via-[#9c27b0] to-[#ba68c8] hover:from-[#6a1b9a] hover:to-[#ab47bc] text-white px-6 sm:px-10 py-3 sm:py-3.5 rounded-xl text-sm sm:text-base font-black transition-all shadow-[0_4px_24px_rgba(156,39,176,0.45)]"
-                  >
-                    <Play className="w-5 h-5 fill-white" />
-                    <span>Watch Now</span>
-                  </motion.button>
-                </Link>
-              )}
+              {/* PRIMARY ACTION: Continue Watching or Watch Now */}
+              <button
+                onClick={handleLaunchCTA}
+                className="flex items-center gap-2.5 px-6 sm:px-8 py-3.5 rounded-2xl bg-[#7b1fa2] hover:bg-[#9c27b0] text-white font-bold text-sm sm:text-base transition-all shadow-[0_4px_24px_rgba(123,31,162,0.6)] active:scale-95 cursor-pointer"
+              >
+                <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
+                <span>{watchCTA.label}</span>
+              </button>
 
-              {/* 2. PARTIALLY WATCHED: Continue Watching (e.g. Continue Watching · S2 E7 — 14:32) */}
-              {watchCTA.type === 'continue_watching' && watchCTA.episode && (
-                <>
-                  <Link href={`/watch/${encodeURIComponent(watchCTA.episode.id)}?t=${Math.floor(watchCTA.playbackTimestamp)}&fs=1`}>
-                    <motion.button 
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      className="flex items-center justify-center gap-2.5 bg-gradient-to-r from-[#7b1fa2] via-[#9c27b0] to-[#ba68c8] hover:from-[#6a1b9a] hover:to-[#ab47bc] text-white px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl text-sm sm:text-base font-black transition-all shadow-[0_4px_24px_rgba(156,39,176,0.45)] group relative overflow-hidden"
-                    >
-                      <Play className="w-5 h-5 fill-white text-white group-hover:scale-110 transition-transform" />
-                      <span>{watchCTA.label}</span>
-                      {watchCTA.completionPercentage > 0 && (
-                        <span className="text-[11px] font-bold bg-black/40 px-2 py-0.5 rounded-full border border-white/20 ml-1">
-                          {Math.round(watchCTA.completionPercentage)}%
-                        </span>
-                      )}
-                    </motion.button>
-                  </Link>
-
-                  {/* Secondary Play Ep 1 restart button if not on episode 1 */}
-                  {firstEp && firstEp.id !== watchCTA.episode.id && (
-                    <Link href={`/watch/${encodeURIComponent(firstEp.id)}?t=0&fs=1`}>
-                      <motion.button 
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.97 }}
-                        className="flex items-center justify-center gap-2 bg-black/40 hover:bg-white/10 text-white px-5 py-3 sm:py-3.5 rounded-xl text-sm sm:text-base font-bold transition-all border border-white/20 backdrop-blur-md"
-                      >
-                        Play Ep 1
-                      </motion.button>
-                    </Link>
-                  )}
-                </>
-              )}
-
-              {/* 3. COMPLETED ANIME: Watch Again */}
-              {watchCTA.type === 'watch_again' && (
-                <Link href={`/watch/${encodeURIComponent(watchCTA.episode?.id || firstEp?.id || '')}?t=0`}>
-                  <motion.button 
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="flex items-center justify-center gap-2.5 bg-gradient-to-r from-[#7b1fa2] via-[#9c27b0] to-[#ba68c8] hover:from-[#6a1b9a] hover:to-[#ab47bc] text-white px-6 sm:px-10 py-3 sm:py-3.5 rounded-xl text-sm sm:text-base font-black transition-all shadow-[0_4px_24px_rgba(156,39,176,0.45)]"
-                  >
-                    <RotateCcw className="w-5 h-5 text-white stroke-[2.5]" />
-                    <span>Watch Again</span>
-                  </motion.button>
-                </Link>
-              )}
-
-              {/* Fallback if no episodes */}
-              {!watchCTA.episode && !firstEp && (
-                <button disabled className="flex items-center justify-center gap-2 bg-white/20 text-white/50 cursor-not-allowed px-6 py-3 rounded-xl text-sm font-bold">
-                  No Episodes
-                </button>
-              )}
-              
-              {/* Watchlist Bookmark Button */}
-              <motion.button 
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+              {/* SECONDARY ACTION: My List Bookmark */}
+              <button
                 onClick={toggleWatchlist}
-                className={`flex items-center justify-center gap-2 px-6 py-3 sm:py-3.5 rounded-xl text-sm sm:text-base font-bold transition-all border ${isBookmarked ? 'bg-[#7b1fa2]/30 text-white border-[#9c27b0] shadow-[0_0_15px_rgba(156,39,176,0.3)] backdrop-blur-md' : 'bg-black/40 text-white border-white/20 hover:bg-white/10 backdrop-blur-md'}`}
+                className={`flex items-center gap-2 px-4 py-3 rounded-2xl text-xs sm:text-sm font-semibold transition-all border cursor-pointer ${
+                  isBookmarked
+                    ? 'bg-[#7b1fa2]/25 text-white border-[#ba68c8]/50 shadow-sm'
+                    : 'bg-white/5 hover:bg-white/10 text-gray-200 hover:text-white border-white/10'
+                }`}
               >
-                {isBookmarked ? <Bookmark className="w-5 h-5 fill-[#c084fc] text-[#c084fc]" /> : <Plus className="w-5 h-5" strokeWidth={3} />}
-                {isBookmarked ? 'In Watchlist' : 'Add to List'}
-              </motion.button>
+                <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-[#c084fc] text-[#c084fc]' : ''}`} />
+                <span>{isBookmarked ? 'In My List' : 'Add to List'}</span>
+              </button>
 
-              {/* Favorite Button */}
-              <motion.button 
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={toggleFavorite}
-                className={`p-3 sm:p-3.5 rounded-xl transition-all border backdrop-blur-md ${isFavorite ? 'bg-rose-500/20 text-rose-400 border-rose-500/40 shadow-[0_0_15px_rgba(244,63,94,0.3)]' : 'bg-black/40 text-white border-white/20 hover:bg-white/10'}`}
-                title={isFavorite ? 'Favorited' : 'Add to Favorites'}
+              {/* SECONDARY ACTION: Like */}
+              <button
+                onClick={() => setIsLiked(!isLiked)}
+                className={`p-3 rounded-2xl border transition-all cursor-pointer ${
+                  isLiked
+                    ? 'bg-rose-500/20 text-rose-400 border-rose-500/40 shadow-sm'
+                    : 'bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border-white/10'
+                }`}
+                title="Like this anime"
               >
-                <Heart className={`w-5 h-5 ${isFavorite ? 'fill-rose-500 text-rose-500' : ''}`} />
-              </motion.button>
+                <Heart className={`w-4 h-4 ${isLiked ? 'fill-rose-500 text-rose-500' : ''}`} />
+              </button>
 
-              {/* Completed Button */}
-              <motion.button 
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={toggleCompleted}
-                className={`p-3 sm:p-3.5 rounded-xl transition-all border backdrop-blur-md ${isCompleted ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-black/40 text-white border-white/20 hover:bg-white/10'}`}
-                title={isCompleted ? 'Completed' : 'Mark as Completed'}
-              >
-                <Check className={`w-5 h-5 ${isCompleted ? 'text-emerald-400 stroke-[3]' : ''}`} />
-              </motion.button>
             </div>
-          </motion.div>
+
+          </div>
+
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
+      {/* 2. EPISODES & SEASONS EXPERIENCE */}
+      <div className="w-full max-w-[1680px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 mt-8 flex flex-col gap-6">
         
-        {/* CONTINUE WATCHING BANNER (If anime has saved watch progress) */}
-        {watchCTA.type === 'continue_watching' && watchCTA.episode && (
-          <motion.div 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-10 bg-gradient-to-r from-[#1b1429] via-[#14121d] to-[#121217] border border-[#9c27b0]/40 p-5 sm:p-6 rounded-2xl shadow-[0_8px_32px_rgba(156,39,176,0.18)] relative overflow-hidden"
-          >
-            {/* Top Accent Line */}
-            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-[#7b1fa2] via-[#ba68c8] to-[#9c27b0]" />
-
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-              
-              {/* Left Details */}
-              <div className="flex items-center gap-4 sm:gap-5 w-full md:w-auto">
-                {/* Thumbnail Preview */}
-                <div className="relative w-28 sm:w-36 aspect-video rounded-xl overflow-hidden bg-black/80 shrink-0 border border-white/10 shadow-lg group">
-                  <img 
-                    src={watchCTA.episode.image || data.image || DEFAULT_POSTER} 
-                    alt={`Resume S${watchCTA.seasonNumber} E${watchCTA.episode.number}`}
-                    className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                    <div className="w-8 h-8 rounded-full bg-[#7b1fa2] flex items-center justify-center shadow">
-                      <Play className="w-4 h-4 fill-white text-white ml-0.5" />
-                    </div>
-                  </div>
-                  <div className="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/85 text-[10px] font-bold text-white rounded shadow">
-                    {watchCTA.formattedTimestamp}
-                  </div>
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-[#c084fc] bg-[#7b1fa2]/25 border border-[#9c27b0]/50 px-2 py-0.5 rounded-md">
-                      CONTINUE WATCHING
-                    </span>
-                    <span className="text-xs text-gray-400 font-semibold">
-                      S{watchCTA.seasonNumber} E{watchCTA.episode.number} — {watchCTA.formattedTimestamp}
-                    </span>
-                  </div>
-
-                  <h3 className="text-base sm:text-lg font-black text-white line-clamp-1">
-                    {watchCTA.episode.title || `Episode ${watchCTA.episode.number}`}
-                  </h3>
-
-                  {/* Progress Bar & Details */}
-                  <div className="mt-2.5 max-w-md">
-                    <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
-                      <span>{watchCTA.formattedTimestamp} / 24:00</span>
-                      <span className="text-[#c084fc] font-bold">{Math.round(watchCTA.completionPercentage)}% completed</span>
-                    </div>
-                    <div className="w-full h-2 bg-[#261f36] rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-[#7b1fa2] via-[#9c27b0] to-[#ba68c8] rounded-full transition-all duration-300"
-                        style={{ width: `${Math.max(5, watchCTA.completionPercentage)}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Action Buttons */}
-              <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-                <Link href={`/watch/${encodeURIComponent(watchCTA.episode.id)}?t=${Math.floor(watchCTA.playbackTimestamp)}`}>
-                  <motion.button 
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="flex items-center gap-2 bg-[#7b1fa2] hover:bg-[#9c27b0] text-white px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow-[0_4px_16px_rgba(123,31,162,0.4)] transition-all"
-                  >
-                    <Play className="w-4 h-4 fill-white" />
-                    <span>Resume S{watchCTA.seasonNumber} E{watchCTA.episode.number}</span>
-                  </motion.button>
-                </Link>
-
-                <button 
-                  onClick={handleClearProgress}
-                  className="px-3.5 py-2.5 bg-[#1f1b29] hover:bg-[#2c243c] text-gray-400 hover:text-white rounded-xl text-xs font-semibold border border-white/10 transition-colors"
-                  title="Reset Watch Progress"
-                >
-                  Reset
-                </button>
-              </div>
-
-            </div>
-          </motion.div>
-        )}
-        
-        {/* Episodes Section - LIST VIEW ONLY (Grid view permanently removed) */}
-        <div className="mt-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-[#212126] pb-4">
-            <div className="flex flex-wrap items-center gap-4">
-              <h2 className="text-2xl font-bold text-white tracking-tight">Episodes</h2>
-              <span className="text-xs font-semibold text-gray-400 bg-[#1a1a22] px-2.5 py-1 rounded-full border border-[#262630]">
-                {seasonEpisodes.length} Episodes
-              </span>
-              
-              {/* Multi-Season Selector Tabs */}
-              {seasons.length > 1 && (
-                <div className="flex items-center gap-1.5 bg-[#141418] p-1 rounded-xl border border-[#212126] overflow-x-auto">
-                  {seasons.map((s) => (
-                    <button
-                      key={s.seasonNumber}
-                      onClick={() => {
-                        setSelectedSeasonNumber(s.seasonNumber);
-                        setSelectedChunk(0);
-                      }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                        selectedSeasonNumber === s.seasonNumber
-                          ? 'bg-[#7b1fa2] text-white shadow-md'
-                          : 'text-gray-400 hover:text-white'
-                      }`}
-                    >
-                      <span>Season {s.seasonNumber}</span>
-                      <span className="text-[10px] opacity-75">({s.episodes.length})</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Chunk Selector for long series */}
-              {totalChunks > 1 && (
-                <select 
-                  value={selectedChunk}
-                  onChange={(e) => setSelectedChunk(Number(e.target.value))}
-                  className="bg-[#1c1c22] border border-[#212126] text-white text-xs font-semibold rounded-lg px-3 py-1.5 outline-none focus:border-[#4a148c]"
-                >
-                  {Array.from({ length: totalChunks }).map((_, i) => {
-                    const start = i * CHUNK_SIZE + 1;
-                    const end = Math.min((i + 1) * CHUNK_SIZE, seasonEpisodes.length);
-                    return <option key={i} value={i}>Episodes {start} - {end}</option>;
-                  })}
-                </select>
-              )}
-            </div>
+        {/* Section Header & Reusable Season/Part Selector */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-4">
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+              Episodes
+            </h2>
+            <span className="text-xs text-gray-400 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/5">
+              {activeEpisodes.length} available
+            </span>
           </div>
 
-          {/* Clean Interactive Episode List */}
-          {displayedEpisodes.length > 0 ? (
-            <div className="flex flex-col gap-3">
-              {displayedEpisodes.map((ep: any) => {
-                const epProg = epProgressMap[ep.number] || epProgressMap[ep.id];
-                const isTargetContinue = watchCTA.type === 'continue_watching' && (
-                  ep.id === watchCTA.episode?.id || ep.number.toString() === watchCTA.episode?.number?.toString()
-                );
-                const epTimestamp = epProg?.playbackTimestamp || (isTargetContinue ? watchCTA.playbackTimestamp : 0);
-                const isWatched = epProg?.isCompleted || (epProg && epProg.completionPercentage >= 88);
-                const progressPercent = epProg ? epProg.completionPercentage : (isTargetContinue ? watchCTA.completionPercentage : (isWatched ? 100 : 0));
-                const seasonNum = ep.season || selectedSeasonNumber || watchCTA.seasonNumber || 1;
-                const formattedTime = formatPlaybackTimestamp(epTimestamp);
-
+          {/* Reusable Canonical Season Selector Tabs */}
+          {seasons.length > 1 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+              {seasons.map(s => {
+                const isSelected = s.seasonNumber === selectedSeasonNumber;
                 return (
-                  <Link key={ep.id} href={`/watch/${encodeURIComponent(ep.id)}?t=${Math.floor(epTimestamp)}`}>
-                    <motion.div 
-                      whileHover={{ x: 3 }}
-                      transition={{ duration: 0.2 }}
-                      className={`transition-all p-3 sm:p-3.5 rounded-xl flex items-center justify-between gap-4 group cursor-pointer relative overflow-hidden transform-gpu border ${
-                        isTargetContinue
-                          ? 'bg-[#181423] border-2 border-[#9c27b0] shadow-[0_0_20px_rgba(156,39,176,0.3)]'
-                          : 'bg-[#111115] border-[#212126] hover:border-[#9c27b0]/60 hover:bg-[#15151c]'
-                      }`}
-                    >
-                      {/* Live Progress Bar at Bottom of Row */}
-                      <div className="absolute bottom-0 left-0 h-1 bg-[#212126] w-full">
-                        <div 
-                          className={`h-full transition-all duration-300 ${
-                            isWatched ? 'bg-emerald-500' : 'bg-gradient-to-r from-[#7b1fa2] to-[#ba68c8]'
-                          }`}
-                          style={{ width: `${progressPercent}%` }}
-                        />
-                      </div>
-
-                      <div className="flex items-center gap-4 w-full min-w-0">
-                        {/* Thumbnail */}
-                        <div className="w-28 sm:w-36 aspect-video rounded-lg bg-[#1c1c22] overflow-hidden shrink-0 relative">
-                          <img 
-                            src={ep.image || data.image || DEFAULT_POSTER} 
-                            alt={`EP ${ep.number}`} 
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
-                            loading="lazy" 
-                          />
-                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Play className="w-7 h-7 fill-white" />
-                          </div>
-                          <span className="absolute bottom-1 right-1 bg-black/85 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow">
-                            {epTimestamp > 0 ? formattedTime : '24:00'}
-                          </span>
-                        </div>
-
-                        {/* Episode Info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-wrap items-center gap-2 mb-1">
-                            <span className={`text-xs font-black px-2 py-0.5 rounded uppercase tracking-wider ${
-                              isTargetContinue 
-                                ? 'bg-[#7b1fa2] text-white shadow-[0_0_10px_rgba(123,31,162,0.6)]' 
-                                : 'bg-white/10 text-white'
-                            }`}>
-                              S{seasonNum} E{ep.number}
-                            </span>
-
-                            {isTargetContinue ? (
-                              <span className="text-[10px] font-black text-[#c084fc] bg-[#7b1fa2]/25 border border-[#9c27b0]/50 px-2 py-0.5 rounded flex items-center gap-1">
-                                <Sparkles className="w-3 h-3 text-[#c084fc]" />
-                                RESUME AT {formattedTime} ({Math.round(progressPercent)}%)
-                              </span>
-                            ) : isWatched ? (
-                              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded flex items-center gap-1">
-                                <Check className="w-3 h-3 text-emerald-400" /> WATCHED
-                              </span>
-                            ) : epTimestamp > 0 ? (
-                              <span className="text-[10px] font-bold text-gray-300 bg-white/10 px-2 py-0.5 rounded">
-                                PAUSED AT {formattedTime} ({Math.round(progressPercent)}%)
-                              </span>
-                            ) : null}
-                          </div>
-
-                          <h4 className={`font-bold text-sm sm:text-base truncate transition-colors ${
-                            isTargetContinue ? 'text-[#c084fc]' : 'text-white group-hover:text-[#c084fc]'
-                          }`}>
-                            {ep.title || `Episode ${ep.number}`}
-                          </h4>
-
-                          <div className="flex items-center gap-2 mt-1.5">
-                            <span className="text-[9px] font-bold border border-gray-600/50 text-gray-400 px-1.5 py-0.5 rounded uppercase">SUB</span>
-                            <span className="text-[9px] font-bold border border-gray-600/50 text-gray-400 px-1.5 py-0.5 rounded uppercase">DUB</span>
-                            {epTimestamp > 0 && !isWatched && (
-                              <span className="text-[10px] text-gray-400 ml-1">
-                                Saved: {formattedTime} / 24:00
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Action CTA Button on Right */}
-                        <div className="hidden sm:flex shrink-0 items-center pr-2">
-                          <div className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                            isTargetContinue
-                              ? 'bg-[#7b1fa2] text-white shadow-[0_0_12px_rgba(123,31,162,0.5)]'
-                              : 'bg-[#1c1c24] text-gray-300 group-hover:text-white group-hover:bg-[#282834]'
-                          }`}>
-                            <Play className="w-3.5 h-3.5 fill-current" />
-                            <span>{isTargetContinue ? `Resume (${formattedTime})` : isWatched ? 'Replay' : 'Play'}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  </Link>
+                  <button
+                    key={`season-${s.seasonNumber}`}
+                    onClick={() => setSelectedSeasonNumber(s.seasonNumber)}
+                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 border ${
+                      isSelected
+                        ? 'bg-[#7b1fa2] text-white border-[#ba68c8]/60 shadow-[0_2px_12px_rgba(123,31,162,0.4)]'
+                        : 'bg-[#12131c] text-gray-400 hover:text-white border-white/5 hover:bg-[#191a26]'
+                    }`}
+                  >
+                    {s.title}
+                  </button>
                 );
               })}
             </div>
-          ) : (
-            <div className="text-gray-500 text-sm py-12 text-center bg-[#111115] rounded-xl border border-[#212126]">
-              No episodes available for this season.
-            </div>
           )}
         </div>
+
+        {/* Episode Grid */}
+        {isLoadingSeasonEps ? (
+          <div className="py-16 flex items-center justify-center">
+            <div className="w-8 h-8 border-2 border-[#7b1fa2]/30 border-t-[#7b1fa2] rounded-full animate-spin" />
+          </div>
+        ) : activeEpisodes.length === 0 ? (
+          <div className="py-12 text-center text-gray-500 text-sm">
+            No episodes currently listed for this release.
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+            {activeEpisodes.map((ep) => {
+              const epProg = historyUtil.getEpisodeProgress(id, ep.number);
+              const isWatched = epProg?.isCompleted || (epProg && epProg.completionPercentage >= 85);
+              const epWatchUrl = `/watch/${encodeURIComponent(ep.id || `${id}$episode$${ep.number}`)}`;
+
+              return (
+                <Link key={ep.id} href={epWatchUrl}>
+                  <div className="group flex flex-col w-full rounded-2xl bg-[#0f1016] hover:bg-[#161722] border border-white/5 hover:border-white/15 p-2.5 sm:p-3 transition-all cursor-pointer select-none">
+                    
+                    {/* Thumbnail */}
+                    <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-[#181924] mb-2.5">
+                      <img
+                        src={ep.image || data.image || DEFAULT_POSTER}
+                        alt={`Episode ${ep.number}`}
+                        loading="lazy"
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+
+                      {/* Play overlay on hover */}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="w-9 h-9 rounded-full bg-[#7b1fa2] text-white flex items-center justify-center shadow-lg">
+                          <Play className="w-4 h-4 fill-current ml-0.5" />
+                        </div>
+                      </div>
+
+                      {/* Episode Number Pill */}
+                      <div className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded bg-black/75 backdrop-blur-md text-[10px] font-bold text-white">
+                        EP {ep.number}
+                      </div>
+
+                      {/* Watched Checkmark */}
+                      {isWatched && (
+                        <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-emerald-500/90 text-white flex items-center justify-center shadow-md">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                        </div>
+                      )}
+
+                      {/* Progress bar if partially watched */}
+                      {epProg && !isWatched && epProg.completionPercentage > 5 && (
+                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/60">
+                          <div 
+                            className="h-full bg-[#c084fc]"
+                            style={{ width: `${epProg.completionPercentage}%` }}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Title & Runtime */}
+                    <h4 className="text-xs sm:text-sm font-semibold text-white group-hover:text-purple-300 transition-colors line-clamp-1">
+                      {ep.title || `Episode ${ep.number}`}
+                    </h4>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+
       </div>
+
+      {/* 3. RECOMMENDATIONS / MORE LIKE THIS */}
+      {recsData?.results && recsData.results.length > 0 && (
+        <div className="w-full max-w-[1680px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 mt-16">
+          <AnimeGrid
+            title="More Like This"
+            items={recsData.results.slice(0, 12)}
+          />
+        </div>
+      )}
+
     </div>
   );
 }

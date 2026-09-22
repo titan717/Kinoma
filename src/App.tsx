@@ -9,12 +9,14 @@ import { Search } from './pages/Search';
 import { Details } from './pages/Details';
 import { Watch } from './pages/Watch';
 import { Library } from './pages/Library';
+import { WhatsNew } from './pages/WhatsNew';
 import { AuthProvider } from './lib/AuthContext';
 import { AuthModal } from './components/ui/AuthModal';
 import { AppearanceProvider } from './lib/AppearanceContext';
 import { TVModeProvider, useTVMode } from './lib/TVModeContext';
 import { SettingsModal } from './components/ui/SettingsModal';
 import { AndroidTVModal } from './components/ui/AndroidTVModal';
+import { TVExperiencePrompt } from './components/ui/TVExperiencePrompt';
 import { IntroSplash } from './components/ui/IntroSplash';
 import { TVApp } from './pages/TVApp';
 
@@ -39,6 +41,8 @@ function AnimatedRoutes() {
           <Route path="/" component={Home} />
           <Route path="/tv" component={TVApp} />
           <Route path="/search" component={Search} />
+          <Route path="/explore" component={Search} />
+          <Route path="/whats-new" component={WhatsNew} />
           <Route path="/details/:id" component={Details} />
           <Route path="/watch/:id" component={Watch} />
           <Route path="/library" component={Library} />
@@ -94,6 +98,7 @@ export default function App() {
             <AuthModal />
             <SettingsModal />
             <AndroidTVModal />
+            <TVExperiencePrompt />
           </TVModeProvider>
         </AppearanceProvider>
       </AuthProvider>

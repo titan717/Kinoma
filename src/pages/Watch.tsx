@@ -1,22 +1,42 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useRoute, Link, useLocation } from 'wouter';
 import useSWR from 'swr';
 import { api } from '../lib/api';
 import { animeApi } from '../services/animeApi';
-import { Play, ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Bookmark, Heart, Layers, Radio, Maximize, Minimize, Tv } from 'lucide-react';
-import { motion } from 'motion/react';
+import { 
+  Play, 
+  ArrowLeft, 
+  ArrowRight, 
+  CheckCircle2, 
+  ChevronDown, 
+  ChevronRight,
+  Bookmark, 
+  Heart, 
+  Maximize, 
+  Minimize, 
+  Tv, 
+  Volume2, 
+  Wifi, 
+  WifiOff, 
+  Sparkles,
+  Layers,
+  X
+} from 'lucide-react';
 import { historyUtil, parseSeasonNumber } from '../lib/history';
 import { libraryManager } from '../lib/library';
+import { preferencesUtil } from '../lib/preferences';
+import { updateSEO } from '../lib/seo';
+import { useTVMode } from '../lib/TVModeContext';
 import { AnimeGrid } from '../components/ui/AnimeGrid';
-import { DEFAULT_POSTER } from '../types';
+import { AnimeItem, DEFAULT_POSTER } from '../types';
 
 export function Watch() {
   const [isMatch, params] = useRoute<{id: string}>('/watch/:id');
   const [, setLocation] = useLocation();
+  const { isTVMode } = useTVMode();
   const playerContainerRef = useRef<HTMLDivElement | null>(null);
-  const [isCinemaFullscreen, setIsCinemaFullscreen] = useState(false);
   
-  // Robust URL decoding - handles encoded characters like %7C for pipe
+  // Decoding parameter
   const rawId = decodeURIComponent((isMatch && params) ? params.id : '');
   
   let initialSlug = '';
@@ -40,12 +60,25 @@ export function Watch() {
   const epNum = initialEpNum;
   const anilistId = initialAnilistId;
 
-  const [selectedServer, setSelectedServer] = useState<string>('HD-1');
-  const [selectedType, setSelectedType] = useState<'sub' | 'dub'>('sub');
-  const [selectedChunk, setSelectedChunk] = useState<number>(0);
-  const [isBookmarked, setIsBookmarked] = useState(false);
+  // Local preferences: Audio (sub/dub) and Server with per-anime memory
+  const [selectedType, setSelectedType] = useState<'sub' | 'dub'>(() => {
+    return preferencesUtil.getAudioPreference(slug);
+  });
+  const [selectedServer, setSelectedServer] = useState<string>(() => {
+    return preferencesUtil.getServerPreference(slug);
+  });
 
-  // Fetch anime details
+  const [isCinemaFullscreen, setIsCinemaFullscreen] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [networkQuality, setNetworkQuality] = useState<'excellent' | 'good' | 'poor'>('excellent');
+  const [showNetworkNotice, setShowNetworkNotice] = useState(false);
+
+  // TV Player Accordion OSD State
+  const [isTVDrawerOpen, setIsTVDrawerOpen] = useState(false);
+  const [expandedTVSeason, setExpandedTVSeason] = useState<number>(1);
+  const [tvFocusedEpIndex, setTvFocusedEpIndex] = useState<number>(0);
+
+  // Fetch Anime details & recommendations
   const { data: animeData } = useSWR(slug ? `info-${slug}` : null, () => api.getDetails(slug));
   const { data: recommendationsData } = useSWR(slug ? `recs-${slug}` : null, () => api.getRecommendations(slug));
 
@@ -58,67 +91,72 @@ export function Watch() {
   );
 
   const servers = serversData?.servers || [];
-  const currentServer = servers.find(s => s.serverName === selectedServer && s.dataType === selectedType) || servers[0];
+  const currentServer = servers.find(s => s.serverName === selectedServer && s.dataType === selectedType) 
+    || servers.find(s => s.dataType === selectedType) 
+    || servers[0];
 
-  // Fetch authorized stream URL
+  // Fetch stream URL
   const { data: streamData, isLoading: loadingStream } = useSWR(
     slug && epNum && currentServer ? `stream-${slug}-${epNum}-${currentServer.serverName}-${currentServer.dataType || selectedType}-${effectiveAnilistId}` : null,
     () => animeApi.getStream(slug, epNum, currentServer.serverName, currentServer.dataType || selectedType, effectiveAnilistId)
   );
 
-  // Immediate reliable stream URL: prefer streamData.url, fallback directly to server.dataLink
   const streamUrl = streamData?.url || currentServer?.dataLink || '';
 
   const episodes = animeData?.episodes || [];
   const currentEpIndex = episodes.findIndex((e: any) => e.number.toString() === epNum || e.id === rawId);
   const currentEpObj = currentEpIndex !== -1 ? episodes[currentEpIndex] : null;
-  const prevEp = currentEpIndex !== -1 && currentEpIndex > 0 ? episodes[currentEpIndex - 1] : null;
+  const prevEp = currentEpIndex > 0 ? episodes[currentEpIndex - 1] : null;
   const nextEp = currentEpIndex !== -1 && currentEpIndex < episodes.length - 1 ? episodes[currentEpIndex + 1] : null;
 
-  const getAnimeTitle = (titleObj: any, fallback = '') => {
-    if (!titleObj) return fallback;
-    if (typeof titleObj === 'string') return titleObj;
-    return titleObj.english || titleObj.romaji || titleObj.native || fallback;
-  };
+  const animeTitle = animeData 
+    ? (typeof animeData.title === 'string' ? animeData.title : animeData.title?.english || animeData.title?.romaji || slug)
+    : slug;
 
   const detectedSeason = (currentEpObj as any)?.season || parseSeasonNumber(animeData?.title, 1);
-  const animeTitle = getAnimeTitle(animeData?.title, slug);
+  const isMovie = animeData?.type === 'Movie' || episodes.length <= 1;
 
-  // Check Watchlist status with reactive listener
+  // Update SEO for the active episode
+  useEffect(() => {
+    if (animeTitle) {
+      updateSEO({
+        title: `Episode ${epNum} — ${animeTitle}`,
+        description: `Watch ${animeTitle} Episode ${epNum} streaming in HD on Kinoma with subtitle and audio options.`,
+        image: currentEpObj?.image || animeData?.image,
+        type: 'video.episode'
+      });
+    }
+  }, [animeTitle, epNum, currentEpObj, animeData]);
+
+  // Save Audio & Subtitle memory when user changes them
+  const handleSelectType = (type: 'sub' | 'dub') => {
+    setSelectedType(type);
+    preferencesUtil.setAudioPreference(type, slug);
+  };
+
+  const handleSelectServer = (srv: string) => {
+    setSelectedServer(srv);
+    preferencesUtil.setServerPreference(srv, slug);
+  };
+
+  // Check Watchlist status
   useEffect(() => {
     if (animeData) {
-      setIsBookmarked(libraryManager.isInWatchlist(animeData.id));
+      setIsBookmarked(libraryManager.isInWatchlist(animeData.id || slug));
     }
-    const handleLibUpdate = () => {
-      if (animeData) setIsBookmarked(libraryManager.isInWatchlist(animeData.id));
-    };
-    window.addEventListener('kinoma_library_update', handleLibUpdate);
-    return () => window.removeEventListener('kinoma_library_update', handleLibUpdate);
-  }, [animeData]);
+  }, [animeData, slug]);
 
   const toggleWatchlist = () => {
     if (!animeData) return;
     const inWatch = libraryManager.toggleWatchlist({
-      id: animeData.id,
+      id: animeData.id || slug,
       title: animeTitle,
       image: animeData.image || DEFAULT_POSTER
     });
     setIsBookmarked(inWatch);
   };
 
-  // Save metadata
-  useEffect(() => {
-    if (slug && animeData) {
-      historyUtil.saveMeta(slug, {
-        title: animeTitle,
-        image: currentEpObj?.image || animeData.image || '',
-        animeId: animeData.id || slug,
-        seasonNumber: detectedSeason
-      });
-    }
-  }, [slug, animeData, currentEpObj, detectedSeason, animeTitle]);
-
-  // Clean background progress tracking: quietly records watch progress without artificial UI overlays
+  // Continuous background watch progress tracking
   useEffect(() => {
     if (!slug || !epNum) return;
 
@@ -126,7 +164,6 @@ export function Watch() {
     const timeParam = queryParams.get('t') || queryParams.get('time');
     const startSec = timeParam ? parseInt(timeParam, 10) : 0;
 
-    // Save initial progress
     historyUtil.saveProgress(slug, rawId, epNum, startSec || 120, 1440, {
       title: animeTitle,
       image: currentEpObj?.image || animeData?.image || '',
@@ -134,7 +171,6 @@ export function Watch() {
       seasonNumber: detectedSeason
     });
 
-    // Quiet background update every 15s
     let currentSeconds = startSec || 120;
     const interval = setInterval(() => {
       currentSeconds = Math.min(1440, currentSeconds + 15);
@@ -149,51 +185,86 @@ export function Watch() {
     return () => clearInterval(interval);
   }, [slug, epNum, rawId, animeData, currentEpObj, detectedSeason, animeTitle]);
 
-  const CHUNK_SIZE = 100;
-  const totalChunks = Math.ceil(episodes.length / CHUNK_SIZE);
-  const displayedEpisodes = episodes.slice(selectedChunk * CHUNK_SIZE, (selectedChunk + 1) * CHUNK_SIZE);
-
+  // Network Quality Monitoring (subtle latency / buffer test)
   useEffect(() => {
-    if (currentEpIndex !== -1) {
-      setSelectedChunk(Math.floor(currentEpIndex / CHUNK_SIZE));
-    }
-  }, [currentEpIndex]);
-
-  // Default to fullscreen when requested or coming from "Watch Now" / TV mode
-  useEffect(() => {
-    const query = new URLSearchParams(window.location.search);
-    const hasFsParam = query.get('fs') === '1' || query.get('fullscreen') === 'true';
-    const hasSessionFs = sessionStorage.getItem('kinoma_auto_fullscreen') === '1';
-    const isTV = document.documentElement.classList.contains('tv-mode');
-
-    if (hasFsParam || hasSessionFs || isTV) {
-      setIsCinemaFullscreen(true);
+    let active = true;
+    const checkNetwork = async () => {
+      const start = Date.now();
       try {
-        sessionStorage.removeItem('kinoma_auto_fullscreen');
-      } catch {}
-
-      // Attempt native DOM fullscreen if allowed by user gesture
-      if (playerContainerRef.current && !document.fullscreenElement) {
-        playerContainerRef.current.requestFullscreen?.().catch(() => {
-          // Native fullscreen requires direct click gesture in some browsers;
-          // isCinemaFullscreen handles true edge-to-edge 100vw x 100vh cinema fallback smoothly!
-        });
+        await fetch('https://kinomaapi.vercel.app/health', { cache: 'no-store' });
+        const latency = Date.now() - start;
+        if (!active) return;
+        if (latency < 450) {
+          setNetworkQuality('excellent');
+          setShowNetworkNotice(false);
+        } else if (latency < 1200) {
+          setNetworkQuality('good');
+          setShowNetworkNotice(false);
+        } else {
+          setNetworkQuality('poor');
+          setShowNetworkNotice(true);
+        }
+      } catch {
+        if (active) {
+          setNetworkQuality('poor');
+          setShowNetworkNotice(true);
+        }
       }
-    }
+    };
+
+    checkNetwork();
+    const netInterval = setInterval(checkNetwork, 45000);
+    return () => {
+      active = false;
+      clearInterval(netInterval);
+    };
   }, []);
 
-  // Listen to Escape / 'f' key for fullscreen toggle
+  // FULLSCREEN RULE:
+  // On desktop / mobile / tablet, DO NOT automatically enter fullscreen!
+  // ONLY TV UI defaults to fullscreen.
+  useEffect(() => {
+    if (isTVMode) {
+      setIsCinemaFullscreen(true);
+    }
+  }, [isTVMode]);
+
+  // Keyboard navigation for Fullscreen & Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'f' || e.key === 'F') {
-        toggleFullscreen();
+        if (!isTVMode) toggleFullscreen();
       } else if (e.key === 'Escape' && isCinemaFullscreen) {
-        setIsCinemaFullscreen(false);
+        if (isTVDrawerOpen) {
+          setIsTVDrawerOpen(false);
+          e.preventDefault();
+        } else if (!isTVMode) {
+          setIsCinemaFullscreen(false);
+        }
+      } else if (isTVMode) {
+        // TV Remote D-Pad Navigation
+        if (e.key === 'ArrowDown') {
+          if (!isTVDrawerOpen) {
+            setIsTVDrawerOpen(true);
+            e.preventDefault();
+          }
+        } else if (e.key === 'ArrowUp') {
+          if (isTVDrawerOpen && tvFocusedEpIndex === 0) {
+            setIsTVDrawerOpen(false);
+            e.preventDefault();
+          }
+        } else if (e.keyCode === 10009 || e.keyCode === 461 || e.key === 'Backspace') {
+          if (isTVDrawerOpen) {
+            setIsTVDrawerOpen(false);
+            e.preventDefault();
+          }
+        }
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isCinemaFullscreen]);
+  }, [isCinemaFullscreen, isTVMode, isTVDrawerOpen, tvFocusedEpIndex]);
 
   const toggleFullscreen = () => {
     if (!isCinemaFullscreen) {
@@ -209,18 +280,26 @@ export function Watch() {
     }
   };
 
+  // Multi-season breakdown for TV accordion drawer
+  const seasonsList = useMemo(() => {
+    if (animeData?.seasons && animeData.seasons.length > 0) {
+      return animeData.seasons;
+    }
+    return [{ seasonNumber: detectedSeason, title: `Season ${detectedSeason}`, episodeCount: episodes.length }];
+  }, [animeData?.seasons, detectedSeason, episodes.length]);
+
   return (
-    <div className="w-full bg-[#08090d] min-h-screen pb-20 text-white font-sans">
+    <div className={`w-full bg-[#07080c] min-h-screen text-white font-sans ${isTVMode ? 'tv-player-view' : 'pb-20'}`}>
       
       {/* VIDEO PLAYER CONTAINER */}
-      <div className={`w-full bg-[#050508] border-b border-[#1c1c26] transition-all duration-300 ${
-        isCinemaFullscreen ? 'fixed inset-0 z-50 bg-black flex flex-col justify-center' : ''
+      <div className={`w-full bg-black transition-all duration-300 ${
+        isCinemaFullscreen || isTVMode ? 'fixed inset-0 z-50 flex flex-col justify-center' : 'border-b border-white/10'
       }`}>
-        <div className={`w-full mx-auto ${isCinemaFullscreen ? 'h-full max-w-none p-0 flex flex-col' : 'max-w-6xl px-0 sm:px-4 sm:py-4'}`}>
+        <div className={`w-full mx-auto ${isCinemaFullscreen || isTVMode ? 'h-full max-w-none p-0 flex flex-col' : 'max-w-6xl px-0 sm:px-4 sm:py-4'}`}>
           <div 
             ref={playerContainerRef}
-            className={`w-full bg-black overflow-hidden relative shadow-[0_12px_40px_rgba(0,0,0,0.8)] border border-[#1a1a24] ${
-              isCinemaFullscreen ? 'flex-1 h-full w-full rounded-none border-none' : 'aspect-video sm:rounded-2xl'
+            className={`w-full bg-black overflow-hidden relative border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.85)] ${
+              isCinemaFullscreen || isTVMode ? 'flex-1 h-full w-full rounded-none border-none' : 'aspect-video sm:rounded-2xl'
             }`}
           >
             {streamUrl ? (
@@ -233,229 +312,311 @@ export function Watch() {
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               />
             ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-[#0b0c10] text-center p-4">
+              <div className="w-full h-full flex flex-col items-center justify-center bg-[#090a10] text-center p-4">
                 <div className="w-10 h-10 border-3 border-[#7b1fa2]/30 border-t-[#7b1fa2] rounded-full animate-spin mb-4" />
-                <p className="text-gray-300 font-bold text-sm tracking-wide">Connecting to streaming server...</p>
-                <p className="text-gray-500 text-xs mt-1">Episode {epNum} • {selectedServer} • {selectedType.toUpperCase()}</p>
+                <p className="text-gray-200 font-bold text-sm tracking-wide">Connecting to stream...</p>
+                <p className="text-gray-400 text-xs mt-1">Episode {epNum} • {selectedServer} • {selectedType.toUpperCase()}</p>
               </div>
             )}
 
-            {/* Quick Fullscreen Close Floating Button when Cinema is active */}
-            {isCinemaFullscreen && (
+            {/* Subtle Network Quality Indicator in player corner */}
+            <div className="absolute top-3 left-3 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[11px] font-medium text-gray-300">
+              <span className={`w-2 h-2 rounded-full ${
+                networkQuality === 'excellent' ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]' :
+                networkQuality === 'good' ? 'bg-amber-400' : 'bg-rose-500 animate-pulse'
+              }`} />
+              <span className="capitalize">{networkQuality}</span>
+            </div>
+
+            {/* Unstable Connection Notice (subtle, non-interrupting) */}
+            {showNetworkNotice && (
+              <div className="absolute top-12 left-3 z-30 max-w-xs px-3 py-2 rounded-xl bg-black/80 backdrop-blur-md border border-amber-500/30 text-amber-200 text-xs flex items-center justify-between gap-2 shadow-lg">
+                <span>Connection is unstable. Changing server or audio may improve playback.</span>
+                <button onClick={() => setShowNetworkNotice(false)} className="text-gray-400 hover:text-white">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
+            {/* Quick Exit Fullscreen Button for normal desktop/mobile cinema mode */}
+            {isCinemaFullscreen && !isTVMode && (
               <button
                 onClick={toggleFullscreen}
-                className="absolute top-4 right-4 z-40 px-3 py-1.5 rounded-xl bg-black/70 hover:bg-black/90 border border-white/20 text-xs font-bold text-white flex items-center gap-1.5 backdrop-blur-md transition-all active:scale-95 cursor-pointer shadow-lg"
+                className="absolute top-3 right-3 z-40 px-3 py-1.5 rounded-xl bg-black/70 hover:bg-black/90 border border-white/20 text-xs font-bold text-white flex items-center gap-1.5 backdrop-blur-md transition-all cursor-pointer shadow-lg"
                 title="Exit Fullscreen (Esc)"
               >
                 <Minimize className="w-3.5 h-3.5" />
                 <span>Exit Fullscreen</span>
               </button>
             )}
+
+            {/* TV Mode: Down indicator hint */}
+            {isTVMode && !isTVDrawerOpen && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-xs text-gray-300 pointer-events-none">
+                <ChevronDown className="w-3.5 h-3.5 text-[#c084fc]" />
+                <span>Press Down for Seasons & Episodes</span>
+              </div>
+            )}
           </div>
 
-          {/* Minimalist Player Controls Bar */}
-          <div className={`flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-[#0e0f15] border border-[#1c1c26] ${
-            isCinemaFullscreen ? 'rounded-none border-x-0 border-b-0 shrink-0' : 'sm:rounded-xl mt-3'
-          }`}>
-            
-            {/* Server and Audio Track Selectors */}
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center bg-[#14141d] p-1 rounded-xl border border-[#222230]">
-                <button
-                  onClick={() => setSelectedType('sub')}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${selectedType === 'sub' ? 'bg-[#7b1fa2] text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
-                >
-                  SUB
-                </button>
-                <button
-                  onClick={() => setSelectedType('dub')}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${selectedType === 'dub' ? 'bg-[#7b1fa2] text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}
-                >
-                  DUB
-                </button>
+          {/* Minimalist Web Player Controls Bar */}
+          {!isTVMode && (
+            <div className={`flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-[#0d0e15] border border-white/10 ${
+              isCinemaFullscreen ? 'rounded-none border-x-0 border-b-0 shrink-0' : 'sm:rounded-xl mt-3'
+            }`}>
+              
+              {/* Audio Track & Server Selectors (with persistent memory) */}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center bg-[#141520] p-1 rounded-xl border border-white/10">
+                  <button
+                    onClick={() => handleSelectType('sub')}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                      selectedType === 'sub' ? 'bg-[#7b1fa2] text-white shadow-sm' : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    SUB
+                  </button>
+                  <button
+                    onClick={() => handleSelectType('dub')}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                      selectedType === 'dub' ? 'bg-[#7b1fa2] text-white shadow-sm' : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    DUB
+                  </button>
+                </div>
+
+                {servers.length > 0 && (
+                  <div className="flex items-center gap-1 bg-[#141520] p-1 rounded-xl border border-white/10">
+                    {Array.from(new Set(servers.map(s => s.serverName))).map(sName => (
+                      <button
+                        key={sName}
+                        onClick={() => handleSelectServer(sName)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                          selectedServer === sName ? 'bg-[#7b1fa2]/30 text-[#c084fc] border border-[#ba68c8]/40' : 'text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        {sName}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {servers.length > 0 && (
-                <div className="flex items-center gap-1.5 bg-[#14141d] p-1 rounded-xl border border-[#222230]">
-                  {Array.from(new Set(servers.map(s => s.serverName))).map(sName => (
-                    <button
-                      key={sName}
-                      onClick={() => setSelectedServer(sName)}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${selectedServer === sName ? 'bg-[#7b1fa2]/30 text-[#c084fc] border border-[#9c27b0]/40' : 'text-gray-400 hover:text-white'}`}
-                    >
-                      {sName}
+              {/* Prev / Next Episode & Fullscreen Toggle */}
+              <div className="flex items-center gap-2 ml-auto">
+                <button
+                  onClick={toggleFullscreen}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#141520] hover:bg-[#1c1e2e] text-gray-300 hover:text-white text-xs font-bold border border-white/10 transition-colors cursor-pointer"
+                  title="Toggle Fullscreen"
+                >
+                  {isCinemaFullscreen ? <Minimize className="w-3.5 h-3.5" /> : <Maximize className="w-3.5 h-3.5 text-[#c084fc]" />}
+                  <span>{isCinemaFullscreen ? 'Exit' : 'Fullscreen'}</span>
+                </button>
+
+                {prevEp && (
+                  <Link href={`/watch/${encodeURIComponent(prevEp.id)}`}>
+                    <button className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#141520] hover:bg-[#1c1e2e] text-gray-300 hover:text-white text-xs font-bold border border-white/10 transition-colors cursor-pointer">
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                      <span>Prev</span>
                     </button>
-                  ))}
-                </div>
-              )}
+                  </Link>
+                )}
+
+                {nextEp && (
+                  <Link href={`/watch/${encodeURIComponent(nextEp.id)}`}>
+                    <button className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#7b1fa2] hover:bg-[#9c27b0] text-white text-xs font-bold shadow-md transition-all cursor-pointer">
+                      <span>Next Ep {nextEp.number}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </Link>
+                )}
+              </div>
+
             </div>
+          )}
 
-            {/* Episode Quick Switcher Buttons & Fullscreen Action */}
-            <div className="flex items-center gap-2 ml-auto">
-              <button
-                onClick={toggleFullscreen}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#14141d] hover:bg-[#1f1f2c] text-gray-300 hover:text-white text-xs font-bold border border-[#222230] transition-colors cursor-pointer"
-                title={isCinemaFullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen (F)'}
-              >
-                {isCinemaFullscreen ? <Minimize className="w-3.5 h-3.5" /> : <Maximize className="w-3.5 h-3.5 text-[#c084fc]" />}
-                <span>{isCinemaFullscreen ? 'Collapse' : 'Fullscreen'}</span>
-              </button>
-
-              {prevEp && (
-                <Link href={`/watch/${encodeURIComponent(prevEp.id)}?fs=1`}>
-                  <button className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#14141d] hover:bg-[#1f1f2c] text-gray-300 hover:text-white text-xs font-bold border border-[#222230] transition-colors">
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                    <span>Prev</span>
-                  </button>
-                </Link>
-              )}
-
-              {nextEp && (
-                <Link href={`/watch/${encodeURIComponent(nextEp.id)}?fs=1`}>
-                  <button className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-[#7b1fa2] hover:bg-[#9c27b0] text-white text-xs font-bold shadow-[0_2px_12px_rgba(123,31,162,0.4)] transition-all">
-                    <span>Next Ep {nextEp.number}</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </Link>
-              )}
-            </div>
-
-          </div>
         </div>
       </div>
 
-      {/* EPISODE DETAILS & SELECTION SECTION */}
-      <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 mt-6 flex flex-col gap-8">
-        
-        {/* Title and Metadata Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1c1c26] pb-5">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Link href={`/details/${slug}`}>
-                <span className="text-xs font-bold text-[#c084fc] hover:underline cursor-pointer">
-                  {animeTitle}
-                </span>
-              </Link>
-              <span className="text-xs text-gray-500">•</span>
-              <span className="text-xs font-semibold text-gray-400">Season {detectedSeason}</span>
+      {/* TV OSD / ACCORDION DRAWER (When down is pressed in TV mode) */}
+      {isTVMode && isTVDrawerOpen && (
+        <div className="fixed inset-x-0 bottom-0 top-1/3 z-50 bg-[#07080c]/95 backdrop-blur-2xl border-t border-white/15 p-6 overflow-y-auto flex flex-col gap-6 shadow-[0_-20px_50px_rgba(0,0,0,0.9)] animate-in slide-in-from-bottom duration-200">
+          
+          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <div>
+              <span className="text-xs font-bold text-[#c084fc] uppercase tracking-wider">{animeTitle}</span>
+              <h3 className="text-xl font-black text-white">{isMovie ? 'More Like This' : 'Seasons & Episodes'}</h3>
+            </div>
+            <button
+              onClick={() => setIsTVDrawerOpen(false)}
+              className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white flex items-center gap-1 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+              <span>Close (Back)</span>
+            </button>
+          </div>
+
+          {/* If Series: Vertical Season/Episode Accordion */}
+          {!isMovie && (
+            <div className="flex flex-col gap-4">
+              {seasonsList.map((s: any) => {
+                const isExpanded = expandedTVSeason === s.seasonNumber;
+                return (
+                  <div key={`tv-season-${s.seasonNumber}`} className="flex flex-col rounded-2xl bg-[#0f1018] border border-white/10 overflow-hidden">
+                    
+                    {/* Season Accordion Header */}
+                    <button
+                      onClick={() => setExpandedTVSeason(isExpanded ? 0 : s.seasonNumber)}
+                      className="w-full p-4 flex items-center justify-between text-left hover:bg-white/5 transition-colors focus:ring-2 focus:ring-[#c084fc] outline-none"
+                    >
+                      <div className="flex items-center gap-3">
+                        {isExpanded ? <ChevronDown className="w-5 h-5 text-[#c084fc]" /> : <ChevronRight className="w-5 h-5 text-gray-400" />}
+                        <span className="text-base font-bold text-white">{s.title || `Season ${s.seasonNumber}`}</span>
+                      </div>
+                      <span className="text-xs text-gray-400">{episodes.length} Episodes</span>
+                    </button>
+
+                    {/* Season Episodes List */}
+                    {isExpanded && (
+                      <div className="p-4 pt-0 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                        {episodes.map((ep: any, idx: number) => {
+                          const isCurrent = ep.number.toString() === epNum;
+                          return (
+                            <Link key={ep.id} href={`/watch/${encodeURIComponent(ep.id)}`}>
+                              <div
+                                onFocus={() => setTvFocusedEpIndex(idx)}
+                                className={`p-2.5 rounded-xl transition-all cursor-pointer border ${
+                                  isCurrent
+                                    ? 'bg-[#7b1fa2] text-white border-[#ba68c8] shadow-lg ring-2 ring-white'
+                                    : 'bg-[#151622] hover:bg-[#1e1f30] text-gray-300 border-white/5 focus:border-[#c084fc] focus:ring-2 focus:ring-[#c084fc]'
+                                }`}
+                              >
+                                <div className="text-xs font-bold">Episode {ep.number}</div>
+                                <div className="text-[11px] text-gray-400 truncate mt-0.5">{ep.title || `Episode ${ep.number}`}</div>
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* If Movie: Horizontal More Like This Cards */}
+          {isMovie && recommendationsData?.results && (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+              {recommendationsData.results.slice(0, 6).map((item) => (
+                <Link key={item.id} href={`/details/${item.id}`}>
+                  <div className="rounded-xl overflow-hidden bg-[#151622] border border-white/10 hover:scale-105 transition-all p-2 focus:ring-2 focus:ring-[#c084fc]">
+                    <img src={item.image || DEFAULT_POSTER} alt="cover" className="w-full aspect-[2/3] object-cover rounded-lg mb-1.5" />
+                    <div className="text-xs font-bold text-white truncate">{typeof item.title === 'string' ? item.title : item.title?.english}</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+
+        </div>
+      )}
+
+      {/* WEB PLAYER: DETAIL & EPISODE SELECTOR SECTION */}
+      {!isTVMode && (
+        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 mt-6 flex flex-col gap-8">
+          
+          {/* Header Title & Actions */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Link href={`/details/${slug}`}>
+                  <span className="text-xs font-bold text-[#c084fc] hover:underline cursor-pointer">
+                    {animeTitle}
+                  </span>
+                </Link>
+                <span className="text-xs text-gray-500">•</span>
+                <span className="text-xs font-semibold text-gray-400">Season {detectedSeason}</span>
+              </div>
+
+              <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                Episode {epNum}: {currentEpObj?.title || `Episode ${epNum}`}
+              </h1>
             </div>
 
-            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-              Episode {epNum}: {currentEpObj?.title || `Episode ${epNum}`}
-            </h1>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2.5">
-            <button
-              onClick={toggleWatchlist}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
-                isBookmarked 
-                  ? 'bg-[#7b1fa2]/25 text-white border-[#9c27b0]/50' 
-                  : 'bg-[#14141d] text-gray-300 hover:text-white border-[#222230] hover:bg-[#1b1b26]'
-              }`}
-            >
-              <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-[#c084fc] text-[#c084fc]' : ''}`} />
-              <span>{isBookmarked ? 'In Library' : 'Add to Library'}</span>
-            </button>
-
-            <Link href={`/details/${slug}`}>
-              <button className="px-4 py-2 rounded-xl bg-[#14141d] hover:bg-[#1b1b26] text-gray-300 hover:text-white text-xs font-bold border border-[#222230] transition-colors">
-                All Episodes
-              </button>
-            </Link>
-          </div>
-        </div>
-
-        {/* EPISODES GRID SELECTOR */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">
-              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">Episodes</h2>
-              <span className="text-xs text-gray-400 bg-[#14141d] px-2.5 py-0.5 rounded-full border border-[#222230]">
+              <button
+                onClick={toggleWatchlist}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+                  isBookmarked
+                    ? 'bg-[#7b1fa2]/25 text-white border-[#ba68c8]/50'
+                    : 'bg-[#141520] text-gray-300 hover:text-white border-white/10 hover:bg-[#1b1c2b]'
+                }`}
+              >
+                <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-[#c084fc] text-[#c084fc]' : ''}`} />
+                <span>{isBookmarked ? 'In List' : 'Add to List'}</span>
+              </button>
+
+              <Link href={`/details/${slug}`}>
+                <button className="px-4 py-2 rounded-xl bg-[#141520] hover:bg-[#1b1c2b] text-gray-300 hover:text-white text-xs font-bold border border-white/10 transition-colors cursor-pointer">
+                  All Episodes
+                </button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Quick Episode Grid */}
+          <div>
+            <div className="flex items-center justify-between mb-3.5">
+              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">All Episodes</h2>
+              <span className="text-xs text-gray-400 bg-white/5 px-2.5 py-0.5 rounded-full border border-white/5">
                 {episodes.length} total
               </span>
             </div>
 
-            {totalChunks > 1 && (
-              <select
-                value={selectedChunk}
-                onChange={(e) => setSelectedChunk(Number(e.target.value))}
-                className="bg-[#14141d] border border-[#222230] text-gray-200 text-xs font-bold rounded-lg px-3 py-1.5 outline-none focus:border-[#7b1fa2] cursor-pointer"
-              >
-                {Array.from({ length: totalChunks }).map((_, i) => {
-                  const start = i * CHUNK_SIZE + 1;
-                  const end = Math.min((i + 1) * CHUNK_SIZE, episodes.length);
-                  return <option key={i} value={i}>Episodes {start} - {end}</option>;
-                })}
-              </select>
-            )}
-          </div>
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+              {episodes.map((ep: any) => {
+                const isCurrent = ep.number.toString() === epNum;
+                const epProg = historyUtil.getEpisodeProgress(slug, ep.number);
+                const isWatched = epProg?.isCompleted || (epProg && epProg.completionPercentage >= 85);
 
-          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
-            {displayedEpisodes.map((ep: any) => {
-              const isCurrent = ep.number.toString() === epNum;
-              const epProg = historyUtil.getEpisodeProgress(slug, ep.number);
-              const isWatched = epProg?.isCompleted || (epProg && epProg.completionPercentage >= 88);
-
-              return (
-                <Link key={ep.id} href={`/watch/${encodeURIComponent(ep.id)}`}>
-                  <button
-                    className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all relative flex items-center justify-center border cursor-pointer ${
-                      isCurrent
-                        ? 'bg-[#7b1fa2] text-white border-[#ba68c8] shadow-[0_0_15px_rgba(123,31,162,0.45)]'
-                        : isWatched
-                          ? 'bg-[#11161d] text-emerald-400 border-emerald-500/30 hover:bg-[#161d27]'
-                          : 'bg-[#121219] text-gray-400 border-[#20202c] hover:text-white hover:bg-[#181822] hover:border-[#353548]'
-                    }`}
-                  >
-                    <span>{ep.number}</span>
-                    {isWatched && !isCurrent && (
-                      <CheckCircle2 className="w-3 h-3 text-emerald-400 absolute top-1 right-1" />
-                    )}
-                  </button>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ABOUT ANIME SYNOPSIS */}
-        {animeData && (
-          <div className="bg-[#0e0f14] border border-[#1c1c26] rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row gap-5 items-start">
-            <img 
-              src={animeData.image || DEFAULT_POSTER} 
-              alt={animeTitle} 
-              className="w-24 sm:w-28 aspect-[3/4] object-cover rounded-xl border border-white/10 shrink-0" 
-            />
-            <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-bold text-white mb-2">{animeTitle}</h3>
-              <p 
-                className="text-xs sm:text-sm text-gray-400 leading-relaxed line-clamp-4"
-                dangerouslySetInnerHTML={{ __html: animeData.description || 'No description available.' }} 
-              />
-              <div className="flex flex-wrap gap-2 mt-3">
-                {(animeData.genres || []).map((g: string) => (
-                  <span key={g} className="text-[10px] font-bold text-gray-400 bg-[#161622] px-2.5 py-1 rounded-lg border border-[#242434]">
-                    {g}
-                  </span>
-                ))}
-              </div>
+                return (
+                  <Link key={ep.id} href={`/watch/${encodeURIComponent(ep.id)}`}>
+                    <button
+                      className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all relative flex items-center justify-center border cursor-pointer ${
+                        isCurrent
+                          ? 'bg-[#7b1fa2] text-white border-[#ba68c8] shadow-[0_0_15px_rgba(123,31,162,0.45)]'
+                          : isWatched
+                            ? 'bg-[#111818] text-emerald-400 border-emerald-500/30 hover:bg-[#162020]'
+                            : 'bg-[#12131c] text-gray-400 border-white/5 hover:text-white hover:bg-[#181926] hover:border-white/15'
+                      }`}
+                    >
+                      <span>{ep.number}</span>
+                      {isWatched && !isCurrent && (
+                        <CheckCircle2 className="w-3 h-3 text-emerald-400 absolute top-1 right-1" />
+                      )}
+                    </button>
+                  </Link>
+                );
+              })}
             </div>
           </div>
-        )}
 
-        {/* RECOMMENDATIONS */}
-        {recommendationsData?.results && recommendationsData.results.length > 0 && (
-          <div className="mt-4">
-            <AnimeGrid 
-              title="You May Also Like" 
-              items={recommendationsData.results.slice(0, 10)} 
-            />
-          </div>
-        )}
+          {/* Recommendations */}
+          {recommendationsData?.results && recommendationsData.results.length > 0 && (
+            <div className="mt-4">
+              <AnimeGrid 
+                title="You May Also Like" 
+                items={recommendationsData.results.slice(0, 10)} 
+              />
+            </div>
+          )}
 
-      </div>
+        </div>
+      )}
+
     </div>
   );
 }

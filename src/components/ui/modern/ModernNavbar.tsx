@@ -21,6 +21,7 @@ import { useAuth } from '../../../lib/AuthContext';
 import { useTVMode } from '../../../lib/TVModeContext';
 import { ModernNotifications } from './ModernNotifications';
 import { KinomaLogo } from '../KinomaLogo';
+import { preferencesUtil } from '../../../lib/preferences';
 import { AnimatePresence, motion } from 'motion/react';
 
 interface ModernNavbarProps {
@@ -73,6 +74,7 @@ export function ModernNavbar({ onSelectCategory, onOpenAuth }: ModernNavbarProps
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
+      preferencesUtil.addRecentSearch(searchQuery.trim());
       setLocation(`/search?keyword=${encodeURIComponent(searchQuery.trim())}`);
       setIsMobileSearchOpen(false);
       setIsMobileDrawerOpen(false);
@@ -121,6 +123,26 @@ export function ModernNavbar({ onSelectCategory, onOpenAuth }: ModernNavbarProps
                 </span>
               </Link>
 
+              <Link href="/search">
+                <span className={`px-3 py-1.5 rounded-full transition-all cursor-pointer select-none ${
+                  location === '/search' 
+                    ? 'text-white font-bold bg-white/10 shadow-sm' 
+                    : 'text-gray-300 hover:text-white hover:bg-white/5'
+                }`}>
+                  Explore
+                </span>
+              </Link>
+
+              <Link href="/whats-new">
+                <span className={`px-3 py-1.5 rounded-full transition-all cursor-pointer select-none ${
+                  location === '/whats-new' 
+                    ? 'text-white font-bold bg-white/10 shadow-sm' 
+                    : 'text-gray-300 hover:text-white hover:bg-white/5'
+                }`}>
+                  What's New
+                </span>
+              </Link>
+
               <Link href="/library">
                 <span className={`px-3 py-1.5 rounded-full transition-all cursor-pointer select-none ${
                   location === '/library' 
@@ -130,36 +152,6 @@ export function ModernNavbar({ onSelectCategory, onOpenAuth }: ModernNavbarProps
                   My List
                 </span>
               </Link>
-
-              <button
-                onClick={() => {
-                  if (location !== '/') setLocation('/');
-                  if (onSelectCategory) onSelectCategory('Movie');
-                }}
-                className="px-3 py-1.5 rounded-full text-gray-300 hover:text-white hover:bg-white/5 transition-all cursor-pointer select-none"
-              >
-                Movie
-              </button>
-
-              <button
-                onClick={() => {
-                  if (location !== '/') setLocation('/');
-                  if (onSelectCategory) onSelectCategory('New Season');
-                }}
-                className="px-3 py-1.5 rounded-full text-gray-300 hover:text-white hover:bg-white/5 transition-all cursor-pointer select-none"
-              >
-                New Season
-              </button>
-
-              <button
-                onClick={() => {
-                  if (location !== '/') setLocation('/');
-                  if (onSelectCategory) onSelectCategory('All Genres');
-                }}
-                className="hidden lg:inline-flex px-3 py-1.5 rounded-full text-gray-300 hover:text-white hover:bg-white/5 transition-all cursor-pointer select-none"
-              >
-                Language
-              </button>
             </nav>
           </div>
 
@@ -380,33 +372,27 @@ export function ModernNavbar({ onSelectCategory, onOpenAuth }: ModernNavbarProps
                       location === '/library' ? 'bg-white text-black font-bold' : 'text-gray-300 hover:bg-white/5'
                     }`}>
                       <Bookmark className="w-5 h-5" />
-                      <span>My List & Bookmarks</span>
+                      <span>My List</span>
                     </div>
                   </Link>
 
-                  <button
-                    onClick={() => {
-                      setIsMobileDrawerOpen(false);
-                      if (location !== '/') setLocation('/');
-                      if (onSelectCategory) onSelectCategory('Movie');
-                    }}
-                    className="px-4 py-3 rounded-2xl flex items-center gap-3 text-gray-300 hover:bg-white/5 text-left"
-                  >
-                    <Film className="w-5 h-5 text-[#c084fc]" />
-                    <span>Anime Movies</span>
-                  </button>
+                  <Link href="/search" onClick={() => setIsMobileDrawerOpen(false)}>
+                    <div className={`px-4 py-3 rounded-2xl flex items-center gap-3 transition-colors ${
+                      location === '/search' ? 'bg-white text-black font-bold' : 'text-gray-300 hover:bg-white/5'
+                    }`}>
+                      <Search className="w-5 h-5" />
+                      <span>Explore & Search</span>
+                    </div>
+                  </Link>
 
-                  <button
-                    onClick={() => {
-                      setIsMobileDrawerOpen(false);
-                      if (location !== '/') setLocation('/');
-                      if (onSelectCategory) onSelectCategory('New Season');
-                    }}
-                    className="px-4 py-3 rounded-2xl flex items-center gap-3 text-gray-300 hover:bg-white/5 text-left"
-                  >
-                    <Sparkles className="w-5 h-5 text-amber-400" />
-                    <span>New Season Releases</span>
-                  </button>
+                  <Link href="/whats-new" onClick={() => setIsMobileDrawerOpen(false)}>
+                    <div className={`px-4 py-3 rounded-2xl flex items-center gap-3 transition-colors ${
+                      location === '/whats-new' ? 'bg-white text-black font-bold' : 'text-gray-300 hover:bg-white/5'
+                    }`}>
+                      <Sparkles className="w-5 h-5 text-[#c084fc]" />
+                      <span>What's New</span>
+                    </div>
+                  </Link>
 
                   <button
                     onClick={handleReplayIntro}

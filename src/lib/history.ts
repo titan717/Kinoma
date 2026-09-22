@@ -134,6 +134,24 @@ export const historyUtil = {
     }
   },
 
+  removeFromHistory: (animeIdOrSlug: string) => {
+    try {
+      const history = historyUtil.getHistory();
+      const target = (animeIdOrSlug || '').toLowerCase();
+      const updated = history.filter(item => 
+        (item.animeId || '').toLowerCase() !== target && 
+        (item.slug || '').toLowerCase() !== target &&
+        (item.episodeId || '').toLowerCase() !== target
+      );
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+      window.dispatchEvent(new CustomEvent('kinoma_progress_update', {
+        detail: { removed: animeIdOrSlug }
+      }));
+    } catch (e) {
+      console.error('Failed to remove from history', e);
+    }
+  },
+
   getAllEpisodesProgressMap: (): Record<string, Record<string, EpisodeProgress>> => {
     try {
       const raw = localStorage.getItem(EPISODES_PROGRESS_KEY);

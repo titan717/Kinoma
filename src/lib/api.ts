@@ -64,42 +64,76 @@ function getSeasonTitle(titleStr: string, index: number): string {
 export const api = {
   getTrending: async () => {
     return localCache.getOrFetch('api_trending', async () => {
-      try {
-        const res = await animeApi.search('action', 20, 0);
-        const mapped = (res.results || []).map(mapItem);
-        const unique = deduplicate(mapped, 'id');
-        if (unique.length > 0) return { results: unique };
-        throw new Error('No results');
-      } catch (e) {
-        console.warn('Trending fetch warning, using fallback:', e);
-        try {
-          const res2 = await animeApi.search('naruto', 20, 0);
-          return { results: deduplicate((res2.results || []).map(mapItem), 'id') };
-        } catch {
-          return { results: [] };
-        }
-      }
+      const res = await animeApi.search('action', 24, 0);
+      const mapped = (res.results || []).map(mapItem);
+      const unique = deduplicate(mapped, 'id');
+      if (unique.length > 0) return { results: unique };
+      return { results: [] };
     }, 1000 * 60 * 30); // 30 mins TTL
   },
 
   getPopular: async () => {
     return localCache.getOrFetch('api_popular', async () => {
-      try {
-        const res = await animeApi.search('adventure', 20, 0);
-        const mapped = (res.results || []).map(mapItem);
-        const unique = deduplicate(mapped, 'id');
-        if (unique.length > 0) return { results: unique };
-        throw new Error('No results');
-      } catch (e) {
-        console.warn('Popular fetch warning, using fallback:', e);
-        try {
-          const res2 = await animeApi.search('one', 20, 0);
-          return { results: deduplicate((res2.results || []).map(mapItem), 'id') };
-        } catch {
-          return { results: [] };
-        }
-      }
+      const res = await animeApi.search('adventure', 24, 0);
+      const mapped = (res.results || []).map(mapItem);
+      const unique = deduplicate(mapped, 'id');
+      if (unique.length > 0) return { results: unique };
+      return { results: [] };
     }, 1000 * 60 * 30); // 30 mins TTL
+  },
+
+  getAiringSchedule: async (tz = 'Asia/Calcutta', week = 0) => {
+    const cleanKey = `api_schedule_${tz}_${week}`;
+    return localCache.getOrFetch(cleanKey, async () => {
+      try {
+        const res = await animeApi.getSchedule(tz, week);
+        const allEpisodes: AnimeItem[] = [];
+        (res.schedule || []).forEach(day => {
+          (day.episodes || []).forEach(ep => {
+            allEpisodes.push(mapItem(ep));
+          });
+        });
+        return {
+          schedule: res.schedule || [],
+          results: deduplicate(allEpisodes, 'id')
+        };
+      } catch (e) {
+        console.error('Schedule fetch error:', e);
+        return { schedule: [], results: [] };
+      }
+    }, 1000 * 60 * 30);
+  },
+
+  getAiringToday: async () => {
+    return localCache.getOrFetch('api_airing_today', async () => {
+      try {
+        const res = await animeApi.getSchedule();
+        const firstDay = res.schedule?.[0];
+        const eps = (firstDay?.episodes || []).map(mapItem);
+        return { results: deduplicate(eps, 'id'), day: firstDay?.day || 'Today' };
+      } catch (e) {
+        console.error('Airing today error:', e);
+        return { results: [], day: 'Today' };
+      }
+    }, 1000 * 60 * 20);
+  },
+
+  getGenreAnime: async (genre: string, limit = 20) => {
+    const cleanKey = `api_genre_${genre.toLowerCase().trim()}_${limit}`;
+    return localCache.getOrFetch(cleanKey, async () => {
+      try {
+        const res = await animeApi.search(genre, limit, 0);
+        const mapped = (res.results || []).map(mapItem);
+        return { results: deduplicate(mapped, 'id') };
+      } catch (e) {
+        console.error(`Genre fetch error for ${genre}:`, e);
+        return { results: [] };
+      }
+    }, 1000 * 60 * 30);
+  },
+
+  getSeasons: async (animeId: string) => {
+    return animeApi.getSeasons(animeId);
   },
 
   search: async (query: string) => {
