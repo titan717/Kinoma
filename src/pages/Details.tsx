@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useRoute, Link, useLocation } from 'wouter';
 import useSWR from 'swr';
 import { api } from '../lib/api';
-import { Play, Bookmark, Heart, Star, Sparkles, CheckCircle2, ChevronRight, Layers, Film } from 'lucide-react';
+import { Play, Bookmark, Heart, Star, Sparkles, CheckCircle2, ChevronRight, Layers, Film, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { historyUtil, WatchCTAInfo, parseSeasonNumber } from '../lib/history';
 import { libraryManager } from '../lib/library';
@@ -23,12 +23,19 @@ export function Details() {
   const [seasonEpisodesMap, setSeasonEpisodesMap] = useState<Record<number, Episode[]>>({});
   const [isLoadingSeasonEps, setIsLoadingSeasonEps] = useState<boolean>(false);
   const [progressVersion, setProgressVersion] = useState(0);
+  const [trailerOpen, setTrailerOpen] = useState(false);
 
   // Fetch Anime Details
   const { data, isLoading, error, mutate: retryDetails } = useSWR<AnimeDetails>(
     id ? `info-${id}` : null,
     () => api.getDetails(id),
     { dedupingInterval: 60000 }
+  );
+
+  const { data: trailerData } = useSWR(
+    id ? `trailer-${id}` : null,
+    () => api.getTrailer(id),
+    { dedupingInterval: 86400000, revalidateOnFocus: false }
   );
 
   // Fetch Recommendations
@@ -310,6 +317,16 @@ export function Details() {
                 <span>{watchCTA.label}</span>
               </button>
 
+              {trailerData?.available && trailerData.trailer?.id && trailerData.trailer.site === 'youtube' && (
+                <button
+                  onClick={() => setTrailerOpen(true)}
+                  className="flex items-center gap-2.5 px-5 py-3 rounded-2xl border border-white/15 bg-white/[0.07] hover:bg-white/[0.12] text-white font-semibold text-sm transition-all cursor-pointer"
+                >
+                  <Film className="w-4 h-4" />
+                  <span>Watch Trailer</span>
+                </button>
+              )}
+
               {/* SECONDARY ACTION: My List Bookmark */}
               <button
                 onClick={toggleWatchlist}
@@ -342,6 +359,25 @@ export function Details() {
 
         </div>
       </div>
+
+      {trailerOpen && trailerData?.trailer?.id && trailerData.trailer.site === 'youtube' && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={`${animeTitle} trailer`} onClick={() => setTrailerOpen(false)}>
+          <div className="relative w-full max-w-5xl overflow-hidden rounded-3xl border border-white/10 bg-[#0b0c10] shadow-[0_30px_100px_rgba(0,0,0,.7)]" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setTrailerOpen(false)} aria-label="Close trailer" className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-black/70 text-white/80 hover:bg-black/90 hover:text-white">
+              <X className="h-5 w-5" />
+            </button>
+            <div className="aspect-video">
+              <iframe
+                src={`https://www.youtube.com/embed/${encodeURIComponent(trailerData.trailer.id)}?autoplay=1&rel=0`}
+                title={`${animeTitle} trailer`}
+                className="h-full w-full"
+                allow="autoplay; encrypted-media; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 2. EPISODES & SEASONS EXPERIENCE */}
       <div className="w-full max-w-[1680px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 mt-8 flex flex-col gap-6">
