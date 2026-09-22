@@ -12,7 +12,6 @@ import { TVContentRow } from '../components/tv/TVContentRow';
 import { TVCard, prefetchImage } from '../components/tv/TVCard';
 import { TVSearchView } from '../components/tv/TVSearchView';
 import { TVDetailsView } from '../components/tv/TVDetailsView';
-import { TVVirtualRemote } from '../components/tv/TVVirtualRemote';
 import { groupFranchises } from '../lib/franchise';
 import { 
   Compass, 
@@ -28,7 +27,13 @@ import {
 } from 'lucide-react';
 
 export function TVApp() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+  const routeDetailsId = location.startsWith('/details/') ? decodeURIComponent(location.slice('/details/'.length)) : null;
+  const { data: routeDetailsAnime } = useSWR(
+    routeDetailsId ? `tv-route-details-${routeDetailsId}` : null,
+    () => api.getDetails(routeDetailsId as string),
+    { revalidateOnFocus: false }
+  );
   const { isTVMode, setTVMode } = useTVMode();
 
   useEffect(() => {
@@ -38,6 +43,11 @@ export function TVApp() {
   // Primary TV Navigation Views
   const [activeSection, setActiveSection] = useState<TVNavSection>('home');
   const [selectedDetailsAnime, setSelectedDetailsAnime] = useState<AnimeItem | null>(null);
+
+  useEffect(() => {
+    if (routeDetailsAnime) setSelectedDetailsAnime(routeDetailsAnime as AnimeItem);
+    else if (!routeDetailsId && location === '/tv') setSelectedDetailsAnime(null);
+  }, [routeDetailsAnime, routeDetailsId, location]);
 
   // Spatial TV Focus Model
   // Area: 'sidebar' | 'hero' | 'rows'
@@ -426,7 +436,10 @@ export function TVApp() {
         animeId={selectedDetailsAnime.id}
         initialItem={selectedDetailsAnime}
         onPlayEpisode={(epId, timestamp = 0) => handleLaunchWatch(epId, timestamp)}
-        onBack={() => setSelectedDetailsAnime(null)}
+        onBack={() => {
+          setSelectedDetailsAnime(null);
+          setLocation('/tv');
+        }}
       />
     );
   }
@@ -627,13 +640,6 @@ export function TVApp() {
         </div>
       </main>
 
-      {/* Floating Virtual Android TV Remote Control */}
-      <TVVirtualRemote
-        onDirection={handleRemoteDirection}
-        onEnter={handleRemoteEnter}
-        onBack={handleRemoteBack}
-        onHome={handleRemoteHome}
-      />
     </div>
   );
 }
