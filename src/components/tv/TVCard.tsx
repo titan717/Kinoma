@@ -34,7 +34,7 @@ export function TVCard({ item, historyItem, isContinueWatching = false, isFocuse
         onClick={onSelect}
         className={`group relative shrink-0 w-64 sm:w-72 overflow-hidden rounded-2xl border bg-[#11141b] text-left outline-none transition-all duration-200 ${
           isFocused
-            ? 'z-20 scale-[1.05] border-[#00F0FF] shadow-[0_14px_40px_rgba(0,0,0,.7),0_0_28px_rgba(0,240,255,.18)] ring-2 ring-[#00F0FF]/70'
+            ? 'z-20 scale-[1.05] border-[#ffffff] shadow-[0_14px_40px_rgba(0,0,0,.7),0_0_28px_rgba(255,255,255,.12)] ring-2 ring-[#ffffff]/70'
             : 'border-white/[0.08] opacity-90'
         }`}
       >
@@ -47,7 +47,7 @@ export function TVCard({ item, historyItem, isContinueWatching = false, isFocuse
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-white/15">
-            <div className="h-full bg-gradient-to-r from-[#00F0FF] to-[#FF0055]" style={{ width: `${progressPct}%` }} />
+            <div className="h-full bg-gradient-to-r from-[#ffffff] to-[#FF0055]" style={{ width: `${progressPct}%` }} />
           </div>
           <span className="absolute left-3 top-3 rounded-md border border-white/15 bg-black/65 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-white/85">
             S{historyItem.seasonNumber || 1}:E{historyItem.episodeNumber}
@@ -77,7 +77,7 @@ export function TVCard({ item, historyItem, isContinueWatching = false, isFocuse
       onClick={onSelect}
       className={`group relative shrink-0 w-48 sm:w-56 overflow-hidden rounded-2xl border bg-[#11141b] text-left outline-none transition-all duration-200 ${
         isFocused
-          ? 'z-20 scale-[1.06] border-[#00F0FF] shadow-[0_14px_40px_rgba(0,0,0,.7),0_0_28px_rgba(0,240,255,.18)] ring-2 ring-[#00F0FF]/70'
+          ? 'z-20 scale-[1.06] border-[#ffffff] shadow-[0_14px_40px_rgba(0,0,0,.7),0_0_28px_rgba(255,255,255,.12)] ring-2 ring-[#ffffff]/70'
           : 'border-white/[0.08] opacity-90'
       }`}
     >
@@ -91,7 +91,7 @@ export function TVCard({ item, historyItem, isContinueWatching = false, isFocuse
         <div className="absolute inset-0 bg-gradient-to-t from-[#11141b] via-transparent to-black/20" />
         {item.rating !== undefined && item.rating !== null && (
           <span className="absolute left-3 top-3 flex items-center gap-1 rounded-md border border-white/15 bg-black/65 px-2 py-1 text-[10px] font-black text-white">
-            <Star className="h-3 w-3 fill-[#00F0FF] text-[#00F0FF]" />
+            <Star className="h-3 w-3 fill-[#ffffff] text-[#ffffff]" />
             {typeof item.rating === 'number' ? Math.round(item.rating) : item.rating}
           </span>
         )}
