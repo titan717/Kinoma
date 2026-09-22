@@ -316,7 +316,7 @@ export function TVPlayerOSD({
 
         <div
           className={`relative h-3 rounded-full bg-white/20 transition-all ${
-            focusZone === 'timeline' ? 'h-4 ring-2 ring-[#00F0FF]/40' : ''
+            focusZone === 'timeline' ? 'h-4 ring-2 ring-[#ffffff]/40' : ''
           }`}
           aria-label="Playback timeline"
         >
@@ -345,7 +345,7 @@ export function TVPlayerOSD({
             onClick={() => setDrawer(isMovie ? 'more' : 'episodes')}
             className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/45 px-4 py-3 text-xs font-black text-white  outline-none transition-all focus:ring-2 focus:ring-white/40"
           >
-            <ListVideo className="h-4 w-4 text-[#00F0FF]" />
+            <ListVideo className="h-4 w-4 text-[#ffffff]" />
             {isMovie ? 'More Like This' : 'Episodes'}
             <ChevronDown className="h-4 w-4" />
           </button>
@@ -407,7 +407,7 @@ export function TVPlayerOSD({
                         <div className="truncate text-base font-black text-white">{ep.title || `Episode ${ep.number}`}</div>
                         <div className="mt-1 text-xs font-semibold text-white/40">{ep.duration ? `${Math.round(ep.duration / 60)} min` : ''}</div>
                       </div>
-                      {current && <span className="rounded-full bg-[#00F0FF]/10 px-2 py-1 text-[10px] font-black text-[#00F0FF]">NOW</span>}
+                      {current && <span className="rounded-full bg-[#ffffff]/10 px-2 py-1 text-[10px] font-black text-[#ffffff]">NOW</span>}
                     </button>
                   );
                 })}
@@ -483,11 +483,11 @@ export function TVPlayerOSD({
                   }}
                   className={`flex w-full items-center gap-4 rounded-2xl border p-5 text-left outline-none transition-all ${
                     settingsFocus === idx
-                      ? 'scale-[1.02] border-[#00F0FF]/70 bg-gradient-to-r from-[#00F0FF]/14 to-[#FF0055]/10 ring-1 ring-[#00F0FF]/30'
+                      ? 'scale-[1.02] border-[#ffffff]/70 bg-gradient-to-r from-[#ffffff]/14 to-[#c084fc]/10 ring-1 ring-[#ffffff]/30'
                       : 'border-white/[.06] bg-white/[.03]'
                   }`}
                 >
-                  <Icon className="h-6 w-6 text-[#00F0FF]" />
+                  <Icon className="h-6 w-6 text-[#ffffff]" />
                   <div className="flex-1">
                     <div className="font-black">{item.label}</div>
                     <div className="text-xs text-white/40">{item.value}</div>
@@ -501,7 +501,7 @@ export function TVPlayerOSD({
       )}
 
       {focusZone === 'timeline' && drawer === null && (
-        <div className="pointer-events-none absolute bottom-28 left-1/2 -translate-x-1/2 rounded-full border border-[#00F0FF]/30 bg-black/65 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#8ff7ff] ">
+        <div className="pointer-events-none absolute bottom-28 left-1/2 -translate-x-1/2 rounded-full border border-[#ffffff]/30 bg-black/65 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#8ff7ff] ">
           D-pad Left / Right · Seek
         </div>
       )}
