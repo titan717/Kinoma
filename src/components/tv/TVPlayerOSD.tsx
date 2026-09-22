@@ -2,13 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   ChevronDown,
-  ChevronLeft,
   ChevronRight,
-  ChevronUp,
   Settings,
   X,
   Play,
-  Pause,
   ListVideo,
   Volume2,
   MonitorPlay,
@@ -70,17 +67,9 @@ export function TVPlayerOSD({
   );
   const [episodeFocus, setEpisodeFocus] = useState(Math.max(0, currentEpisodeIndex));
   const [seekSeconds, setSeekSeconds] = useState(0);
-  const [showStatus, setShowStatus] = useState<'play' | 'pause' | null>(null);
-
   useEffect(() => {
     setEpisodeFocus(Math.max(0, currentEpisodeIndex));
   }, [currentEpisodeIndex]);
-
-  useEffect(() => {
-    if (!showStatus) return;
-    const t = window.setTimeout(() => setShowStatus(null), 900);
-    return () => window.clearTimeout(t);
-  }, [showStatus]);
 
   const season = seasons[seasonFocus];
   const seasonEpisodes = useMemo(() => {
@@ -141,22 +130,21 @@ export function TVPlayerOSD({
     }
 
     if (e.key === 'Enter') {
-      e.preventDefault();
       if (drawer === 'episodes') {
+        e.preventDefault();
         const ep = seasonEpisodes[episodeFocus];
         if (ep) onPlayEpisode(ep.id, 0);
       } else if (drawer === 'settings') {
+        e.preventDefault();
         if (settingsFocus === 0) onSelectType(selectedType === 'sub' ? 'dub' : 'sub');
         if (settingsFocus === 1 && servers.length) {
           const index = Math.max(0, servers.findIndex((s: any) => s.serverName === selectedServer));
           const next = servers[(index + 1) % servers.length];
           if (next) onSelectServer(next.serverName);
         }
-      } else {
-        // No permanent play/pause control exists in the OSD.
-        // OK remains reserved for the underlying video/player surface.
-        setShowStatus(prev => prev === 'pause' ? 'play' : 'pause');
       }
+      // With no drawer open, Enter/OK is intentionally not intercepted:
+      // the underlying video player remains responsible for play/pause.
     }
   };
 
@@ -201,12 +189,6 @@ export function TVPlayerOSD({
           </button>
         </div>
       </header>
-
-      {showStatus && (
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/15 bg-black/60 p-5 text-white backdrop-blur-xl">
-          {showStatus === 'pause' ? <Pause className="w-8 h-8 fill-current" /> : <Play className="w-8 h-8 fill-current" />}
-        </div>
-      )}
 
       <div className="absolute inset-x-0 bottom-0 px-8 lg:px-14 pb-7 pointer-events-auto">
         <div className="mb-2 flex items-center justify-between text-xs font-bold text-white/75">
