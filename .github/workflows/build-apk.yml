@@ -128,6 +128,13 @@ jobs:
           mkdir -p android/app/src/main/assets/web
           cp -R dist/. android/app/src/main/assets/web/
 
+      - name: Generate Gradle wrapper
+        working-directory: android
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle wrapper --gradle-version 8.5
+
       - name: Build signed release APK
         working-directory: android
         env:
