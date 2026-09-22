@@ -135,7 +135,12 @@ export function Home() {
       const year = item.season_year || (item.releaseDate ? parseInt(String(item.releaseDate).slice(0, 4)) : 2024);
       return !isMovie && year >= 2024;
     });
-    return (filtered.length > 0 ? filtered : pool).slice(0, 8);
+    const candidates = filtered.length > 0 ? filtered : pool;
+    // Pick exactly five strong candidates, then shuffle their order for a fresh hero.
+    // The actual catalog remains live/API-backed; this only changes presentation order.
+    return [...candidates]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 5);
   }, [popularRaw, trendingRaw]);
 
   // Smart Discovery Pipeline with cross-row novelty deduplication
