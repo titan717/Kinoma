@@ -41,6 +41,7 @@ export function Watch() {
   const [playerCurrentTime, setPlayerCurrentTime] = useState(0);
   const [playerDuration, setPlayerDuration] = useState(0);
   const [isPlayerPlaying, setIsPlayerPlaying] = useState(false);
+  const [playerEnded, setPlayerEnded] = useState(false);
   
   // Decoding parameter
   const rawId = decodeURIComponent((isMatch && params) ? params.id : '');
@@ -295,13 +296,15 @@ export function Watch() {
   // On desktop / mobile / tablet, DO NOT automatically enter fullscreen!
   // ONLY TV UI defaults to fullscreen.
   useEffect(() => {
-    if (isTVMode) {
-      setIsCinemaFullscreen(true);
-    }
-  }, [isTVMode]);
+    if (isTVMode && !playerEnded) setIsCinemaFullscreen(true);
+  }, [isTVMode, playerEnded]);
 
-  // TV remote: any D-pad interaction reveals the master OSD.
-  // The OSD itself owns drawer navigation. Back closes the OSD/drawer first.
+  useEffect(() => {
+    setPlayerEnded(false);
+  }, [streamUrl]);
+
+  // TV remote: D-pad opens the lightweight OSD. Back follows a strict hierarchy:
+  // drawer -> OSD -> anime details. The TV homepage is the next Back from Details.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'f' || e.key === 'F') {
@@ -322,11 +325,12 @@ export function Watch() {
 
       if (isBack) {
         if (isTVDrawerOpen) setIsTVDrawerOpen(false);
-        else setIsCinemaFullscreen(false);
+        else setLocation(`/details/${encodeURIComponent(slug)}`);
         return;
       }
 
       if (isDpad) {
+        // Any D-pad press wakes the OSD. The OSD maps Down directly to Seasons/Episodes.
         setIsTVDrawerOpen(true);
         return;
       }
@@ -341,7 +345,7 @@ export function Watch() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isCinemaFullscreen, isTVMode, isTVDrawerOpen, isDirectMedia]);
+  }, [isCinemaFullscreen, isTVMode, isTVDrawerOpen, isDirectMedia, slug, setLocation]);
 
   const toggleFullscreen = () => {
     if (!isCinemaFullscreen) {
@@ -370,13 +374,13 @@ export function Watch() {
       
       {/* VIDEO PLAYER CONTAINER */}
       <div className={`w-full bg-black transition-all duration-300 ${
-        isCinemaFullscreen || isTVMode ? 'fixed inset-0 z-50 flex flex-col justify-center' : 'border-b border-white/10'
+        isCinemaFullscreen ? 'fixed inset-0 z-50 flex flex-col justify-center' : 'border-b border-white/10'
       }`}>
-        <div className={`w-full mx-auto ${isCinemaFullscreen || isTVMode ? 'h-full max-w-none p-0 flex flex-col' : 'max-w-6xl px-0 sm:px-4 sm:py-4'}`}>
+        <div className={`w-full mx-auto ${isCinemaFullscreen ? 'h-full max-w-none p-0 flex flex-col' : 'max-w-6xl px-0 sm:px-4 sm:py-4'}`}>
           <div 
             ref={playerContainerRef}
             className={`w-full bg-black overflow-hidden relative border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.85)] ${
-              isCinemaFullscreen || isTVMode ? 'flex-1 h-full w-full rounded-none border-none' : 'aspect-video sm:rounded-2xl'
+              isCinemaFullscreen ? 'flex-1 h-full w-full rounded-none border-none' : 'aspect-video sm:rounded-2xl'
             }`}
           >
             {streamUrl ? (
@@ -397,6 +401,12 @@ export function Watch() {
                   onTimeUpdate={(e) => setPlayerCurrentTime(e.currentTarget.currentTime || 0)}
                   onPlay={() => setIsPlayerPlaying(true)}
                   onPause={() => setIsPlayerPlaying(false)}
+                  onEnded={() => {
+                    setIsPlayerPlaying(false);
+                    setPlayerEnded(true);
+                    setIsTVDrawerOpen(false);
+                    setIsCinemaFullscreen(false);
+                  }}
                   onDurationChange={(e) => setPlayerDuration(e.currentTarget.duration || 0)}
                   onClick={(e) => {
                     if (e.currentTarget.paused) e.currentTarget.play().catch(() => {});
@@ -536,7 +546,7 @@ export function Watch() {
       </div>
 
       {/* MASTER 10-FOOT TV PLAYER OSD */}
-      {isTVMode && (
+      {isTVMode && !playerEnded && (
         <TVPlayerOSD
           animeTitle={animeTitle}
           episodeNumber={`E${epNum}`}
