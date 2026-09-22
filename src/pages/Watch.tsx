@@ -36,6 +36,10 @@ export function Watch() {
   const [, setLocation] = useLocation();
   const { isTVMode } = useTVMode();
   const playerContainerRef = useRef<HTMLDivElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [playerCurrentTime, setPlayerCurrentTime] = useState(0);
+  const [playerDuration, setPlayerDuration] = useState(0);
+  const [isPlayerPlaying, setIsPlayerPlaying] = useState(false);
   
   // Decoding parameter
   const rawId = decodeURIComponent((isMatch && params) ? params.id : '');
@@ -119,6 +123,7 @@ export function Watch() {
   );
 
   const streamUrl = (streamData && streamData.url) ? streamData.url : (currentServer?.dataLink || '');
+  const isDirectMedia = /\.(m3u8|mp4|webm)(?:\?|$)/i.test(streamUrl);
 
   const episodes = animeData?.episodes || [];
   const currentEpIndex = episodes.findIndex((e: any) => e.number.toString() === epNum || e.id === rawId);
@@ -262,21 +267,32 @@ export function Watch() {
 
       if (!isTVMode) return;
 
-      const tvKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Enter', ' '];
+      const isDpad = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key);
+      const isSelect = e.key === 'Enter' || e.key === ' ';
       const isBack = e.key === 'Escape' || e.key === 'Backspace' || e.keyCode === 10009 || e.keyCode === 461;
 
-      if (tvKeys.includes(e.key)) {
-        setIsTVDrawerOpen(true);
+      if (isBack) {
+        if (isTVDrawerOpen) setIsTVDrawerOpen(false);
+        else setIsCinemaFullscreen(false);
+        return;
       }
 
-      if (isBack && isTVDrawerOpen) {
-        setIsTVDrawerOpen(false);
+      if (isDpad) {
+        setIsTVDrawerOpen(true);
+        return;
+      }
+
+      if (isSelect && !isTVDrawerOpen && isDirectMedia && videoRef.current) {
+        e.preventDefault();
+        if (videoRef.current.paused) videoRef.current.play().catch(() => {});
+        else videoRef.current.pause();
+        return;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isCinemaFullscreen, isTVMode, isTVDrawerOpen]);
+  }, [isCinemaFullscreen, isTVMode, isTVDrawerOpen, isDirectMedia]);
 
   const toggleFullscreen = () => {
     if (!isCinemaFullscreen) {
@@ -315,14 +331,39 @@ export function Watch() {
             }`}
           >
             {streamUrl ? (
-              <iframe 
-                key={streamUrl}
-                src={streamUrl}
-                title={`Episode ${epNum}`}
-                className="w-full h-full border-0 outline-none"
-                allowFullScreen
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              />
+              isDirectMedia ? (
+                <video
+                  ref={videoRef}
+                  key={streamUrl}
+                  src={streamUrl}
+                  className="h-full w-full bg-black object-contain"
+                  playsInline
+                  autoPlay
+                  controls={false}
+                  onLoadedMetadata={(e) => {
+                    setPlayerDuration(e.currentTarget.duration || 0);
+                    const start = Number(new URLSearchParams(window.location.search).get('t') || 0);
+                    if (start > 0 && Number.isFinite(start)) e.currentTarget.currentTime = start;
+                  }}
+                  onTimeUpdate={(e) => setPlayerCurrentTime(e.currentTarget.currentTime || 0)}
+                  onPlay={() => setIsPlayerPlaying(true)}
+                  onPause={() => setIsPlayerPlaying(false)}
+                  onDurationChange={(e) => setPlayerDuration(e.currentTarget.duration || 0)}
+                  onClick={(e) => {
+                    if (e.currentTarget.paused) e.currentTarget.play().catch(() => {});
+                    else e.currentTarget.pause();
+                  }}
+                />
+              ) : (
+                <iframe
+                  key={streamUrl}
+                  src={streamUrl}
+                  title={'Episode ' + epNum}
+                  className="w-full h-full border-0 outline-none"
+                  allowFullScreen
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                />
+              )
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center bg-[#090a10] text-center p-4">
                 <div className="w-10 h-10 border-3 border-[#7b1fa2]/30 border-t-[#7b1fa2] rounded-full animate-spin mb-4" />
@@ -469,6 +510,20 @@ export function Watch() {
           servers={servers}
           selectedServer={selectedServer}
           onSelectServer={handleSelectServer}
+          currentTime={playerCurrentTime}
+          duration={playerDuration}
+          isPlaying={isPlayerPlaying}
+          onTogglePlay={() => {
+            if (videoRef.current) {
+              if (videoRef.current.paused) videoRef.current.play().catch(() => {});
+              else videoRef.current.pause();
+            }
+          }}
+          onSeek={(time) => {
+            if (videoRef.current) {
+              videoRef.current.currentTime = Math.max(0, Math.min(time, videoRef.current.duration || time));
+            }
+          }}
         />
       )}
 
