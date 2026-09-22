@@ -82,15 +82,20 @@ export function TVApp() {
     }));
   }, [savedWatchlist]);
 
-  // Featured Hero Item (Prioritize Solo Leveling / Frieren / Jujutsu Kaisen / Top trending)
+  // Dynamic hero: use live catalog metadata, never a hardcoded title.
+  // Prefer currently airing/recently released high-popularity series.
   const heroItem = useMemo(() => {
     const list = [...trending, ...popular];
-    const topKeywords = ['solo leveling', 'frieren', 'jujutsu kaisen', 'demon slayer', 'one piece'];
-    const match = list.find(item => {
-      const t = (typeof item.title === 'string' ? item.title : item.title?.english || item.title?.romaji || '').toLowerCase();
-      return topKeywords.some(kw => t.includes(kw));
+    const unique = Array.from(new Map(list.map(item => [item.id, item])).values());
+    const seriesOnly = unique.filter(item => {
+      const format = String((item as any).format || (item as any).type || '').toLowerCase();
+      return format !== 'movie' && format !== 'special' && format !== 'ova' && format !== 'ona';
     });
-    return match || trending[0] || popular[0] || null;
+    return [...seriesOnly].sort((a: any, b: any) => {
+      const yearDiff = Number(b.season_year || 0) - Number(a.season_year || 0);
+      if (yearDiff !== 0) return yearDiff;
+      return Number(b.popularity || 0) - Number(a.popularity || 0);
+    })[0] || seriesOnly[0] || unique[0] || null;
   }, [trending, popular]);
 
   // Dynamic Row Configuration for Current Section
