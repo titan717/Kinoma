@@ -379,6 +379,41 @@ export function Details() {
         </div>
       )}
 
+      {trailerData?.available && trailerData.trailer?.id && trailerData.trailer.site === 'youtube' && (
+        <section className="w-full max-w-[1680px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 mt-2">
+          <div className="flex items-center gap-2 mb-3">
+            <Film className="w-4 h-4 text-white/70" />
+            <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">Trailer</h2>
+          </div>
+          <button
+            type="button"
+            onClick={() => setTrailerOpen(true)}
+            className="group relative w-full max-w-3xl aspect-video overflow-hidden rounded-2xl sm:rounded-3xl border border-white/10 bg-[#0f1016] text-left shadow-[0_18px_50px_rgba(0,0,0,.35)] cursor-pointer"
+            aria-label={`Watch ${animeTitle} trailer`}
+          >
+            <img
+              src={trailerData.trailer.thumbnail || `https://i.ytimg.com/vi/${encodeURIComponent(trailerData.trailer.id)}/hqdefault.jpg`}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-black/20" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-white text-black shadow-[0_10px_40px_rgba(0,0,0,.45)] transition-transform duration-300 group-hover:scale-110">
+                <Play className="ml-1 h-7 w-7 sm:h-8 sm:w-8 fill-current" />
+              </div>
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
+              <span className="inline-flex items-center gap-2 rounded-full bg-black/55 px-3 py-1.5 text-xs font-bold text-white backdrop-blur-sm">
+                <Film className="h-3.5 w-3.5" />
+                Preview trailer
+              </span>
+            </div>
+          </button>
+        </section>
+      )}
+
       {/* 2. EPISODES & SEASONS EXPERIENCE */}
       <div className="w-full max-w-[1680px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 mt-8 flex flex-col gap-6">
         
