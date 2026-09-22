@@ -3,9 +3,6 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
-def kinomaVersionCode = (project.findProperty("KINOMA_VERSION_CODE") ?: "1").toString().toInteger()
-def kinomaVersionName = (project.findProperty("KINOMA_VERSION_NAME") ?: "1.0.0").toString()
-
 android {
     namespace 'com.kinoma.tv'
     compileSdk 34
@@ -14,8 +11,8 @@ android {
         applicationId "com.kinoma.tv"
         minSdk 21
         targetSdk 34
-        versionCode kinomaVersionCode
-        versionName kinomaVersionName
+        versionCode = project.findProperty("KINOMA_VERSION_CODE")?.toString()?.toInteger() ?: 1
+        versionName = project.findProperty("KINOMA_VERSION_NAME")?.toString() ?: "1.0.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
