@@ -142,7 +142,13 @@ object UpdateChecker {
                                     if (total > 0L) {
                                         val progress = ((soFar * 100L) / total).toInt().coerceIn(0, 100)
                                         mainHandler.post { onProgress(progress) }
+                                    } else {
+                                        mainHandler.post { onProgress(0) }
                                     }
+                                }
+                                else -> {
+                                    finished = true
+                                    mainHandler.post { onError("Unknown update download status: $status") }
                                 }
                             }
                         }
