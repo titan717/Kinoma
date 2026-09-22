@@ -58,7 +58,6 @@ export function IntroSplash({ forceShow = false, onComplete }: IntroSplashProps)
       clearTimeout(timer);
       window.removeEventListener('keydown', handleKey);
     };
-    };
   }, [isVisible, completeIntro]);
 
   // Click on screen also triggers sound if browser required user gesture
@@ -79,7 +78,7 @@ export function IntroSplash({ forceShow = false, onComplete }: IntroSplashProps)
           className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center overflow-hidden select-none cursor-pointer"
           onClick={handleScreenClick}
         >
-          {/* Netflix-style cinematic black stage — adapted to Kinoma's purple identity. */
+          {/* Netflix-style cinematic black stage — adapted to Kinoma's purple identity. */}
           <div className="absolute inset-0 bg-black pointer-events-none" />
           <motion.div
             initial={{ opacity: 0, scale: 0.7 }}
