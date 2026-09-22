@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search as SearchIcon, Delete, CornerDownLeft, Sparkles, Clock, X } from 'lucide-react';
+import { Search as SearchIcon, Delete, CornerDownLeft, Sparkles, Clock, X, Mic, MicOff } from 'lucide-react';
 import { api } from '../../lib/api';
 import { AnimeItem } from '../../types';
 import { TVCard } from './TVCard';
+import { libraryManager } from '../../lib/library';
 
 interface TVSearchViewProps {
   onSelectAnime: (anime: AnimeItem) => void;
@@ -18,32 +19,63 @@ const TV_KEYBOARD_LAYOUT = [
   ['0', 'SPACE', 'BACKSPACE', 'CLEAR']
 ];
 
-const SUGGESTIONS = [
-  'Solo Leveling',
-  'Demon Slayer',
-  'Jujutsu Kaisen',
-  'One Piece',
-  'Attack on Titan',
-  'Frieren',
-  'Chainsaw Man',
-  'Bleach'
-];
-
 export function TVSearchView({ onSelectAnime, onBackToSidebar }: TVSearchViewProps) {
   const [query, setQuery] = useState('');
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
   const [results, setResults] = useState<AnimeItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('kinoma_tv_recents');
-      return saved ? JSON.parse(saved) : ['Solo Leveling', 'One Piece'];
+      return saved ? JSON.parse(saved) : libraryManager.getSearchHistory().slice(0, 8);
     } catch {
-      return ['Solo Leveling', 'One Piece'];
+      return libraryManager.getSearchHistory().slice(0, 8);
     }
   });
 
-  // Focus zones: 'keyboard' | 'suggestions' | 'results'
-  const [focusZone, setFocusZone] = useState<'keyboard' | 'suggestions' | 'results'>('keyboard');
+  // Focus zones: 'voice' | 'keyboard' | 'suggestions' | 'results'
+  const [focusZone, setFocusZone] = useState<'voice' | 'keyboard' | 'suggestions' | 'results'>('voice');
+
+  const smartSuggestions = recentSearches.slice(0, 8);
+
+  const startVoiceSearch = () => {
+    const SpeechRecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognitionCtor) {
+      window.alert('Voice search is not supported by this TV browser.');
+      return;
+    }
+
+    if (recognitionRef.current) {
+      recognitionRef.current.abort();
+      recognitionRef.current = null;
+      setIsListening(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognitionCtor();
+    recognition.lang = 'en-US';
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+    recognition.onstart = () => setIsListening(true);
+    recognition.onresult = (event: any) => {
+      const transcript = Array.from(event.results || [])
+        .map((result: any) => result?.[0]?.transcript || '')
+        .join(' ')
+        .trim();
+      if (transcript) setQuery(transcript);
+      const last = event.results?.[event.results.length - 1];
+      if (last?.isFinal && transcript) applyQuery(transcript);
+    };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => {
+      setIsListening(false);
+      recognitionRef.current = null;
+    };
+    recognitionRef.current = recognition;
+    try { recognition.start(); } catch { setIsListening(false); recognitionRef.current = null; }
+  };
   const [kbRow, setKbRow] = useState(0);
   const [kbCol, setKbCol] = useState(0);
   const [suggIndex, setSuggIndex] = useState(0);
@@ -90,6 +122,8 @@ export function TVSearchView({ onSelectAnime, onBackToSidebar }: TVSearchViewPro
     try {
       localStorage.setItem('kinoma_tv_recents', JSON.stringify(updated));
     } catch {}
+    libraryManager.addSearchQuery(text);
+    setRecentSearches(libraryManager.getSearchHistory().slice(0, 8));
     setFocusZone('results');
     setResultIndex(0);
   };
@@ -144,21 +178,22 @@ export function TVSearchView({ onSelectAnime, onBackToSidebar }: TVSearchViewPro
             setResultIndex(0);
           }
         } else if (focusZone === 'suggestions') {
-          if (suggIndex < SUGGESTIONS.length - 1) setSuggIndex(prev => prev + 1);
+          if (suggIndex < smartSuggestions.length - 1) setSuggIndex(prev => prev + 1);
         } else if (focusZone === 'results') {
           if (resultIndex < results.length - 1) {
             setResultIndex(prev => prev + 1);
           }
         }
       } else if (e.key === 'ArrowUp') {
-        if (focusZone === 'keyboard') {
+        if (focusZone === 'voice') {
+          return;
+        } else if (focusZone === 'keyboard') {
           if (kbRow > 0) {
             const nextRow = kbRow - 1;
             setKbRow(nextRow);
             setKbCol(prev => Math.min(prev, TV_KEYBOARD_LAYOUT[nextRow].length - 1));
           } else {
-            setFocusZone('suggestions');
-            setSuggIndex(0);
+            setFocusZone('voice');
           }
         } else if (focusZone === 'results') {
           if (resultIndex >= 4) {
@@ -166,7 +201,11 @@ export function TVSearchView({ onSelectAnime, onBackToSidebar }: TVSearchViewPro
           }
         }
       } else if (e.key === 'ArrowDown') {
-        if (focusZone === 'suggestions') {
+        if (focusZone === 'voice') {
+          setFocusZone('keyboard');
+          setKbRow(0);
+          setKbCol(0);
+        } else if (focusZone === 'suggestions') {
           setFocusZone('keyboard');
           setKbRow(0);
           setKbCol(0);
@@ -185,11 +224,13 @@ export function TVSearchView({ onSelectAnime, onBackToSidebar }: TVSearchViewPro
           }
         }
       } else if (e.key === 'Enter') {
-        if (focusZone === 'keyboard') {
+        if (focusZone === 'voice') {
+          startVoiceSearch();
+        } else if (focusZone === 'keyboard') {
           const key = TV_KEYBOARD_LAYOUT[kbRow]?.[kbCol];
           if (key) handleKeyPress(key);
         } else if (focusZone === 'suggestions') {
-          applyQuery(SUGGESTIONS[suggIndex]);
+          applyQuery(smartSuggestions[suggIndex]);
         } else if (focusZone === 'results') {
           if (results[resultIndex]) {
             onSelectAnime(results[resultIndex]);
@@ -202,7 +243,7 @@ export function TVSearchView({ onSelectAnime, onBackToSidebar }: TVSearchViewPro
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [focusZone, kbRow, kbCol, suggIndex, resultIndex, results, recentSearches, onBackToSidebar, onSelectAnime]);
+  }, [focusZone, kbRow, kbCol, suggIndex, resultIndex, results, recentSearches, onBackToSidebar, onSelectAnime, isListening]);
 
   return (
     <div className="w-full min-h-screen bg-[#07080d] text-white p-8 lg:p-14 select-none">
@@ -216,6 +257,14 @@ export function TVSearchView({ onSelectAnime, onBackToSidebar }: TVSearchViewPro
             </span>
             <span className="inline-block w-0.5 h-7 bg-[#c084fc] ml-1 animate-pulse" />
           </div>
+          <button
+            onClick={startVoiceSearch}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${focusZone === 'voice' ? 'bg-white text-black border-white scale-105' : 'bg-white/5 text-white/80 border-white/10 hover:bg-white/10'}`}
+            aria-label={isListening ? 'Stop voice search' : 'Start voice search'}
+          >
+            {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+            <span className="text-xs font-black">{isListening ? 'Listening…' : 'Voice'}</span>
+          </button>
           {query && (
             <button
               onClick={() => setQuery('')}
@@ -232,7 +281,7 @@ export function TVSearchView({ onSelectAnime, onBackToSidebar }: TVSearchViewPro
         <span className="text-xs font-bold uppercase tracking-widest text-gray-400 flex items-center gap-1.5 mr-2">
           <Sparkles className="w-3.5 h-3.5 text-[#c084fc]" /> Suggestions:
         </span>
-        {SUGGESTIONS.map((item, idx) => {
+        {smartSuggestions.map((item, idx) => {
           const isFocused = focusZone === 'suggestions' && suggIndex === idx;
           return (
             <button
@@ -315,10 +364,10 @@ export function TVSearchView({ onSelectAnime, onBackToSidebar }: TVSearchViewPro
           ) : (
             <div className="py-16 text-center text-gray-400 bg-[#0e0f17]/50 rounded-2xl border border-dashed border-[#222332]">
               <p className="text-base font-bold text-gray-300">
-                {query ? 'No matching titles found.' : 'Use remote D-pad or keyboard to search anime.'}
+                {query ? 'No matching titles found.' : 'Use the D-pad, keyboard, or microphone to search anime.'}
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                Supports English titles, Romaji, and genres.
+                Voice search uses the browser Web Speech API when supported.
               </p>
             </div>
           )}
