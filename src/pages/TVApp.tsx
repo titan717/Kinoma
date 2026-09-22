@@ -25,6 +25,53 @@ import {
   Tv
 } from 'lucide-react';
 
+function franchiseKey(item: AnimeItem): string {
+  const raw = typeof item.title === 'string'
+    ? item.title
+    : item.title?.english || item.title?.romaji || item.id;
+
+  return raw
+    .toLowerCase()
+    .replace(/[:\-–—]/g, ' ')
+    .replace(/\b(the\s+)?final\s+(season|chapters?)\b/g, ' ')
+    .replace(/\bseason\s*\d+(?:\s*part\s*\d+)?\b/g, ' ')
+    .replace(/\bpart\s*\d+\b/g, ' ')
+    .replace(/\b(?:cour|arc)\s*\d+\b/g, ' ')
+    .replace(/\b(?:ova|ona|special)\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function groupFranchises(items: AnimeItem[]): AnimeItem[] {
+  const groups = new Map<string, AnimeItem>();
+
+  for (const item of items) {
+    const key = franchiseKey(item);
+    const existing = groups.get(key);
+
+    if (!existing) {
+      groups.set(key, item);
+      continue;
+    }
+
+    // Keep the richest representative so the card points at the franchise
+    // while retaining the best available artwork/metadata.
+    const existingScore =
+      Number(existing.popularity || 0) +
+      Number(existing.season_year || 0) +
+      (existing.description ? 10 : 0);
+
+    const itemScore =
+      Number(item.popularity || 0) +
+      Number(item.season_year || 0) +
+      (item.description ? 10 : 0);
+
+    if (itemScore > existingScore) groups.set(key, item);
+  }
+
+  return Array.from(groups.values());
+}
+
 export function TVApp() {
   const [, setLocation] = useLocation();
   const { isTVMode, setTVMode } = useTVMode();
@@ -66,9 +113,9 @@ export function TVApp() {
     refreshUserData();
   }, [refreshUserData, activeSection]);
 
-  const trending = useMemo(() => trendingData?.results || [], [trendingData]);
-  const popular = useMemo(() => popularData?.results || [], [popularData]);
-  const newEpisodes = useMemo(() => newSeasonData?.results || [], [newSeasonData]);
+  const trending = useMemo(() => groupFranchises(trendingData?.results || []), [trendingData]);
+  const popular = useMemo(() => groupFranchises(popularData?.results || []), [popularData]);
+  const newEpisodes = useMemo(() => groupFranchises(newSeasonData?.results || []), [newSeasonData]);
   const movies = useMemo(() => moviesData?.results || [], [moviesData]);
 
   // Transform Watchlist items to AnimeItem format for TV rows
