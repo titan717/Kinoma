@@ -123,7 +123,7 @@ export function Watch() {
   );
 
   const streamUrl = (streamData && streamData.url) ? streamData.url : (currentServer?.dataLink || '');
-  const isDirectMedia = /\.(m3u8|mp4|webm)(?:\?|$)/i.test(streamUrl);
+  const isDirectMedia = /\.(mp4|webm)(?:\?|$)/i.test(streamUrl);
 
   const episodes = animeData?.episodes || [];
   const currentEpIndex = episodes.findIndex((e: any) => e.number.toString() === epNum || e.id === rawId);
