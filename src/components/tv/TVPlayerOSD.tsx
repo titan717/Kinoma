@@ -252,7 +252,7 @@ export function TVPlayerOSD({
         <button
           type="button"
           onClick={onBack}
-          className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left backdrop-blur-xl outline-none transition-all ${
+          className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left  outline-none transition-all ${
             focusZone === 'top' && topFocus === 0
               ? 'scale-[1.05] border-[#00F0FF] bg-[#00F0FF]/12 ring-2 ring-[#00F0FF]/60'
               : 'border-white/10 bg-black/45'
@@ -269,13 +269,13 @@ export function TVPlayerOSD({
         </button>
 
         <div className="flex items-center gap-3">
-          <span className="rounded-xl border border-white/10 bg-black/45 px-3 py-2 text-xs font-black text-white/70 backdrop-blur-xl">
+          <span className="rounded-xl border border-white/10 bg-black/45 px-3 py-2 text-xs font-black text-white/70 ">
             AUTO
           </span>
           <button
             type="button"
             onClick={() => setDrawer('settings')}
-            className={`rounded-2xl border p-3 text-white backdrop-blur-xl outline-none transition-all ${
+            className={`rounded-2xl border p-3 text-white  outline-none transition-all ${
               focusZone === 'top' && topFocus === 1
                 ? 'scale-[1.08] border-[#00F0FF] bg-[#00F0FF]/12 ring-2 ring-[#00F0FF]/60'
                 : 'border-white/10 bg-black/45'
@@ -290,9 +290,9 @@ export function TVPlayerOSD({
       <div className="pointer-events-auto absolute inset-x-0 bottom-0 px-8 pb-8 lg:px-14">
         {focusZone === 'timeline' && (
           <div className="mb-3 flex items-end gap-4">
-            <div className="w-44 overflow-hidden rounded-xl border border-white/10 bg-black/65 shadow-2xl backdrop-blur-xl">
+            <div className="w-44 overflow-hidden rounded-xl border border-white/10 bg-black/65 shadow-2xl ">
               {previewImage ? (
-                <img src={previewImage} alt="" className="aspect-video w-full object-cover" />
+                <img src={previewImage} alt="" loading="lazy" decoding="async" className="aspect-video w-full object-cover" />
               ) : (
                 <div className="aspect-video w-full bg-white/[.04]" />
               )}
@@ -335,7 +335,7 @@ export function TVPlayerOSD({
           <button
             type="button"
             onClick={() => setDrawer(isMovie ? 'more' : 'episodes')}
-            className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/45 px-4 py-3 text-xs font-black text-white backdrop-blur-xl outline-none transition-all focus:ring-2 focus:ring-[#00F0FF]"
+            className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/45 px-4 py-3 text-xs font-black text-white  outline-none transition-all focus:ring-2 focus:ring-[#00F0FF]"
           >
             <ListVideo className="h-4 w-4 text-[#00F0FF]" />
             {isMovie ? 'More Like This' : 'Episodes'}
@@ -345,7 +345,7 @@ export function TVPlayerOSD({
       </div>
 
       {drawer === 'episodes' && !isMovie && (
-        <div className="pointer-events-auto absolute inset-x-0 bottom-0 h-[60%] overflow-hidden border-t border-white/10 bg-[#0B0C10]/97 shadow-[0_-30px_90px_rgba(0,0,0,.8)] backdrop-blur-2xl">
+        <div className="pointer-events-auto absolute inset-x-0 bottom-0 h-[60%] overflow-hidden border-t border-white/10 bg-[#0B0C10]/97 shadow-[0_-30px_90px_rgba(0,0,0,.8)] ">
           <div className="flex h-full">
             <aside className="w-[25%] min-w-[230px] overflow-y-auto border-r border-white/10 p-7">
               <div className="mb-5 text-[11px] font-black uppercase tracking-[0.22em] text-white/40">Seasons</div>
@@ -393,7 +393,7 @@ export function TVPlayerOSD({
                           : 'border-white/[.06] bg-white/[.03]'
                       }`}
                     >
-                      <img src={ep.image || ''} alt="" className="h-16 w-28 rounded-xl bg-black/40 object-cover" />
+                      <img src={ep.image || ''} alt="" loading="lazy" decoding="async" className="h-16 w-28 rounded-xl bg-black/40 object-cover" />
                       <div className="min-w-0 flex-1">
                         <div className="text-[10px] font-black uppercase tracking-wider text-white/40">Episode {ep.number}</div>
                         <div className="truncate text-base font-black text-white">{ep.title || `Episode ${ep.number}`}</div>
@@ -410,7 +410,7 @@ export function TVPlayerOSD({
       )}
 
       {drawer === 'more' && (
-        <div className="pointer-events-auto absolute inset-x-0 bottom-0 h-[60%] overflow-y-auto border-t border-white/10 bg-[#0B0C10]/97 p-7 shadow-[0_-30px_90px_rgba(0,0,0,.8)] backdrop-blur-2xl">
+        <div className="pointer-events-auto absolute inset-x-0 bottom-0 h-[60%] overflow-y-auto border-t border-white/10 bg-[#0B0C10]/97 p-7 shadow-[0_-30px_90px_rgba(0,0,0,.8)] ">
           <div className="mb-6 flex items-center justify-between">
             <div>
               <div className="text-[11px] font-black uppercase tracking-[0.22em] text-white/40">Discovery</div>
@@ -430,7 +430,7 @@ export function TVPlayerOSD({
                 className={`group text-left outline-none ${episodeFocus === idx ? 'scale-[1.04]' : ''}`}
               >
                 <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[.03] transition-all group-focus:ring-2 group-focus:ring-[#00F0FF]">
-                  <img src={item.image || ''} alt="" className="aspect-[2/3] w-full object-cover" />
+                  <img src={item.image || ''} alt="" loading="lazy" decoding="async" className="aspect-[2/3] w-full object-cover" />
                 </div>
                 <div className="mt-2 truncate text-xs font-bold text-white/80">
                   {typeof item.title === 'string' ? item.title : item.title?.english || item.title?.romaji || 'Anime'}
@@ -442,7 +442,7 @@ export function TVPlayerOSD({
       )}
 
       {drawer === 'settings' && (
-        <div className="pointer-events-auto absolute inset-y-0 right-0 w-[42%] min-w-[430px] border-l border-white/10 bg-[#0B0C10]/98 p-8 shadow-[-30px_0_90px_rgba(0,0,0,.75)] backdrop-blur-2xl">
+        <div className="pointer-events-auto absolute inset-y-0 right-0 w-[42%] min-w-[430px] border-l border-white/10 bg-[#0B0C10]/98 p-8 shadow-[-30px_0_90px_rgba(0,0,0,.75)] ">
           <div className="mb-8 flex items-center justify-between">
             <div>
               <div className="text-[11px] font-black uppercase tracking-[0.22em] text-white/40">Player</div>
@@ -493,7 +493,7 @@ export function TVPlayerOSD({
       )}
 
       {focusZone === 'timeline' && drawer === null && (
-        <div className="pointer-events-none absolute bottom-28 left-1/2 -translate-x-1/2 rounded-full border border-[#00F0FF]/30 bg-black/65 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#8ff7ff] backdrop-blur-xl">
+        <div className="pointer-events-none absolute bottom-28 left-1/2 -translate-x-1/2 rounded-full border border-[#00F0FF]/30 bg-black/65 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#8ff7ff] ">
           D-pad Left / Right · Seek
         </div>
       )}
