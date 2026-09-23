@@ -8,7 +8,6 @@ export interface BeforeInstallPromptEvent extends Event {
 export function usePWAInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
-  const [isAndroidTV, setIsAndroidTV] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
 
@@ -21,14 +20,10 @@ export function usePWAInstall() {
     setIsInstalled(isStandalone);
 
     const ua = window.navigator.userAgent.toLowerCase();
-    
-    // Android TV detection
-    const isTV = /android.*(tv|googletv|leanback|smarttv|large screen|aft)/i.test(ua) ||
-      /smart-tv|hbbtv|appletv|roku/i.test(ua);
-    setIsAndroidTV(isTV);
 
-    // Standard Android detection
-    const isAndroidDevice = /android/i.test(ua) && !isTV;
+    // Standard Android detection. Kinoma uses one unified responsive interface;
+    // device type must never switch the app into a separate TV UI.
+    const isAndroidDevice = /android/i.test(ua);
     setIsAndroid(isAndroidDevice);
 
     // iOS detection
@@ -73,7 +68,6 @@ export function usePWAInstall() {
   return {
     isInstallable: !!deferredPrompt,
     isInstalled,
-    isAndroidTV,
     isAndroid,
     isIOS,
     install,
