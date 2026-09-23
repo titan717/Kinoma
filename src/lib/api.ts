@@ -205,7 +205,81 @@ export const api = {
 
   getTrailer: async (id: string) => {
     const cleanKey = `api_trailer_${id}`;
-    return localCache.getOrFetch(cleanKey, () => animeApi.getTrailer(id), 1000 * 60 * 60 * 24);
+    return localCache.getOrFetch(cleanKey, async () => {
+      // Prefer Kinoma API's curated trailer endpoint.
+      try {
+        const response: any = await animeApi.getTrailer(id);
+        const raw = response?.trailer ?? response?.data?.trailer ?? response?.data ?? response;
+
+        if (raw) {
+          const trailerId = raw.id || raw.key || raw.video_id;
+          const site = String(raw.site || raw.provider || 'youtube').toLowerCase();
+          const url = raw.url || raw.youtube_url || raw.embed_url;
+
+          if (trailerId || url) {
+            let normalizedId = trailerId;
+            if (!normalizedId && typeof url === 'string') {
+              const match = url.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{6,})/);
+              normalizedId = match?.[1];
+            }
+
+            if (normalizedId) {
+              return {
+                available: true,
+                trailer: {
+                  id: normalizedId,
+                  site: site === 'youtube' || site === 'yt' ? 'youtube' : site,
+                  thumbnail: raw.thumbnail || `https://i.ytimg.com/vi/${normalizedId}/hqdefault.jpg`
+                }
+              };
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('Kinoma trailer endpoint unavailable; trying AniList fallback:', error);
+      }
+
+      // Fallback: AniList exposes official trailer metadata for many titles.
+      try {
+        const cached = itemCache.get(id);
+        const info = await animeApi.getAnimeInfo(id).catch(() => null);
+        const anilistId = info?.anilist_id || cached?.anilist_id;
+
+        if (anilistId) {
+          const response = await fetch('https://graphql.anilist.co', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({
+              query: `query Trailer($id: Int) {
+                Media(id: $id, type: ANIME) {
+                  trailer { id site thumbnail }
+                }
+              }`,
+              variables: { id: anilistId }
+            })
+          });
+
+          if (response.ok) {
+            const json = await response.json();
+            const trailer = json?.data?.Media?.trailer;
+            if (trailer?.id) {
+              return {
+                available: true,
+                trailer: {
+                  id: trailer.id,
+                  site: String(trailer.site || '').toLowerCase(),
+                  thumbnail: trailer.thumbnail || `https://i.ytimg.com/vi/${trailer.id}/hqdefault.jpg`
+                }
+              };
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('AniList trailer fallback failed:', error);
+      }
+
+      return { available: false, trailer: null };
+    }, 1000 * 60 * 60 * 24);
   },
 
   getDetails: async (id: string, initialItem?: AnimeItem): Promise<AnimeDetails> => {
