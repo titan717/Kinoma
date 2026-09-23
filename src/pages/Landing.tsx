@@ -1,204 +1,129 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'wouter';
+import useSWR from 'swr';
 import { ChevronDown, Play, Sparkles, ArrowDown } from 'lucide-react';
 import { motion } from 'motion/react';
 import { KinomaLogo } from '../components/ui/KinomaLogo';
+import { api } from '../lib/api';
+import { AnimeItem } from '../types';
+import { updateSEO } from '../lib/seo';
 
-const ARTWORK_URL =
-  'https://cdn.dribbble.com/userupload/15472332/file/original-a48b48c6977115c7185f2857575dac09.png?resize=1200x900&vertical=center';
 const BACKDROP_URL = 'https://aniwaves.ru/assets/images/bg-index2.jpg';
-const REFERENCE_TEXTURE_URL =
-  'https://cdn.dribbble.com/userupload/14005335/file/original-d6adb157992d0492ed2fc3b2ab46cef9.jpg?resize=1200x1200&vertical=center';
+const REFERENCE_TEXTURE_URL = 'https://cdn.dribbble.com/userupload/14005335/file/original-d6adb157992d0492ed2fc3b2ab46cef9.jpg?resize=1200x1200&vertical=center';
 
 const FAQ = [
-  {
-    question: 'What is Kinoma?',
-    answer:
-      'Kinoma is a streaming experience for anime, movies and series, built around fast discovery, beautiful artwork and a simple path from finding a title to pressing play.',
-  },
-  {
-    question: 'Do I need an account to browse?',
-    answer:
-      'No. You can enter Kinoma and explore the catalog without signing in. An account is used for features such as your personal library and viewing progress.',
-  },
-  {
-    question: 'Does Kinoma support movies and series too?',
-    answer:
-      'Yes. The interface is designed around content rather than a single format, so anime, movies and series can share the same discovery experience.',
-  },
-  {
-    question: 'Can I use Kinoma on a TV?',
-    answer:
-      'Yes. Kinoma is being designed around the same visual language across web and TV, with layouts and controls that remain comfortable on a large screen.',
-  },
+  { question: 'What is Kinoma?', answer: 'Kinoma is a streaming experience for anime, movies and series, built around fast discovery, beautiful artwork and a simple path from finding a title to pressing play.' },
+  { question: 'Do I need an account to browse?', answer: 'No. You can enter Kinoma and explore the catalog without signing in. An account is used for features such as your personal library and viewing progress.' },
+  { question: 'Does Kinoma support movies and series too?', answer: 'Yes. The interface is designed around content rather than a single format, so anime, movies and series can share the same discovery experience.' },
+  { question: 'Can I use Kinoma on a TV?', answer: 'Yes. Kinoma uses the same visual language across web and TV, with responsive layouts and controls designed to remain comfortable on large screens.' },
 ];
 
-function CartoonButton({
-  children,
-  href,
-  secondary = false,
-}: {
-  children: React.ReactNode;
-  href: string;
-  secondary?: boolean;
-}) {
+function getAnimeTitle(item: AnimeItem) {
+  if (typeof item.title === 'string') return item.title;
+  return item.title.english || item.title.romaji || item.title.native || 'Untitled';
+}
+
+function CartoonButton({ children, href }: { children: React.ReactNode; href: string }) {
+  return <Link href={href} className="kinoma-cartoon-button"><span className="kinoma-cartoon-button__face">{children}</span><span className="kinoma-cartoon-button__shadow" aria-hidden="true" /></Link>;
+}
+
+function CatalogPreview() {
+  const { data } = useSWR('welcome_catalog_preview', api.getTrending, { revalidateOnFocus: false, dedupingInterval: 300000 });
+  const items = (data?.results || []).filter((item) => item?.image).slice(0, 8);
+
   return (
-    <Link
-      href={href}
-      className={`kinoma-cartoon-button ${secondary ? 'kinoma-cartoon-button--secondary' : ''}`}
-    >
-      <span className="kinoma-cartoon-button__face">
-        {children}
-      </span>
-      <span className="kinoma-cartoon-button__shadow" aria-hidden="true" />
-    </Link>
+    <div className="kinoma-welcome__catalog" aria-label="Featured anime catalog preview">
+      <div className="kinoma-welcome__catalog-head">
+        <div><span>LIVE CATALOG</span><strong>Anime worth watching</strong></div>
+        <span className="kinoma-welcome__catalog-count">{items.length ? `${items.length} picks` : 'Loading'}</span>
+      </div>
+      <div className="kinoma-welcome__catalog-grid">
+        {items.length ? items.map((item, index) => (
+          <Link href={`/details/${item.id}`} key={`welcome-catalog-${item.id}-${index}`} className="kinoma-welcome__catalog-card" aria-label={`Open ${getAnimeTitle(item)}`}>
+            <img src={item.image} alt="" loading={index > 3 ? 'lazy' : 'eager'} decoding="async" referrerPolicy="no-referrer" />
+            <span>{getAnimeTitle(item)}</span>
+          </Link>
+        )) : Array.from({ length: 8 }, (_, index) => (
+          <div key={`catalog-skeleton-${index}`} className="kinoma-welcome__catalog-card is-loading"><span /></div>
+        ))}
+      </div>
+      <div className="kinoma-welcome__catalog-foot"><span>Trending from the Kinoma catalog</span><Link href="/browse">View full catalog →</Link></div>
+    </div>
   );
 }
 
 export function Landing() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
+  useEffect(() => {
+    updateSEO({
+      title: 'Anime, Movies & Series Streaming',
+      description: 'Discover anime, movies and series on Kinoma. Browse the catalog, find what to watch, and continue your story across web and TV.',
+      image: '/icon.svg',
+      type: 'website',
+      canonicalUrl: window.location.origin + '/',
+      schema: {
+        '@context': 'https://schema.org',
+        '@graph': [
+          { '@type': 'WebSite', name: 'Kinoma', url: window.location.origin + '/', description: 'Discover anime, movies and series on Kinoma through a simple, cinematic streaming experience.', image: window.location.origin + '/icon.svg', potentialAction: { '@type': 'SearchAction', target: { '@type': 'EntryPoint', urlTemplate: `${window.location.origin}/search?keyword={search_term_string}` }, 'query-input': 'required name=search_term_string' } },
+          { '@type': 'Organization', name: 'Kinoma', url: window.location.origin + '/', logo: window.location.origin + '/icon.svg' },
+          { '@type': 'FAQPage', mainEntity: FAQ.map((item) => ({ '@type': 'Question', name: item.question, acceptedAnswer: { '@type': 'Answer', text: item.answer } })) },
+        ],
+      },
+    });
+  }, []);
+
   return (
     <div className="kinoma-welcome">
-      <div
-        className="kinoma-welcome__backdrop"
-        style={{ backgroundImage: `url("${BACKDROP_URL}")` }}
-      />
-      <div
-        className="kinoma-welcome__reference-texture"
-        style={{ backgroundImage: `url("${REFERENCE_TEXTURE_URL}")` }}
-      />
+      <div className="kinoma-welcome__backdrop" style={{ backgroundImage: `url("${BACKDROP_URL}")` }} />
+      <div className="kinoma-welcome__reference-texture" style={{ backgroundImage: `url("${REFERENCE_TEXTURE_URL}")` }} />
       <div className="kinoma-welcome__grain" aria-hidden="true" />
 
       <header className="kinoma-welcome__header">
-        <Link href="/" aria-label="Kinoma">
-          <KinomaLogo size="md" variant="full" />
-        </Link>
-        <span className="kinoma-welcome__header-label">ANIME · MOVIES · SERIES</span>
+        <Link href="/" aria-label="Kinoma"><KinomaLogo size="md" variant="full" /></Link>
       </header>
 
       <main>
-        <section className="kinoma-welcome__hero">
+        <section className="kinoma-welcome__hero" aria-labelledby="welcome-title">
           <div className="kinoma-welcome__art">
-            <motion.div
-              initial={{ opacity: 0, y: 30, rotate: -3 }}
-              animate={{ opacity: 1, y: 0, rotate: 0 }}
-              transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-              className="kinoma-welcome__art-frame"
-            >
-              <div className="kinoma-welcome__art-glow" />
-              <img
-                src={ARTWORK_URL}
-                alt="Anime artwork"
-                referrerPolicy="no-referrer"
-              />
-              <div className="kinoma-welcome__art-vignette" />
-              <div className="kinoma-welcome__art-caption">
-                <span>WELCOME TO</span>
-                <strong>KINOMA</strong>
-              </div>
+            <motion.div initial={{ opacity: 0, y: 30, rotate: -3 }} animate={{ opacity: 1, y: 0, rotate: 0 }} transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }} className="kinoma-welcome__art-frame">
+              <div className="kinoma-welcome__art-glow" /><CatalogPreview /><div className="kinoma-welcome__art-vignette" />
             </motion.div>
           </div>
-
-          <motion.div
-            initial={{ opacity: 0, x: -24 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.75, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="kinoma-welcome__copy"
-          >
-            <p className="kinoma-welcome__eyebrow">
-              <Sparkles className="h-3.5 w-3.5" />
-              YOUR NEXT STORY STARTS HERE
-            </p>
-
-            <h1>
-              Find something
-              <span>worth watching.</span>
-            </h1>
-
-            <p className="kinoma-welcome__description">
-              A beautiful home for the stories you love. Discover anime, movies and
-              series without getting in the way of the experience.
-            </p>
-
+          <motion.div initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.75, delay: 0.15, ease: [0.16, 1, 0.3, 1] }} className="kinoma-welcome__copy">
+            <p className="kinoma-welcome__eyebrow"><Sparkles className="h-3.5 w-3.5" />YOUR NEXT STORY STARTS HERE</p>
+            <h1 id="welcome-title">Find something<span>worth watching.</span></h1>
+            <p className="kinoma-welcome__description">A beautiful home for the stories you love. Discover anime, movies and series without getting in the way of the experience.</p>
             <div className="kinoma-welcome__actions">
-              <CartoonButton href="/browse">
-                <Play className="h-4 w-4 fill-current" />
-                Go to homepage
-              </CartoonButton>
-              <a href="#questions" className="kinoma-welcome__scroll-link">
-                Common questions
-                <ChevronDown className="h-3.5 w-3.5" />
-              </a>
+              <CartoonButton href="/browse"><Play className="h-4 w-4 fill-current" />Go to homepage</CartoonButton>
+              <a href="#questions" className="kinoma-welcome__scroll-link">Common questions<ChevronDown className="h-3.5 w-3.5" /></a>
             </div>
           </motion.div>
         </section>
 
-        <section className="kinoma-welcome__intro-strip">
-          <div>
-            <span>01</span>
-            <p>Discover</p>
-          </div>
-          <div>
-            <span>02</span>
-            <p>Choose</p>
-          </div>
-          <div>
-            <span>03</span>
-            <p>Press play</p>
-          </div>
-          <div className="kinoma-welcome__intro-line" />
-        </section>
-
-        <section id="questions" className="kinoma-welcome__faq">
-          <div className="kinoma-welcome__faq-heading">
-            <p>BEFORE YOU ENTER</p>
-            <h2>A few quick answers.</h2>
-            <span>Scroll through the essentials, then step into Kinoma.</span>
-          </div>
-
+        <section id="questions" className="kinoma-welcome__faq" aria-labelledby="questions-title">
+          <div className="kinoma-welcome__faq-heading"><p>BEFORE YOU ENTER</p><h2 id="questions-title">A few quick answers.</h2><span>Scroll through the essentials, then step into Kinoma.</span></div>
           <div className="kinoma-welcome__faq-list">
             {FAQ.map((item, index) => {
               const isOpen = openFaq === index;
-
-              return (
-                <button
-                  key={item.question}
-                  type="button"
-                  className={`kinoma-welcome__faq-item ${isOpen ? 'is-open' : ''}`}
-                  onClick={() => setOpenFaq(isOpen ? null : index)}
-                  aria-expanded={isOpen}
-                >
-                  <span className="kinoma-welcome__faq-number">
-                    0{index + 1}
-                  </span>
-                  <span className="kinoma-welcome__faq-content">
-                    <strong>{item.question}</strong>
-                    <span className="kinoma-welcome__faq-answer">{item.answer}</span>
-                  </span>
-                  <ChevronDown className="kinoma-welcome__faq-chevron" />
-                </button>
-              );
+              return <button key={item.question} type="button" className={`kinoma-welcome__faq-item ${isOpen ? 'is-open' : ''}`} onClick={() => setOpenFaq(isOpen ? null : index)} aria-expanded={isOpen}>
+                <span className="kinoma-welcome__faq-number">0{index + 1}</span>
+                <span className="kinoma-welcome__faq-content"><strong>{item.question}</strong><span className="kinoma-welcome__faq-answer"><span>{item.answer}</span></span></span>
+                <ChevronDown className="kinoma-welcome__faq-chevron" />
+              </button>;
             })}
           </div>
         </section>
 
-        <section className="kinoma-welcome__final">
-          <p>READY?</p>
-          <h2>Let's watch something.</h2>
-          <CartoonButton href="/browse">
-            <Play className="h-4 w-4 fill-current" />
-            Enter Kinoma
-          </CartoonButton>
+        <section className="kinoma-welcome__final" aria-labelledby="final-title">
+          <p>READY?</p><h2 id="final-title">Let's watch something.</h2>
+          <CartoonButton href="/browse"><Play className="h-4 w-4 fill-current" />Enter Kinoma</CartoonButton>
         </section>
       </main>
 
       <footer className="kinoma-welcome__footer">
-        <KinomaLogo size="sm" variant="full" />
-        <span>Stories worth staying for.</span>
-        <a href="#questions" aria-label="Back to questions">
-          <ArrowDown className="h-3.5 w-3.5" />
-        </a>
+        <KinomaLogo size="sm" variant="full" /><span>Stories, in motion.</span>
+        <a href="#questions" aria-label="Back to questions"><ArrowDown className="h-3.5 w-3.5" /></a>
       </footer>
     </div>
   );
