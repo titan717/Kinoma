@@ -55,20 +55,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#08090d] text-white flex flex-col items-center justify-start relative font-sans selection:bg-[#9333ea] selection:text-white w-full overflow-x-hidden">
-      
-      {/* Subtle Top Ambient Lighting (Cinema Atmosphere) */}
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-15%,rgba(147,51,234,0.07),rgba(8,9,13,0))] pointer-events-none z-0" />
-
-      {/* 
-        Responsive Application Shell:
-        - Large Desktop & Ultra-wide: Sits in an elegant container (rounded-[28px] lg:rounded-[36px], subtle border, soft drop-shadow, max width).
-        - Tablet & Mobile: Fills viewport seamlessly edge-to-edge.
-      */}
+    <div className="min-h-screen w-full bg-[var(--kinoma-bg)] text-[var(--kinoma-text)] flex flex-col relative overflow-x-hidden">
       <div className={`relative z-10 w-full flex-1 flex flex-col ${
         resolvedTheme === 'modern'
-          ? 'max-w-[1720px] 2xl:max-w-[1800px] md:my-3 lg:my-6 md:rounded-[28px] lg:rounded-[36px] bg-[#0e1017] md:border md:border-white/5 md:shadow-[0_25px_80px_rgba(0,0,0,0.85)] overflow-hidden'
-          : 'w-full bg-[#08090d]'
+          ? 'bg-[var(--kinoma-bg)]'
+          : 'w-full bg-[var(--kinoma-bg)]'
       }`}>
 
         {/* Top Navbar: Modern (matching reference image) or Preserved Classic */}
@@ -239,7 +230,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         )}
         
         {/* Main Content Area */}
-        <main className={`flex-1 w-full mx-auto pb-20 md:pb-12 ${resolvedTheme === 'modern' ? 'pt-0' : ''}`}>
+        <main className={`flex-1 w-full mx-auto pb-12 ${resolvedTheme === 'modern' ? 'pt-0' : ''}`}>
           {children}
         </main>
 
@@ -248,68 +239,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       </div>
 
-      {/* Mobile Bottom Navigation Bar (Dock) */}
-      <nav 
-        aria-label="Mobile navigation" 
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#08090d]/95 backdrop-blur-xl border-t border-white/10 px-2 py-1.5 flex items-center justify-around safe-area-pb shadow-[0_-4px_25px_rgba(0,0,0,0.7)]"
-      >
-        <Link href="/">
-          <div 
-            role="button"
-            tabIndex={0}
-            className={`flex flex-col items-center justify-center min-w-[52px] min-h-[44px] px-2 py-1 rounded-xl transition-all duration-150 active:scale-90 cursor-pointer kinoma-focus ${
-              location === '/' ? 'text-purple-400 bg-white/10 font-bold' : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <Home className="w-5 h-5 mb-0.5" />
-            <span className="text-[10px] tracking-tight">Home</span>
-          </div>
-        </Link>
-        <Link href="/search">
-          <div 
-            role="button"
-            tabIndex={0}
-            className={`flex flex-col items-center justify-center min-w-[52px] min-h-[44px] px-2 py-1 rounded-xl transition-all duration-150 active:scale-90 cursor-pointer kinoma-focus ${
-              location === '/search' || location === '/explore' ? 'text-purple-400 bg-white/10 font-bold' : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <SearchIcon className="w-5 h-5 mb-0.5" />
-            <span className="text-[10px] tracking-tight">Explore</span>
-          </div>
-        </Link>
-        <div 
-          role="button"
-          tabIndex={0}
-          onClick={handleRandom} 
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleRandom(); }}
-          className="flex flex-col items-center justify-center min-w-[52px] min-h-[44px] px-2 py-1 rounded-xl text-gray-400 hover:text-white transition-all duration-150 active:scale-90 cursor-pointer kinoma-focus"
-        >
-          <Shuffle className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px] font-medium tracking-tight">Random</span>
-        </div>
-        <Link href="/library">
-          <div 
-            role="button"
-            tabIndex={0}
-            className={`flex flex-col items-center justify-center min-w-[52px] min-h-[44px] px-2 py-1 rounded-xl transition-all duration-150 active:scale-90 cursor-pointer kinoma-focus ${
-              location === '/library' ? 'text-purple-400 bg-white/10 font-bold' : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <Bookmark className="w-5 h-5 mb-0.5" />
-            <span className="text-[10px] tracking-tight">Library</span>
-          </div>
-        </Link>
-        <div 
-          role="button"
-          tabIndex={0}
-          onClick={() => openSettingsModal('appearance')} 
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openSettingsModal('appearance'); }}
-          className="flex flex-col items-center justify-center min-w-[52px] min-h-[44px] px-2 py-1 rounded-xl text-gray-400 hover:text-white transition-all duration-150 active:scale-90 cursor-pointer kinoma-focus"
-        >
-          <SettingsIcon className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px] font-medium tracking-tight">Settings</span>
-        </div>
-      </nav>
+
 
     </div>
   );
