@@ -5,6 +5,7 @@ import { SWRConfig } from 'swr';
 import { localCache } from './lib/localCache';
 import { Layout } from './components/Layout';
 import { Home } from './pages/Home';
+import { Landing } from './pages/Landing';
 import { Search } from './pages/Search';
 import { Details } from './pages/Details';
 import { Watch } from './pages/Watch';
@@ -41,7 +42,9 @@ function AnimatedRoutes() {
         className="w-full flex-1 flex flex-col will-change-transform"
       >
         <Switch location={location}>
-          <Route path="/" component={Home} />
+          <Route path="/" component={Landing} />
+          <Route path="/browse" component={Home} />
+          <Route path="/home" component={Home} />
           <Route path="/tv" component={TVApp} />
           <Route path="/admin" component={Admin} />
           <Route path="/search" component={Search} />
@@ -65,7 +68,6 @@ function MainAppShell() {
   const { isTVMode } = useTVMode();
   const [location] = useLocation();
 
-  // If in TV Mode or on /tv, render the dedicated 10-foot Android TV layout
   if (isTVMode || location === '/tv') {
     if (location.startsWith('/watch/')) {
       return (
@@ -86,8 +88,8 @@ function MainAppShell() {
 
 export default function App() {
   return (
-    <SWRConfig 
-      value={{ 
+    <SWRConfig
+      value={{
         provider: localCache.getSwrStorageProvider(),
         revalidateOnFocus: false,
         revalidateIfStale: false,
