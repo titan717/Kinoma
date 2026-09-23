@@ -49,7 +49,7 @@ export function ModernNavbar() {
                   onClick={() => setOpenMenu(isOpen ? null : item.label)}
                 >
                   {item.label}
-                  <ChevronDown aria-hidden="true" />
+                  {item.label === 'About' && <ChevronDown aria-hidden="true" />}
                 </button>
 
                 <div className={`kinoma-header__menu ${isOpen ? 'is-open' : ''}`}>
