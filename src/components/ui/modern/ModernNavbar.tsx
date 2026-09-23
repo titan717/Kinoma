@@ -9,11 +9,9 @@ import {
   Sparkles,
   Tv,
   Film,
-  Sliders,
   X,
   Menu,
   Compass,
-  Bell,
 } from 'lucide-react';
 import { useAppearance } from '../../../lib/AppearanceContext';
 import { useAuth } from '../../../lib/AuthContext';
@@ -126,13 +124,6 @@ export function ModernNavbar({ onOpenAuth }: ModernNavbarProps) {
               <Search className="h-[18px] w-[18px]" />
             </button>
 
-            <button
-              className="kinoma-header__icon-button hidden sm:flex kinoma-focus"
-              aria-label="Notifications"
-              title="Notifications"
-            >
-              <Bell className="h-[17px] w-[17px]" />
-            </button>
 
             {user ? (
               <div className="relative">
