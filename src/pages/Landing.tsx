@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'wouter';
-import { ChevronDown, Play, Sparkles, ArrowDown } from 'lucide-react';
+import { ChevronDown, Play, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 import { KinomaLogo } from '../components/ui/KinomaLogo';
 import { updateSEO } from '../lib/seo';
@@ -13,6 +13,7 @@ const FAQ = [
   { question: 'Do I need an account to browse?', answer: 'No. You can enter Kinoma and explore the catalog without signing in. An account is used for features such as your personal library and viewing progress.' },
   { question: 'Does Kinoma support movies and series too?', answer: 'Yes. The interface is designed around content rather than a single format, so anime, movies and series can share the same discovery experience.' },
   { question: 'Can I use Kinoma on a TV?', answer: 'Yes. Kinoma uses the same visual language across web and TV, with responsive layouts and controls designed to remain comfortable on large screens.' },
+  { question: 'Where can I read the Terms of Service?', answer: 'You can read Kinoma’s Terms of Service whenever you need it.' },
 ];
 
 function CartoonButton({ children, href }: { children: React.ReactNode; href: string }) {
@@ -64,7 +65,7 @@ export function Landing() {
             <h1 id="welcome-title">Find something<span>worth watching.</span></h1>
             <p className="kinoma-welcome__description">A beautiful home for the stories you love. Discover anime, movies and series without getting in the way of the experience.</p>
             <div className="kinoma-welcome__actions">
-              <CartoonButton href="/browse"><Play className="h-4 w-4 fill-current" />Go to homepage</CartoonButton>
+              <CartoonButton href="/home"><Play className="h-4 w-4 fill-current" />Go to homepage</CartoonButton>
               <a href="#questions" className="kinoma-welcome__scroll-link">Common questions<ChevronDown className="h-3.5 w-3.5" /></a>
             </div>
           </motion.div>
@@ -82,17 +83,17 @@ export function Landing() {
               </button>;
             })}
           </div>
+          <Link href="/terms" className="kinoma-welcome__terms-link">Read Terms of Service <span aria-hidden="true">→</span></Link>
         </section>
 
         <section className="kinoma-welcome__final" aria-labelledby="final-title">
           <p>READY?</p><h2 id="final-title">Let's watch something.</h2>
-          <CartoonButton href="/browse"><Play className="h-4 w-4 fill-current" />Enter Kinoma</CartoonButton>
+          <CartoonButton href="/home"><Play className="h-4 w-4 fill-current" />Enter Kinoma</CartoonButton>
         </section>
       </main>
 
       <footer className="kinoma-welcome__footer">
         <KinomaLogo size="sm" variant="full" /><span>Stories, in motion.</span>
-        <a href="#questions" aria-label="Back to questions"><ArrowDown className="h-3.5 w-3.5" /></a>
       </footer>
     </div>
   );
