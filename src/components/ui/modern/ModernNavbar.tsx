@@ -26,7 +26,7 @@ interface ModernNavbarProps {
 }
 
 const NAV = [
-  { href: '/browse', label: 'Home', icon: Compass },
+  { href: '/home', label: 'Home', icon: Compass },
   { href: '/search', label: 'Explore', icon: Search },
   { href: '/whats-new', label: "What's New", icon: Sparkles },
   { href: '/library', label: 'My List', icon: Bookmark },
@@ -65,7 +65,7 @@ export function ModernNavbar({ onOpenAuth }: ModernNavbarProps) {
       <header className="kinoma-header sticky top-0 z-[var(--z-header)] w-full">
         <div className="kinoma-header__inner kinoma-shell">
           <Link
-            href="/browse"
+            href="/home"
             aria-label="Kinoma home"
             className="kinoma-header__brand kinoma-focus"
           >
