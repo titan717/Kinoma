@@ -76,10 +76,20 @@ export function Landing() {
           <div className="kinoma-welcome__faq-list">
             {FAQ.map((item, index) => {
               const isOpen = openFaq === index;
-              return <button key={item.question} type="button" className={`kinoma-welcome__faq-item ${isOpen ? 'is-open' : ''}`} onClick={() => setOpenFaq(isOpen ? null : index)} aria-expanded={isOpen}>
-                <span className="kinoma-welcome__faq-number">0{index + 1}</span>
-                <span className="kinoma-welcome__faq-content"><strong>{item.question}</strong><span className="kinoma-welcome__faq-answer"><span>{item.answer}</span></span></span>
-                <ChevronDown className="kinoma-welcome__faq-chevron" />
+              const faqContent = (
+                <>
+                  <span className="kinoma-welcome__faq-number">0{index + 1}</span>
+                  <span className="kinoma-welcome__faq-content"><strong>{item.question}</strong><span className="kinoma-welcome__faq-answer"><span>{item.answer}</span></span></span>
+                  <ChevronDown className="kinoma-welcome__faq-chevron" />
+                </>
+              );
+
+              if (index === 4) {
+                return <Link key={item.question} href="/terms" className="kinoma-welcome__faq-item">{faqContent}</Link>;
+              }
+
+              return <button key={item.question} type="button" className={`kinoma-welcome__faq-item ${isOpen ? 'is-open' : ''`}"} onClick={() => setOpenFaq(isOpen ? null : index)} aria-expanded={isOpen}>
+                {faqContent}
               </button>;
             })}
           </div>
