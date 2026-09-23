@@ -15,12 +15,12 @@ export default defineConfig(() => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icon.svg', 'tv-banner-320x180.png'],
+        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icon.svg'],
         manifest: {
           id: '/',
           name: 'Kinoma - Anime & Movie Streaming',
           short_name: 'Kinoma',
-          description: 'Unified anime streaming platform with modern layout, Netflix-style cinematic intro, and Android TV support.',
+          description: 'Anime, movies and series on Kinoma with a modern, cinematic streaming experience.',
           theme_color: '#0b0c10',
           background_color: '#0b0c10',
           display: 'standalone',
@@ -46,12 +46,6 @@ export default defineConfig(() => {
               sizes: '512x512',
               type: 'image/png',
               purpose: 'maskable',
-            },
-            {
-              src: '/tv-banner-320x180.png',
-              sizes: '320x180',
-              type: 'image/png',
-              purpose: 'any',
             },
           ],
         },
