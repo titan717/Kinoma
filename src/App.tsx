@@ -19,12 +19,15 @@ import { AndroidTVModal } from './components/ui/AndroidTVModal';
 import { TVExperiencePrompt } from './components/ui/TVExperiencePrompt';
 import { IntroSplash } from './components/ui/IntroSplash';
 import { TVApp } from './pages/TVApp';
+import { Admin } from './pages/Admin';
+import { trackPageView } from './lib/analytics';
 
 function AnimatedRoutes() {
   const [location] = useLocation();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
+    trackPageView(location);
   }, [location]);
 
   return (
@@ -40,6 +43,7 @@ function AnimatedRoutes() {
         <Switch location={location}>
           <Route path="/" component={Home} />
           <Route path="/tv" component={TVApp} />
+          <Route path="/admin" component={Admin} />
           <Route path="/search" component={Search} />
           <Route path="/explore" component={Search} />
           <Route path="/whats-new" component={WhatsNew} />
