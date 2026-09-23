@@ -4,8 +4,6 @@ const GENRE_AFFINITY_KEY = 'kinoma_genre_affinity';
 const AUDIO_PREF_PREFIX = 'kinoma_audio_pref_';
 const SERVER_PREF_PREFIX = 'kinoma_server_pref_';
 const GLOBAL_AUDIO_PREF_KEY = 'kinoma_global_audio_pref';
-const TV_PROMPT_CHOICE_KEY = 'kinoma_tv_prompt_dismissed';
-
 export interface GenreAffinity {
   [genre: string]: number;
 }
@@ -118,20 +116,6 @@ export const preferencesUtil = {
         localStorage.setItem(`${SERVER_PREF_PREFIX}${animeId}`, server);
       }
     } catch {}
-  },
-
-  // --- Large Screen TV Prompt Choice ---
-  hasDismissedTVPrompt: (): boolean => {
-    try {
-      return localStorage.getItem(TV_PROMPT_CHOICE_KEY) === 'true';
-    } catch {
-      return false;
-    }
-  },
-
-  setDismissedTVPrompt: (dismissed: boolean) => {
-    try {
-      localStorage.setItem(TV_PROMPT_CHOICE_KEY, dismissed ? 'true' : 'false');
-    } catch {}
   }
+
 };
