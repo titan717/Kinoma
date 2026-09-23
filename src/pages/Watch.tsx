@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRoute, Link } from 'wouter';
 import useSWR from 'swr';
 import { api } from '../lib/api';
@@ -9,18 +9,10 @@ import {
   ArrowLeft, 
   ArrowRight, 
   CheckCircle2, 
-  ChevronDown, 
-  ChevronRight,
+
   Bookmark, 
-  Heart, 
   Maximize, 
   Minimize, 
-  Tv, 
-  Volume2, 
-  Wifi, 
-  WifiOff, 
-  Sparkles,
-  Layers,
   X
 } from 'lucide-react';
 import { historyUtil, parseSeasonNumber } from '../lib/history';
@@ -558,7 +550,6 @@ export function Watch() {
           )}
 
         </div>
-      )}
 
     </div>
   );
