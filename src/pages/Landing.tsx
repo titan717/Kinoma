@@ -88,7 +88,7 @@ export function Landing() {
                 return <Link key={item.question} href="/terms" className="kinoma-welcome__faq-item">{faqContent}</Link>;
               }
 
-              return <button key={item.question} type="button" className={`kinoma-welcome__faq-item ${isOpen ? 'is-open' : ''`}"} onClick={() => setOpenFaq(isOpen ? null : index)} aria-expanded={isOpen}>
+              return <button key={item.question} type="button" className={`kinoma-welcome__faq-item ${isOpen ? 'is-open' : ''}`} onClick={() => setOpenFaq(isOpen ? null : index)} aria-expanded={isOpen}>
                 {faqContent}
               </button>;
             })}
