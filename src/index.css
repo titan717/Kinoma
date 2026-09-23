@@ -1323,3 +1323,209 @@ p {
     animation: none !important;
   }
 }
+
+
+.kinoma-welcome__terms-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  color: rgba(232, 208, 192, 0.72);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  transition: color 160ms ease, transform 160ms var(--ease-kinoma);
+}
+
+.kinoma-welcome__terms-link:hover {
+  color: #fffaf6;
+  transform: translateX(2px);
+}
+
+.kinoma-terms {
+  min-height: 100svh;
+  background:
+    radial-gradient(circle at 82% 8%, rgba(184, 77, 65, 0.10), transparent 28rem),
+    linear-gradient(180deg, #0f0d0d 0%, #121010 55%, #0f0d0d 100%);
+  color: var(--kinoma-text);
+}
+
+.kinoma-terms__header {
+  width: min(100% - 40px, 1220px);
+  min-height: 82px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(246, 242, 238, 0.08);
+}
+
+.kinoma-terms__brand,
+.kinoma-terms__back {
+  display: inline-flex;
+  align-items: center;
+}
+
+.kinoma-terms__back {
+  gap: 8px;
+  color: rgba(246, 242, 238, 0.52);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  transition: color 160ms ease;
+}
+
+.kinoma-terms__back:hover {
+  color: #f6f2ee;
+}
+
+.kinoma-terms__main {
+  width: min(100% - 40px, 1000px);
+  margin: 0 auto;
+  padding: 88px 0 120px;
+}
+
+.kinoma-terms__intro {
+  max-width: 760px;
+  margin-bottom: 72px;
+}
+
+.kinoma-terms__icon {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  border: 1px solid rgba(232, 208, 192, 0.16);
+  border-radius: 12px;
+  color: #e8d0c0;
+  background: rgba(232, 208, 192, 0.05);
+}
+
+.kinoma-terms__intro > p {
+  margin-bottom: 12px;
+  color: #c1935f;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .25em;
+}
+
+.kinoma-terms__intro h1 {
+  font-size: clamp(3rem, 6vw, 6rem);
+  line-height: .9;
+  letter-spacing: -.07em;
+  font-weight: 900;
+}
+
+.kinoma-terms__intro > span {
+  display: block;
+  max-width: 560px;
+  margin-top: 22px;
+  color: rgba(246, 242, 238, 0.48);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.kinoma-terms__document {
+  border-top: 1px solid rgba(246, 242, 238, 0.12);
+}
+
+.kinoma-terms__section {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 28px;
+  padding: 34px 0 38px;
+  border-bottom: 1px solid rgba(246, 242, 238, 0.09);
+}
+
+.kinoma-terms__number {
+  color: #b84d41;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  padding-top: 5px;
+}
+
+.kinoma-terms__section h2 {
+  margin-bottom: 17px;
+  color: #f6f2ee;
+  font-size: clamp(1.2rem, 2vw, 1.55rem);
+  line-height: 1.2;
+  letter-spacing: -.025em;
+}
+
+.kinoma-terms__section p {
+  max-width: 720px;
+  margin-top: 12px;
+  color: rgba(246, 242, 238, 0.52);
+  font-size: 13px;
+  line-height: 1.9;
+}
+
+.kinoma-terms__section p:first-of-type {
+  margin-top: 0;
+}
+
+.kinoma-terms__footer {
+  width: min(100% - 40px, 1000px);
+  margin: 0 auto;
+  padding: 26px 0 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-top: 1px solid rgba(246, 242, 238, 0.08);
+  color: rgba(246, 242, 238, 0.34);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.kinoma-terms__footer a {
+  color: rgba(246, 242, 238, 0.48);
+}
+
+.kinoma-terms__footer a:hover {
+  color: #e8d0c0;
+}
+
+@media (max-width: 640px) {
+  .kinoma-terms__header {
+    width: min(100% - 28px, 1220px);
+    min-height: 68px;
+  }
+
+  .kinoma-terms__back {
+    font-size: 8px;
+  }
+
+  .kinoma-terms__main {
+    width: min(100% - 28px, 1000px);
+    padding: 64px 0 90px;
+  }
+
+  .kinoma-terms__intro {
+    margin-bottom: 50px;
+  }
+
+  .kinoma-terms__section {
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 10px;
+    padding: 26px 0 30px;
+  }
+
+  .kinoma-terms__section p {
+    font-size: 12px;
+    line-height: 1.8;
+  }
+
+  .kinoma-terms__footer {
+    width: min(100% - 28px, 1000px);
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
