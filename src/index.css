@@ -688,6 +688,10 @@ p {
 }
 
 @media (max-width: 767px) {
+  .kinoma-header__search {
+    display: none;
+  }
+
   .kinoma-header {
     --header-height: 64px;
     background: rgba(15, 13, 13, 0.94);
