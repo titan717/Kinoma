@@ -8,6 +8,7 @@ import { AnimeGridSkeleton } from '../components/ui/Skeletons';
 import { KinomaErrorState } from '../components/ui/KinomaErrorState';
 import { preferencesUtil } from '../lib/preferences';
 import { updateSEO } from '../lib/seo';
+import { trackEvent } from '../lib/analytics';
 
 const POPULAR_SEARCH_TAGS = [
   'Solo Leveling',
@@ -84,6 +85,7 @@ export function Search() {
     try {
       // Record search to history for discovery signals
       preferencesUtil.addRecentSearch(q);
+      void trackEvent({ type: 'search', metadata: { query: q } });
       const res = await api.search(q);
       setItems(res.results || []);
     } catch (e) {
