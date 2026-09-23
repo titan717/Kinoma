@@ -63,7 +63,11 @@ export function ModernNavbar({ onOpenAuth }: ModernNavbarProps) {
             aria-label="Kinoma home"
             className="kinoma-header__brand kinoma-focus"
           >
-            <img\n              src="https://raw.githubusercontent.com/titan717/Kinoma/5a6e2dc356c4e674cb51193ca083de9dcc3c8947/Kinoma-9-23-2026.png"\n              alt="Kinoma"\n              className="h-8 w-auto max-w-[150px] object-contain md:h-9"\n            />
+            <img
+              src="https://raw.githubusercontent.com/titan717/Kinoma/5a6e2dc356c4e674cb51193ca083de9dcc3c8947/Kinoma-9-23-2026.png"
+              alt="Kinoma"
+              className="h-8 w-auto max-w-[150px] object-contain md:h-9"
+            />
           </Link>
 
           <nav className="kinoma-header__nav hidden md:flex" aria-label="Primary navigation">
