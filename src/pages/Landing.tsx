@@ -1,11 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'wouter';
-import useSWR from 'swr';
 import { ChevronDown, Play, Sparkles, ArrowDown } from 'lucide-react';
 import { motion } from 'motion/react';
 import { KinomaLogo } from '../components/ui/KinomaLogo';
-import { api } from '../lib/api';
-import { AnimeItem } from '../types';
 import { updateSEO } from '../lib/seo';
 
 const BACKDROP_URL = 'https://aniwaves.ru/assets/images/bg-index2.jpg';
@@ -18,39 +15,11 @@ const FAQ = [
   { question: 'Can I use Kinoma on a TV?', answer: 'Yes. Kinoma uses the same visual language across web and TV, with responsive layouts and controls designed to remain comfortable on large screens.' },
 ];
 
-function getAnimeTitle(item: AnimeItem) {
-  if (typeof item.title === 'string') return item.title;
-  return item.title.english || item.title.romaji || item.title.native || 'Untitled';
-}
-
 function CartoonButton({ children, href }: { children: React.ReactNode; href: string }) {
   return <Link href={href} className="kinoma-cartoon-button"><span className="kinoma-cartoon-button__face">{children}</span><span className="kinoma-cartoon-button__shadow" aria-hidden="true" /></Link>;
 }
 
-function CatalogPreview() {
-  const { data } = useSWR('welcome_catalog_preview', api.getTrending, { revalidateOnFocus: false, dedupingInterval: 300000 });
-  const items = (data?.results || []).filter((item) => item?.image).slice(0, 8);
-
-  return (
-    <div className="kinoma-welcome__catalog" aria-label="Featured anime catalog preview">
-      <div className="kinoma-welcome__catalog-head">
-        <div><span>LIVE CATALOG</span><strong>Anime worth watching</strong></div>
-        <span className="kinoma-welcome__catalog-count">{items.length ? `${items.length} picks` : 'Loading'}</span>
-      </div>
-      <div className="kinoma-welcome__catalog-grid">
-        {items.length ? items.map((item, index) => (
-          <Link href={`/details/${item.id}`} key={`welcome-catalog-${item.id}-${index}`} className="kinoma-welcome__catalog-card" aria-label={`Open ${getAnimeTitle(item)}`}>
-            <img src={item.image} alt="" loading={index > 3 ? 'lazy' : 'eager'} decoding="async" referrerPolicy="no-referrer" />
-            <span>{getAnimeTitle(item)}</span>
-          </Link>
-        )) : Array.from({ length: 8 }, (_, index) => (
-          <div key={`catalog-skeleton-${index}`} className="kinoma-welcome__catalog-card is-loading"><span /></div>
-        ))}
-      </div>
-      <div className="kinoma-welcome__catalog-foot"><span>Trending from the Kinoma catalog</span><Link href="/browse">View full catalog →</Link></div>
-    </div>
-  );
-}
+const WELCOME_IMAGE_URL = 'https://static.crunchyroll.com/cr-acquisition/assets/img/start/hero/india/background-desktop@2x.webp';
 
 export function Landing() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -87,7 +56,7 @@ export function Landing() {
         <section className="kinoma-welcome__hero" aria-labelledby="welcome-title">
           <div className="kinoma-welcome__art">
             <motion.div initial={{ opacity: 0, y: 30, rotate: -3 }} animate={{ opacity: 1, y: 0, rotate: 0 }} transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }} className="kinoma-welcome__art-frame">
-              <div className="kinoma-welcome__art-glow" /><CatalogPreview /><div className="kinoma-welcome__art-vignette" />
+              <div className="kinoma-welcome__art-glow" /><img src={WELCOME_IMAGE_URL} alt="Kinoma streaming artwork" fetchPriority="high" decoding="async" referrerPolicy="no-referrer" /><div className="kinoma-welcome__art-vignette" />
             </motion.div>
           </div>
           <motion.div initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.75, delay: 0.15, ease: [0.16, 1, 0.3, 1] }} className="kinoma-welcome__copy">
