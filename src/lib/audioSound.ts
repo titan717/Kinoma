@@ -1,11 +1,7 @@
 /**
- * Kinoma Cinematic Intro Sound Generator
- * Uses Web Audio API to synthesize a rich, memorable signature sound:
- * 1. Deep sub-bass punch (cinematic impact)
- * 2. Harmonic chord swell (warm, resonant brass-like synth)
- * 3. Crystal bell shimmer / ethereal harmonic sparkle
- * 
- * Works 100% offline with zero external audio assets or network requests.
+ * Kinoma signature intro sound.
+ * A short anime-inspired chime/pluck ident generated entirely with Web Audio API.
+ * No external audio asset or network request is required.
  */
 
 class KinomaAudioEngine {
@@ -14,14 +10,12 @@ class KinomaAudioEngine {
   private getAudioContext(): AudioContext | null {
     if (typeof window === 'undefined') return null;
     if (!this.ctx) {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (AudioCtx) {
-        this.ctx = new AudioCtx();
-      }
+      const AudioCtx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (AudioCtx) this.ctx = new AudioCtx();
     }
-    if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume().catch(() => {});
-    }
+    if (this.ctx?.state === 'suspended') this.ctx.resume().catch(() => {});
     return this.ctx;
   }
 
@@ -31,82 +25,59 @@ class KinomaAudioEngine {
       if (!ctx) return;
 
       const now = ctx.currentTime;
+      const master = ctx.createGain();
+      master.gain.setValueAtTime(0.0001, now);
+      master.gain.exponentialRampToValueAtTime(0.28, now + 0.025);
+      master.gain.exponentialRampToValueAtTime(0.0001, now + 1.45);
+      master.connect(ctx.destination);
 
-      // Master output gain
-      const masterGain = ctx.createGain();
-      masterGain.gain.setValueAtTime(0.85, now);
-      masterGain.connect(ctx.destination);
+      // A tiny rising "anime title card" pluck: A4 → C#5 → E5 → A5.
+      const notes = [
+        { frequency: 440, start: 0.02, length: 0.55 },
+        { frequency: 554.37, start: 0.16, length: 0.55 },
+        { frequency: 659.25, start: 0.30, length: 0.62 },
+        { frequency: 880, start: 0.46, length: 0.85 },
+      ];
 
-      // --- 1. SUB-BASS IMPACT (The deep "Ta" thump) ---
-      const subOsc = ctx.createOscillator();
-      const subGain = ctx.createGain();
-      subOsc.type = 'sine';
-      // Pitch drop: 80Hz down to 35Hz for punchy cinematic impact
-      subOsc.frequency.setValueAtTime(95, now);
-      subOsc.frequency.exponentialRampToValueAtTime(32, now + 0.9);
-
-      subGain.gain.setValueAtTime(0.0, now);
-      subGain.gain.linearRampToValueAtTime(0.9, now + 0.04);
-      subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
-
-      subOsc.connect(subGain);
-      subGain.connect(masterGain);
-      subOsc.start(now);
-      subOsc.stop(now + 1.8);
-
-      // --- 2. CINEMATIC RESONANT SWELL (The "DUMMMM" chord) ---
-      // Frequencies corresponding to D2, A2, D3, F#3 (A rich, majestic D-Major / Cinematic Anime Chord)
-      const chordFrequencies = [73.42, 110.0, 146.83, 185.0, 220.0];
-      chordFrequencies.forEach((freq, idx) => {
+      notes.forEach(({ frequency, start, length }, index) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         const filter = ctx.createBiquadFilter();
 
-        // Alternating triangle and sawtooth for warmth & texture
-        osc.type = idx % 2 === 0 ? 'triangle' : 'sawtooth';
-        osc.frequency.setValueAtTime(freq, now + 0.08);
+        osc.type = index === 3 ? 'sine' : 'triangle';
+        osc.frequency.setValueAtTime(frequency, now + start);
+        osc.detune.setValueAtTime(index % 2 === 0 ? -4 : 4, now + start);
 
-        // Lowpass sweep for rich opening bloom
         filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(180, now + 0.08);
-        filter.frequency.exponentialRampToValueAtTime(1600, now + 0.6);
-        filter.frequency.exponentialRampToValueAtTime(250, now + 2.2);
+        filter.frequency.setValueAtTime(2200, now + start);
+        filter.Q.setValueAtTime(0.8, now + start);
 
-        // Amplitude envelope: Quick rise, sustained resonance, smooth cinematic tail
-        gain.gain.setValueAtTime(0.0, now + 0.08);
-        gain.gain.linearRampToValueAtTime(0.22 / (idx + 1), now + 0.35);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.4);
+        gain.gain.setValueAtTime(0.0001, now + start);
+        gain.gain.exponentialRampToValueAtTime(index === 3 ? 0.30 : 0.20, now + start + 0.018);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + start + length);
 
         osc.connect(filter);
         filter.connect(gain);
-        gain.connect(masterGain);
-
-        osc.start(now + 0.08);
-        osc.stop(now + 2.5);
+        gain.connect(master);
+        osc.start(now + start);
+        osc.stop(now + start + length + 0.03);
       });
 
-      // --- 3. CRYSTAL CELESTIAL SHIMMER (Anime Ethereal Sparkle) ---
-      // Higher harmonic bells that chime in as the logo blooms
-      const shimmerNotes = [587.33, 880.0, 1174.66, 1479.98]; // D5, A5, D6, F#6
-      shimmerNotes.forEach((noteFreq, idx) => {
-        const chimeOsc = ctx.createOscillator();
-        const chimeGain = ctx.createGain();
-        chimeOsc.type = 'sine';
-        chimeOsc.frequency.setValueAtTime(noteFreq, now + 0.25 + idx * 0.08);
-
-        chimeGain.gain.setValueAtTime(0.0, now + 0.25 + idx * 0.08);
-        chimeGain.gain.linearRampToValueAtTime(0.08, now + 0.32 + idx * 0.08);
-        chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.8 + idx * 0.1);
-
-        chimeOsc.connect(chimeGain);
-        chimeGain.connect(masterGain);
-
-        chimeOsc.start(now + 0.25 + idx * 0.08);
-        chimeOsc.stop(now + 2.2);
-      });
-
+      // One soft sparkle after the final note gives Kinoma a recognizable finish.
+      const sparkle = ctx.createOscillator();
+      const sparkleGain = ctx.createGain();
+      sparkle.type = 'sine';
+      sparkle.frequency.setValueAtTime(1320, now + 0.66);
+      sparkle.frequency.exponentialRampToValueAtTime(1760, now + 0.86);
+      sparkleGain.gain.setValueAtTime(0.0001, now + 0.66);
+      sparkleGain.gain.exponentialRampToValueAtTime(0.075, now + 0.69);
+      sparkleGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.25);
+      sparkle.connect(sparkleGain);
+      sparkleGain.connect(master);
+      sparkle.start(now + 0.66);
+      sparkle.stop(now + 1.3);
     } catch (err) {
-      console.warn('AudioContext playback warning:', err);
+      console.warn('Kinoma intro audio warning:', err);
     }
   }
 }
