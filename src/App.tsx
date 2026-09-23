@@ -68,6 +68,8 @@ function MainAppShell() {
   const { isTVMode } = useTVMode();
   const [location] = useLocation();
 
+  if (location === '/') return <Landing />;
+
   if (isTVMode || location === '/tv') {
     if (location.startsWith('/watch/')) {
       return (
