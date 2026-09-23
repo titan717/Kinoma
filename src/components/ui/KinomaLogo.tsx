@@ -57,21 +57,21 @@ export function KinomaLogo({
             viewBox="0 0 36 36" 
             fill="none" 
             xmlns="http://www.w3.org/2000/svg"
-            className="drop-shadow-[0_0_14px_rgba(168,85,247,0.6)]"
+            className="drop-shadow-[0_0_14px_rgba(184,77,65,0.34)]"
           >
             <defs>
               <linearGradient id="kStem" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#f3e8ff" />
-                <stop offset="60%" stopColor="#c084fc" />
-                <stop offset="100%" stopColor="#9333ea" />
+                <stop offset="0%" stopColor="#fffaf6" />
+                <stop offset="60%" stopColor="#d8a69d" />
+                <stop offset="100%" stopColor="#b84d41" />
               </linearGradient>
               <linearGradient id="kUpper" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#ffffff" />
-                <stop offset="100%" stopColor="#e879f9" />
+                <stop offset="0%" stopColor="#fffaf6" />
+                <stop offset="100%" stopColor="#e8d0c0" />
               </linearGradient>
               <linearGradient id="kLower" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#d8b4fe" />
-                <stop offset="100%" stopColor="#7e22ce" />
+                <stop offset="0%" stopColor="#c1935f" />
+                <stop offset="100%" stopColor="#542c25" />
               </linearGradient>
             </defs>
             {/* Architectural streaming vertical ribbon */}
@@ -97,13 +97,13 @@ export function KinomaLogo({
       {(variant === 'full' || variant === 'typography') && (
         <div className="flex items-baseline tracking-[-0.04em]">
           <span 
-            className={`${currentSize.text} font-black text-white group-hover:text-purple-100 transition-colors drop-shadow-sm font-['Outfit']`}
+            className={`${currentSize.text} font-black text-white group-hover:text-[#fffaf6] transition-colors drop-shadow-sm font-sans`}
             style={{ letterSpacing: '-0.04em' }}
           >
             kino
           </span>
           <span 
-            className={`${currentSize.text} font-black bg-gradient-to-r from-[#d8b4fe] via-[#c084fc] to-[#e879f9] bg-clip-text text-transparent group-hover:brightness-110 transition-all font-['Outfit']`}
+            className={`${currentSize.text} font-black bg-gradient-to-r from-[#c1935f] via-[#d8a69d] to-[#e8d0c0] bg-clip-text text-transparent group-hover:brightness-110 transition-all font-sans`}
             style={{ letterSpacing: '-0.04em' }}
           >
             ma
