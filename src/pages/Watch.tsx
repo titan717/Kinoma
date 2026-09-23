@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { useRoute, Link, useLocation } from 'wouter';
+import { useRoute, Link } from 'wouter';
 import useSWR from 'swr';
 import { api } from '../lib/api';
 import { animeApi } from '../services/animeApi';
@@ -27,23 +27,14 @@ import { historyUtil, parseSeasonNumber } from '../lib/history';
 import { libraryManager } from '../lib/library';
 import { preferencesUtil } from '../lib/preferences';
 import { updateSEO } from '../lib/seo';
-import { useTVMode } from '../lib/TVModeContext';
 import { AnimeGrid } from '../components/ui/AnimeGrid';
 import { AnimeItem, DEFAULT_POSTER } from '../types';
-import { TVPlayerOSD } from '../components/tv/TVPlayerOSD';
 import { trackEvent } from '../lib/analytics';
 
 export function Watch() {
   const [isMatch, params] = useRoute<{id: string}>('/watch/:id');
-  const [, setLocation] = useLocation();
-  const { isTVMode } = useTVMode();
   const playerContainerRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [playerCurrentTime, setPlayerCurrentTime] = useState(0);
-  const [playerDuration, setPlayerDuration] = useState(0);
-  const [isPlayerPlaying, setIsPlayerPlaying] = useState(false);
-  const [playerEnded, setPlayerEnded] = useState(false);
-  const lastUiTimeUpdateRef = useRef(0);
   
   // Decoding parameter
   const rawId = decodeURIComponent((isMatch && params) ? params.id : '');
@@ -86,12 +77,6 @@ export function Watch() {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [networkQuality, setNetworkQuality] = useState<'excellent' | 'good' | 'poor'>('excellent');
   const [showNetworkNotice, setShowNetworkNotice] = useState(false);
-
-  // TV Player Accordion OSD State
-  const [isTVDrawerOpen, setIsTVDrawerOpen] = useState(false);
-  const [tvInitialDrawer, setTvInitialDrawer] = useState<'episodes' | 'settings' | 'more' | null>(null);
-  const [expandedTVSeason, setExpandedTVSeason] = useState<number>(1);
-  const [tvFocusedEpIndex, setTvFocusedEpIndex] = useState<number>(0);
 
   // Fetch Anime details & recommendations
   const { data: animeData } = useSWR(slug ? `info-${slug}` : null, () => api.getDetails(slug));
@@ -141,7 +126,6 @@ export function Watch() {
     : slug;
 
   const detectedSeason = (currentEpObj as any)?.season || parseSeasonNumber(animeData?.title, 1);
-  const isMovie = animeData?.type === 'Movie' || episodes.length <= 1;
 
   // Update SEO for the active episode
   useEffect(() => {
@@ -240,8 +224,6 @@ export function Watch() {
     };
   }, [slug, epNum, rawId, animeData, currentEpObj, detectedSeason, animeTitle]);
 
-  // Use hls.js for real HLS playback so the TV OSD can expose
-  // an actual seekable timeline when the backend returns an m3u8 source.
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !streamUrl || !isDirectMedia) return;
@@ -307,62 +289,6 @@ export function Watch() {
     };
   }, []);
 
-  // FULLSCREEN RULE:
-  // On desktop / mobile / tablet, DO NOT automatically enter fullscreen!
-  // ONLY TV UI defaults to fullscreen.
-  useEffect(() => {
-    if (isTVMode && !playerEnded) setIsCinemaFullscreen(true);
-  }, [isTVMode, playerEnded]);
-
-  useEffect(() => {
-    setPlayerEnded(false);
-  }, [streamUrl]);
-
-  // TV remote: D-pad opens the lightweight OSD. Back follows a strict hierarchy:
-  // drawer -> OSD -> anime details. The TV homepage is the next Back from Details.
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'f' || e.key === 'F') {
-        if (!isTVMode) toggleFullscreen();
-        return;
-      }
-
-      if (e.key === 'Escape' && isCinemaFullscreen && !isTVMode) {
-        setIsCinemaFullscreen(false);
-        return;
-      }
-
-      if (!isTVMode) return;
-
-      const isDpad = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key);
-      const isSelect = e.key === 'Enter' || e.key === ' ';
-      const isBack = e.key === 'Escape' || e.key === 'Backspace' || e.keyCode === 10009 || e.keyCode === 461;
-
-      if (isBack) {
-        if (isTVDrawerOpen) setIsTVDrawerOpen(false);
-        else setLocation(`/details/${encodeURIComponent(slug)}`);
-        return;
-      }
-
-      if (isDpad) {
-        // First Down opens Seasons/Episodes immediately; other D-pad input just wakes the OSD.
-        setTvInitialDrawer(e.key === 'ArrowDown' ? (isMovie ? 'more' : 'episodes') : null);
-        setIsTVDrawerOpen(true);
-        return;
-      }
-
-      if (isSelect && !isTVDrawerOpen && isDirectMedia && videoRef.current) {
-        e.preventDefault();
-        if (videoRef.current.paused) videoRef.current.play().catch(() => {});
-        else videoRef.current.pause();
-        return;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isCinemaFullscreen, isTVMode, isTVDrawerOpen, isDirectMedia, slug, setLocation, isMovie]);
-
   const toggleFullscreen = () => {
     if (!isCinemaFullscreen) {
       setIsCinemaFullscreen(true);
@@ -377,16 +303,8 @@ export function Watch() {
     }
   };
 
-  // Multi-season breakdown for TV accordion drawer
-  const seasonsList = useMemo(() => {
-    if (animeData?.seasons && animeData.seasons.length > 0) {
-      return animeData.seasons;
-    }
-    return [{ seasonNumber: detectedSeason, title: `Season ${detectedSeason}`, episodeCount: episodes.length }];
-  }, [animeData?.seasons, detectedSeason, episodes.length]);
-
   return (
-    <div className={`w-full bg-[#07080c] min-h-screen text-white font-sans ${isTVMode ? 'tv-player-view' : 'pb-20'}`}>
+    <div className="w-full bg-[#07080c] min-h-screen text-white font-sans pb-20">
       
       {/* VIDEO PLAYER CONTAINER */}
       <div className={`w-full bg-black transition-all duration-300 ${
@@ -410,35 +328,10 @@ export function Watch() {
                   preload="metadata"
                   controls={false}
                   onLoadedMetadata={(e) => {
-                    setPlayerDuration(e.currentTarget.duration || 0);
                     const start = Number(new URLSearchParams(window.location.search).get('t') || 0);
                     if (start > 0 && Number.isFinite(start)) e.currentTarget.currentTime = start;
                   }}
-                  onTimeUpdate={(e) => {
-                    const now = performance.now();
-                    if (now - lastUiTimeUpdateRef.current >= 250) {
-                      lastUiTimeUpdateRef.current = now;
-                      setPlayerCurrentTime(e.currentTarget.currentTime || 0);
-                    }
-                  }}
-                  onPlay={() => {
-                    setIsPlayerPlaying(true);
-                    void trackEvent({
-                      type: 'watch_start',
-                      animeId: animeData?.id || slug,
-                      animeTitle,
-                      episodeId: rawId,
-                      episodeNumber: epNum
-                    });
-                  }}
-                  onPause={() => setIsPlayerPlaying(false)}
-                  onEnded={() => {
-                    setIsPlayerPlaying(false);
-                    setPlayerEnded(true);
-                    setIsTVDrawerOpen(false);
-                    setIsCinemaFullscreen(false);
-                  }}
-                  onDurationChange={(e) => setPlayerDuration(e.currentTarget.duration || 0)}
+                  onEnded={() => setIsCinemaFullscreen(false)}
                   onClick={(e) => {
                     if (e.currentTarget.paused) e.currentTarget.play().catch(() => {});
                     else e.currentTarget.pause();
@@ -482,7 +375,7 @@ export function Watch() {
             )}
 
             {/* Quick Exit Fullscreen Button for normal desktop/mobile cinema mode */}
-            {isCinemaFullscreen && !isTVMode && (
+            {isCinemaFullscreen && (
               <button
                 onClick={toggleFullscreen}
                 className="absolute top-3 right-3 z-40 px-3 py-1.5 rounded-xl bg-black/70 hover:bg-black/90 border border-white/20 text-xs font-bold text-white flex items-center gap-1.5 backdrop-blur-md transition-all cursor-pointer shadow-lg"
@@ -497,7 +390,6 @@ export function Watch() {
           </div>
 
           {/* Minimalist Web Player Controls Bar */}
-          {!isTVMode && (
             <div className={`flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-[#0d0e15] border border-white/10 ${
               isCinemaFullscreen ? 'rounded-none border-x-0 border-b-0 shrink-0' : 'sm:rounded-xl mt-3'
             }`}>
@@ -571,60 +463,13 @@ export function Watch() {
               </div>
 
             </div>
-          )}
+
 
         </div>
       </div>
 
-      {/* MASTER 10-FOOT TV PLAYER OSD */}
-      {isTVMode && !playerEnded && (
-        <TVPlayerOSD
-          animeTitle={animeTitle}
-          episodeNumber={`E${epNum}`}
-          episodeTitle={currentEpObj?.title}
-          currentEpisodeIndex={currentEpIndex}
-          episodes={episodes}
-          seasons={seasonsList}
-          currentSeason={Number(detectedSeason) || 1}
-          recommendations={recommendationsData?.results || []}
-          isMovie={isMovie}
-          isOpen={isTVDrawerOpen}
-          initialDrawer={tvInitialDrawer}
-          onClose={() => {
-            setIsTVDrawerOpen(false);
-            setTvInitialDrawer(null);
-          }}
-          onBack={() => setLocation(`/details/${encodeURIComponent(slug)}`)}
-          onPlayEpisode={(episodeId, timestamp = 0) => {
-            setIsTVDrawerOpen(false);
-            setTvInitialDrawer(null);
-            setLocation(`/watch/${encodeURIComponent(episodeId)}?t=${Math.floor(timestamp)}&fs=1`);
-          }}
-          selectedType={selectedType}
-          onSelectType={handleSelectType}
-          servers={servers}
-          selectedServer={selectedServer}
-          onSelectServer={handleSelectServer}
-          currentTime={playerCurrentTime}
-          duration={playerDuration}
-          isPlaying={isPlayerPlaying}
-          onTogglePlay={() => {
-            if (videoRef.current) {
-              if (videoRef.current.paused) videoRef.current.play().catch(() => {});
-              else videoRef.current.pause();
-            }
-          }}
-          onSeek={(time) => {
-            if (videoRef.current) {
-              videoRef.current.currentTime = Math.max(0, Math.min(time, videoRef.current.duration || time));
-            }
-          }}
-        />
-      )}
-
       {/* WEB PLAYER: DETAIL & EPISODE SELECTOR SECTION */}
-      {!isTVMode && (
-        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 mt-6 flex flex-col gap-8">
+      <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 mt-6 flex flex-col gap-8">
           
           {/* Header Title & Actions */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
