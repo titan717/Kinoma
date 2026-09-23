@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { ChevronDown } from 'lucide-react';
-
-const LOGO =
-  'https://raw.githubusercontent.com/titan717/Kinoma/5a6e2dc356c4e674cb51193ca083de9dcc3c8947/Kinoma-9-23-2026.png';
+import { KinomaLogo } from '../KinomaLogo';
 
 const NAV = [
   { href: '/home', label: 'Home' },
@@ -20,7 +18,7 @@ export function ModernNavbar() {
     <header className="kinoma-header sticky top-0 z-[var(--z-header)] w-full">
       <div className="kinoma-header__inner kinoma-shell">
         <Link href="/home" aria-label="Kinoma home" className="kinoma-header__brand kinoma-focus">
-          <img src={LOGO} alt="Kinoma" className="kinoma-header__logo" />
+          <KinomaLogo size="lg" variant="full" className="kinoma-header__logo" />
         </Link>
 
         <nav className="kinoma-header__nav" aria-label="Primary navigation">
