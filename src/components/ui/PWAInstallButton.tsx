@@ -4,8 +4,7 @@ import { usePWAInstall } from '../../lib/usePWAInstall';
 
 interface PWAInstallButtonProps {
   className?: string;
-  variant?: 'pill' | 'compact' | 'tv-badge' | 'menu-item';
-  showTVOption?: boolean;
+  variant?: 'pill' | 'compact';
 }
 
 export function PWAInstallButton({
