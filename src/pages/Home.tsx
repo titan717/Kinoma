@@ -1,7 +1,7 @@
 import React from 'react';
 
 const HOME_BACKGROUND =
-  'https://img.itch.zone/aW1nLzM4OTAwMzIuanBn/original/X6iAYm.jpg';
+  'https://img.itch.zone/aW1hZ2UvNzA0MDYxLzM4ODk2OTIuanBn/original/aDdY1w.jpg';
 
 export function Home() {
   return (
