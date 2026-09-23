@@ -13,7 +13,6 @@ const FAQ = [
   { question: 'Do I need an account to browse?', answer: 'No. You can enter Kinoma and explore the catalog without signing in. An account is used for features such as your personal library and viewing progress.' },
   { question: 'Does Kinoma support movies and series too?', answer: 'Yes. The interface is designed around content rather than a single format, so anime, movies and series can share the same discovery experience.' },
   { question: 'Can I use Kinoma on a TV?', answer: 'Yes. Kinoma uses the same visual language across web and TV, with responsive layouts and controls designed to remain comfortable on large screens.' },
-  { question: 'Where can I read the Terms of Service?', answer: 'You can read Kinoma’s Terms of Service whenever you need it.' },
 ];
 
 function CartoonButton({ children, href }: { children: React.ReactNode; href: string }) {
@@ -83,10 +82,6 @@ export function Landing() {
                   <ChevronDown className="kinoma-welcome__faq-chevron" />
                 </>
               );
-
-              if (index === 4) {
-                return <Link key={item.question} href="/terms" className="kinoma-welcome__faq-item">{faqContent}</Link>;
-              }
 
               return <button key={item.question} type="button" className={`kinoma-welcome__faq-item ${isOpen ? 'is-open' : ''}`} onClick={() => setOpenFaq(isOpen ? null : index)} aria-expanded={isOpen}>
                 {faqContent}
