@@ -31,6 +31,7 @@ import { useTVMode } from '../lib/TVModeContext';
 import { AnimeGrid } from '../components/ui/AnimeGrid';
 import { AnimeItem, DEFAULT_POSTER } from '../types';
 import { TVPlayerOSD } from '../components/tv/TVPlayerOSD';
+import { trackEvent } from '../lib/analytics';
 
 export function Watch() {
   const [isMatch, params] = useRoute<{id: string}>('/watch/:id');
@@ -206,6 +207,18 @@ export function Watch() {
         animeId: animeData?.id || slug,
         seasonNumber: detectedSeason
       });
+
+      if (duration > 0 && currentSeconds > 0) {
+        void trackEvent({
+          type: currentSeconds / duration >= 0.88 ? 'watch_complete' : 'watch_progress',
+          animeId: animeData?.id || slug,
+          animeTitle,
+          episodeId: rawId,
+          episodeNumber: epNum,
+          durationSeconds: Math.min(30, currentSeconds),
+          metadata: { playbackSeconds: currentSeconds, durationSeconds: duration }
+        });
+      }
     };
 
     const scheduleSave = () => {
@@ -408,7 +421,16 @@ export function Watch() {
                       setPlayerCurrentTime(e.currentTarget.currentTime || 0);
                     }
                   }}
-                  onPlay={() => setIsPlayerPlaying(true)}
+                  onPlay={() => {
+                    setIsPlayerPlaying(true);
+                    void trackEvent({
+                      type: 'watch_start',
+                      animeId: animeData?.id || slug,
+                      animeTitle,
+                      episodeId: rawId,
+                      episodeNumber: epNum
+                    });
+                  }}
                   onPause={() => setIsPlayerPlaying(false)}
                   onEnded={() => {
                     setIsPlayerPlaying(false);
