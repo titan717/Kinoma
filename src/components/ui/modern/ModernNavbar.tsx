@@ -8,7 +8,6 @@ import {
   LogOut,
   Sparkles,
   Tv,
-  Film,
   X,
   Menu,
   Compass,
@@ -34,7 +33,7 @@ const NAV = [
 
 export function ModernNavbar({ onOpenAuth }: ModernNavbarProps) {
   const [location, setLocation] = useLocation();
-  const { resolvedTheme, setThemeMode, openSettingsModal } = useAppearance();
+  const { openSettingsModal } = useAppearance();
   const { user, profile, logout } = useAuth();
   const { openAndroidTVModal } = useTVMode();
 
@@ -51,10 +50,6 @@ export function ModernNavbar({ onOpenAuth }: ModernNavbarProps) {
     setLocation('/search?keyword=' + encodeURIComponent(q));
     setSearchOpen(false);
     setMobileOpen(false);
-  };
-
-  const toggleTheme = () => {
-    setThemeMode(resolvedTheme === 'modern' ? 'classic' : 'modern');
   };
 
   const isActive = (href: string) =>
@@ -157,7 +152,7 @@ export function ModernNavbar({ onOpenAuth }: ModernNavbarProps) {
                       <button
                         onClick={() => {
                           setUserOpen(false);
-                          openSettingsModal('appearance');
+                          openSettingsModal('player');
                         }}
                         className="kinoma-header__menu-item w-full text-left"
                       >
@@ -248,17 +243,13 @@ export function ModernNavbar({ onOpenAuth }: ModernNavbarProps) {
               </nav>
 
               <div className="kinoma-header__mobile-tools">
-                <button onClick={() => openSettingsModal('appearance')}>
+                <button onClick={() => openSettingsModal('player')}>
                   <Settings className="h-4 w-4" />
                   Settings
                 </button>
                 <button onClick={openAndroidTVModal}>
                   <Tv className="h-4 w-4" />
                   Android TV
-                </button>
-                <button onClick={toggleTheme}>
-                  <Film className="h-4 w-4" />
-                  {resolvedTheme === 'modern' ? 'Classic UI' : 'Modern UI'}
                 </button>
                 {!user && (
                   <button onClick={onOpenAuth}>
