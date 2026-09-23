@@ -5,7 +5,6 @@ import {
   Sparkles, 
   LayoutTemplate, 
   Monitor, 
-  Tv, 
   Play, 
   FastForward, 
   SkipForward, 
@@ -16,17 +15,12 @@ import {
   CheckCircle2,
   Trash2,
   Download,
-  QrCode,
-  Gamepad2,
   RefreshCw,
-  GitBranch
 } from 'lucide-react';
 import { useAppearance } from '../../lib/AppearanceContext';
-import { useTVMode } from '../../lib/TVModeContext';
 import { usePWAInstall } from '../../lib/usePWAInstall';
 import { historyUtil } from '../../lib/history';
 import { libraryManager } from '../../lib/library';
-import { downloadLatestApk } from '../../services/githubReleases';
 
 export function SettingsModal() {
   const { 
@@ -38,23 +32,7 @@ export function SettingsModal() {
     setActiveSettingsTab
   } = useAppearance();
 
-  const { openAndroidTVModal, isTVMode, toggleTVMode, isAndroidTVDetected } = useTVMode();
   const { isInstallable, isInstalled, install } = usePWAInstall();
-
-  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
-  const [updateStatus, setUpdateStatus] = useState<string | null>(null);
-
-  const fetchLatestRelease = async () => {
-    setIsCheckingUpdate(true);
-    setUpdateStatus('Querying GitHub latest release for Kinoma-Android-TV.apk...');
-    try {
-      await downloadLatestApk((msg) => setUpdateStatus(msg));
-    } catch (err: any) {
-      setUpdateStatus(`Download error: ${err.message || 'Failed to download APK'}`);
-    } finally {
-      setIsCheckingUpdate(false);
-    }
-  };
 
   if (!isSettingsModalOpen) return null;
 
@@ -150,38 +128,7 @@ export function SettingsModal() {
             )}
           </button>
 
-          <button
-            onClick={() => setActiveSettingsTab('androidtv')}
-            className={`flex items-center gap-2 pb-3 px-1 text-xs font-bold transition-colors relative ${
-              activeSettingsTab === 'androidtv' ? 'text-white' : 'text-gray-400 hover:text-gray-200'
-            }`}
-          >
-            <Tv className="w-3.5 h-3.5 text-[#c084fc]" />
-            <span>Android TV</span>
-            {activeSettingsTab === 'androidtv' && (
-              <motion.div 
-                layoutId="settingsTabIndicator" 
-                className="absolute bottom-0 inset-x-0 h-0.5 bg-[#c084fc] rounded-full" 
-              />
-            )}
-          </button>
-
-          <button
-            onClick={() => setActiveSettingsTab('updates')}
-            className={`flex items-center gap-2 pb-3 px-1 text-xs font-bold transition-colors relative ${
-              activeSettingsTab === 'updates' ? 'text-white' : 'text-gray-400 hover:text-gray-200'
-            }`}
-          >
-            <GitBranch className="w-3.5 h-3.5 text-[#c084fc]" />
-            <span>Updates & APK</span>
-            {activeSettingsTab === 'updates' && (
-              <motion.div 
-                layoutId="settingsTabIndicator" 
-                className="absolute bottom-0 inset-x-0 h-0.5 bg-[#c084fc] rounded-full" 
-              />
-            )}
-          </button>
-        </div>
+       </div>
 
         {/* Tab Body */}
         <div className="p-6 overflow-y-auto space-y-6 flex-1 text-sm text-gray-300">
@@ -192,7 +139,7 @@ export function SettingsModal() {
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Kinoma Interface</h3>
                 <p className="text-xs text-gray-400">
-                  Kinoma now uses one unified interface across web, mobile, and TV. The visual system is shared everywhere.
+                  Kinoma uses one unified interface across web and mobile.
                 </p>
               </div>
 
@@ -400,130 +347,6 @@ export function SettingsModal() {
               </div>
             </div>
           )}
-
-          {/* ANDROID TV TAB */}
-          {activeSettingsTab === 'androidtv' && (
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Android TV & Big Screen Experience</h3>
-                <p className="text-xs text-gray-400">
-                  Install Kinoma as an app on your Android TV, Google TV, or Fire TV for leanback 10-foot remote browsing and 4K playback.
-                </p>
-              </div>
-
-              {/* Direct TV Guide & Action Modal Button */}
-              <div className="p-4 bg-gradient-to-r from-purple-950/40 via-[#181926] to-[#12131c] border border-purple-500/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-[#c084fc] shrink-0">
-                    <Tv className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-white">Full TV Setup & QR Code</h4>
-                    <p className="text-[11px] text-gray-400">
-                      Step-by-step guides for TV Bro, Downloader app, and Chromecast.
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => {
-                    closeSettingsModal();
-                    setTimeout(() => openAndroidTVModal(), 150);
-                  }}
-                  className="w-full sm:w-auto px-4 py-2 rounded-xl bg-white hover:bg-gray-100 text-black font-bold text-xs transition-all cursor-pointer shadow-md shrink-0 text-center"
-                >
-                  Open TV Hub
-                </button>
-              </div>
-
-              {/* TV Remote 10-Foot Mode Toggle */}
-              <div className="flex items-center justify-between p-4 bg-[#13141c] border border-[#222230] rounded-xl">
-                <div className="flex items-center gap-3">
-                  <Gamepad2 className="w-5 h-5 text-[#c084fc]" />
-                  <div>
-                    <h4 className="text-xs font-bold text-white">TV 10-Foot Navigation Mode</h4>
-                    <p className="text-[11px] text-gray-400">
-                      Enlarges card scales and enables D-Pad arrow remote navigation.
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={toggleTVMode}
-                  className={`px-3.5 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
-                    isTVMode
-                      ? 'bg-[#22c55e] text-black shadow-lg shadow-green-500/20'
-                      : 'bg-white/10 hover:bg-white/20 text-white'
-                  }`}
-                >
-                  {isTVMode ? 'Active' : 'Enable'}
-                </button>
-              </div>
-
-              {/* Quick Remote Key Reference */}
-              <div className="p-3.5 bg-[#101117] border border-white/5 rounded-xl text-[11px] space-y-2">
-                <h5 className="font-bold text-white flex items-center gap-1.5">
-                  <span>Remote Shortcuts</span>
-                </h5>
-                <div className="grid grid-cols-2 gap-2 text-gray-400">
-                  <div><span className="text-gray-200 font-semibold">Arrows:</span> Move focus</div>
-                  <div><span className="text-gray-200 font-semibold">Enter/OK:</span> Select / Play</div>
-                  <div><span className="text-gray-200 font-semibold">Back/Esc:</span> Go Back</div>
-                  <div><span className="text-gray-200 font-semibold">F Key:</span> TV Fullscreen</div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* UPDATES & APK TAB */}
-          {activeSettingsTab === 'updates' && (
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">GitHub Releases & APK Updater</h3>
-                <p className="text-xs text-gray-400">
-                  Fetch the latest release directly from GitHub API, extract the .apk download URL, and trigger download instantly.
-                </p>
-              </div>
-
-              <div className="p-4 bg-[#13141c] border border-[#222230] rounded-xl space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-xs font-bold text-white">Check GitHub Latest Release</h4>
-                    <p className="text-[11px] text-gray-400">Query GitHub API and trigger direct APK download</p>
-                  </div>
-                  <button
-                    onClick={fetchLatestRelease}
-                    disabled={isCheckingUpdate}
-                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-xs rounded-xl shadow-lg transition-all cursor-pointer disabled:opacity-50"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
-                    <span>{isCheckingUpdate ? 'Checking...' : 'Check For Updates'}</span>
-                  </button>
-                </div>
-
-                {updateStatus && (
-                  <div className="p-3 bg-purple-950/40 border border-purple-500/30 rounded-lg text-xs text-purple-200 font-medium flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-[#c084fc] shrink-0" />
-                    <span>{updateStatus}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <button
-                  onClick={fetchLatestRelease}
-                  className="w-full text-left p-3.5 bg-[#13141c] hover:bg-[#1a1b26] border border-[#222230] rounded-xl flex items-center justify-between transition-all group cursor-pointer"
-                >
-                  <div>
-                    <h4 className="text-xs font-bold text-white group-hover:text-[#c084fc]">Download TV APK</h4>
-                    <p className="text-[10px] text-gray-400">Kinoma-Android-TV.apk</p>
-                  </div>
-                  <Download className="w-4 h-4 text-purple-400" />
-                </button>
-              </div>
-            </div>
-          )}
-
-        </div>
 
         {/* Modal Footer */}
         <div className="px-6 py-3.5 border-t border-[#1c1c28] bg-[#12131b] flex items-center justify-between">
