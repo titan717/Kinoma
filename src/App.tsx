@@ -6,6 +6,7 @@ import { localCache } from './lib/localCache';
 import { Layout } from './components/Layout';
 import { Home } from './pages/Home';
 import { Landing } from './pages/Landing';
+import { Terms } from './pages/Terms';
 import { Search } from './pages/Search';
 import { Details } from './pages/Details';
 import { Watch } from './pages/Watch';
@@ -45,6 +46,7 @@ function AnimatedRoutes() {
           <Route path="/" component={Landing} />
           <Route path="/browse" component={Home} />
           <Route path="/home" component={Home} />
+          <Route path="/terms" component={Terms} />
           <Route path="/tv" component={TVApp} />
           <Route path="/admin" component={Admin} />
           <Route path="/search" component={Search} />
