@@ -7,109 +7,28 @@ interface KinomaLogoProps {
   onClick?: () => void;
 }
 
-export function KinomaLogo({
-  size = 'md',
-  variant = 'full',
-  className = '',
-  onClick
-}: KinomaLogoProps) {
-  // Dimensions & typography scaling
-  const sizeMap = {
-    sm: {
-      mark: 'w-6 h-6',
-      text: 'text-lg',
-      kWidth: '22',
-      kHeight: '22',
-    },
-    md: {
-      mark: 'w-8 h-8',
-      text: 'text-2xl',
-      kWidth: '28',
-      kHeight: '28',
-    },
-    lg: {
-      mark: 'w-10 h-10',
-      text: 'text-3xl sm:text-4xl',
-      kWidth: '36',
-      kHeight: '36',
-    },
-    xl: {
-      mark: 'w-16 h-16',
-      text: 'text-5xl sm:text-6xl',
-      kWidth: '56',
-      kHeight: '56',
-    }
-  };
+const SIZE_MAP = {
+  sm: { width: 96, height: 28 },
+  md: { width: 128, height: 38 },
+  lg: { width: 166, height: 50 },
+  xl: { width: 232, height: 70 },
+} as const;
 
-  const currentSize = sizeMap[size];
+export function KinomaLogo({ size = 'md', variant = 'full', className = '', onClick }: KinomaLogoProps) {
+  const dimensions = SIZE_MAP[size];
+  const isMark = variant === 'mark';
 
   return (
-    <div 
-      className={`inline-flex items-center gap-2.5 select-none cursor-pointer group ${className}`}
-      onClick={onClick}
-    >
-      {/* 1. Sleek Sculpted Streaming Ribbon 'K' Lettermark (No circle) */}
-      {(variant === 'full' || variant === 'mark') && (
-        <div className={`relative ${currentSize.mark} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-300`}>
-          <svg 
-            width={currentSize.kWidth} 
-            height={currentSize.kHeight} 
-            viewBox="0 0 36 36" 
-            fill="none" 
-            xmlns="http://www.w3.org/2000/svg"
-            className="drop-shadow-[0_0_14px_rgba(184,77,65,0.34)]"
-          >
-            <defs>
-              <linearGradient id="kStem" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#fffaf6" />
-                <stop offset="60%" stopColor="#d8a69d" />
-                <stop offset="100%" stopColor="#b84d41" />
-              </linearGradient>
-              <linearGradient id="kUpper" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#fffaf6" />
-                <stop offset="100%" stopColor="#e8d0c0" />
-              </linearGradient>
-              <linearGradient id="kLower" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#c1935f" />
-                <stop offset="100%" stopColor="#542c25" />
-              </linearGradient>
-            </defs>
-            {/* Architectural streaming vertical ribbon */}
-            <path 
-              d="M5 4C5 2.89543 5.89543 2 7 2H11C12.1046 2 13 2.89543 13 4V32C13 33.1046 12.1046 34 11 34H7C5.89543 34 5 33.1046 5 32V4Z" 
-              fill="url(#kStem)" 
-            />
-            {/* Sculpted upper angular wing */}
-            <path 
-              d="M14.5 19L27.8 4.7C28.6 3.8 30 4.4 30 5.6V11.2C30 12.2 29.5 13.1 28.7 13.7L19.2 21.2L14.5 19Z" 
-              fill="url(#kUpper)" 
-            />
-            {/* Sculpted lower power wing */}
-            <path 
-              d="M17.8 17.5L28.6 30.6C29.4 31.5 28.8 33 27.6 33H22C21.1 33 20.2 32.5 19.6 31.8L13 23L17.8 17.5Z" 
-              fill="url(#kLower)" 
-            />
-          </svg>
-        </div>
-      )}
-
-      {/* 2. Custom Sleek Typographic Wordmark (No full stop) */}
-      {(variant === 'full' || variant === 'typography') && (
-        <div className="flex items-baseline tracking-[-0.04em]">
-          <span 
-            className={`${currentSize.text} font-black text-white group-hover:text-[#fffaf6] transition-colors drop-shadow-sm font-sans`}
-            style={{ letterSpacing: '-0.04em' }}
-          >
-            kino
-          </span>
-          <span 
-            className={`${currentSize.text} font-black bg-gradient-to-r from-[#c1935f] via-[#d8a69d] to-[#e8d0c0] bg-clip-text text-transparent group-hover:brightness-110 transition-all font-sans`}
-            style={{ letterSpacing: '-0.04em' }}
-          >
-            ma
-          </span>
-        </div>
-      )}
-    </div>
+    <span className={`inline-flex shrink-0 items-center select-none ${className}`} onClick={onClick}>
+      <img
+        src="/Kinoma-9-23-2026.png"
+        alt={onClick ? 'Kinoma' : ''}
+        width={isMark ? dimensions.height : dimensions.width}
+        height={dimensions.height}
+        draggable={false}
+        className="block h-auto w-full object-contain object-left"
+        style={{ maxWidth: isMark ? dimensions.height : dimensions.width, maxHeight: dimensions.height }}
+      />
+    </span>
   );
 }
