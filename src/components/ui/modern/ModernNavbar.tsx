@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { ChevronDown } from 'lucide-react';
 import { KinomaLogo } from '../KinomaLogo';
+import { SearchBar } from '../SearchBar';
 
 const NAV = [
-  { href: '/home', label: 'Home' },
   { href: '/search', label: 'Explore', items: [{ href: '/search', label: 'Browse Anime' }, { href: '/whats-new', label: "What's New" }] },
   { href: '/library', label: 'Library', items: [{ href: '/library', label: 'My List' }, { href: '/history', label: 'History' }] },
   { href: '/about', label: 'About', items: [{ href: '/about', label: 'Kinoma' }, { href: '/terms', label: 'Terms' }] },
@@ -21,18 +21,13 @@ export function ModernNavbar() {
           <KinomaLogo size="lg" variant="full" className="kinoma-header__logo" />
         </Link>
 
+        <div className="kinoma-header__search" aria-label="Search Kinoma">
+          <SearchBar />
+        </div>
+
         <nav className="kinoma-header__nav" aria-label="Primary navigation">
           {NAV.map((item) => {
             const active = location === item.href || (item.href === '/search' && location === '/explore');
-
-            if (!item.items) {
-              return (
-                <Link key={item.label} href={item.href} className={`kinoma-header__link ${active ? 'is-active' : ''}`}>
-                  {item.label}
-                </Link>
-              );
-            }
-
             const isOpen = openMenu === item.label;
 
             return (
