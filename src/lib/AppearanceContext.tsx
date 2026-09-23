@@ -8,7 +8,7 @@ export interface PlayerSettings {
   preferredAudio: 'sub' | 'dub';
 }
 
-export type SettingsTab = 'appearance' | 'player' | 'library' | 'androidtv' | 'updates';
+export type SettingsTab = 'appearance' | 'player' | 'library';
 
 interface AppearanceContextType {
   playerSettings: PlayerSettings;
