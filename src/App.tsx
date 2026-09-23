@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Route, Switch, useLocation } from 'wouter';
 import { AnimatePresence, motion } from 'motion/react';
 import { SWRConfig } from 'swr';
+import { Analytics } from '@vercel/analytics/react';
 import { localCache } from './lib/localCache';
 import { Layout } from './components/Layout';
 import { Home } from './pages/Home';
@@ -107,6 +108,7 @@ export default function App() {
             <SettingsModal />
             <AndroidTVModal />
             <TVExperiencePrompt />
+            <Analytics />
           </TVModeProvider>
         </AppearanceProvider>
       </AuthProvider>
