@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version_name:
-        description: "Optional version name, e.g. 0.0.2"
+        description: "Optional version name, e.g. 0.0.3"
         required: false
         type: string
   push:
@@ -38,7 +38,7 @@ jobs:
           else
             # Every main-branch commit gets a monotonically increasing
             # production version based on the GitHub Actions run number.
-            VERSION_NAME="0.0.2"
+            VERSION_NAME="0.0.3"
           fi
 
           if [[ ! "$VERSION_NAME" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$ ]]; then
