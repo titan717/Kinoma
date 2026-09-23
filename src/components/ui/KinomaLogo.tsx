@@ -14,6 +14,8 @@ const SIZE_MAP = {
   xl: { width: 232, height: 70 },
 } as const;
 
+const LOGO_SRC = 'https://raw.githubusercontent.com/titan717/Kinoma/main/Kinoma-9-23-2026.png';
+
 export function KinomaLogo({ size = 'md', variant = 'full', className = '', onClick }: KinomaLogoProps) {
   const dimensions = SIZE_MAP[size];
   const isMark = variant === 'mark';
@@ -21,7 +23,7 @@ export function KinomaLogo({ size = 'md', variant = 'full', className = '', onCl
   return (
     <span className={`inline-flex shrink-0 items-center select-none ${className}`} onClick={onClick}>
       <img
-        src="/Kinoma-9-23-2026.png"
+        src={LOGO_SRC}
         alt={onClick ? 'Kinoma' : ''}
         width={isMark ? dimensions.height : dimensions.width}
         height={dimensions.height}
