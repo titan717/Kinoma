@@ -17,11 +17,17 @@
   --color-muted-foreground: #817873;
   --color-disabled: #5e5753;
 
+  /* Reference palette roles — exact colors exposed by the Animfanz reference. */
+  --color-amber: #c1935f;
+  --color-rose: #9d6555;
+  --color-blue: #5383a9;
+
   /* Accent — used as a signal, never as a full-page wash. */
   --color-accent: #b84d41;
   --color-accent-hover: #c45a4e;
   --color-accent-light: #e8d0c0;
   --color-accent-deep: #542c25;
+  --color-accent-neutral: #5e4e42;
   --color-primary: #b84d41;
   --color-primary-foreground: #fffaf6;
 
@@ -46,6 +52,15 @@
   --duration-fast: 150ms;
   --duration-base: 220ms;
   --duration-slow: 360ms;
+
+  /* Type scale — compact body copy, strong editorial display hierarchy. */
+  --text-display: clamp(2.75rem, 6vw, 6.5rem);
+  --text-h1: clamp(2rem, 3.5vw, 4rem);
+  --text-h2: clamp(1.5rem, 2.2vw, 2.25rem);
+  --text-h3: clamp(1.125rem, 1.4vw, 1.375rem);
+  --text-body: 0.9375rem;
+  --text-small: 0.8125rem;
+  --text-caption: 0.6875rem;
 }
 
 :root {
@@ -63,10 +78,23 @@
   --kinoma-accent: #b84d41;
   --kinoma-accent-hover: #c45a4e;
   --kinoma-accent-soft: #e8d0c0;
+  --kinoma-accent-deep: #542c25;
+  --kinoma-amber: #c1935f;
+  --kinoma-rose: #9d6555;
+  --kinoma-blue: #5383a9;
+  --kinoma-accent-neutral: #5e4e42;
   --kinoma-border: rgba(246, 242, 238, 0.10);
   --kinoma-border-soft: rgba(246, 242, 238, 0.06);
   --kinoma-shadow-card: 0 12px 36px rgba(0, 0, 0, 0.24);
   --kinoma-shadow-float: 0 24px 70px rgba(0, 0, 0, 0.36);
+
+  /* Layering keeps artwork, chrome, overlays, and dialogs predictable. */
+  --z-content: 1;
+  --z-overlay: 10;
+  --z-header: 20;
+  --z-drawer: 40;
+  --z-modal: 60;
+  --z-toast: 80;
 }
 
 @layer base {
@@ -120,10 +148,51 @@
 
 /* Shared design primitives. These are intentionally presentation-only:
    page structure and application logic remain untouched. */
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+p {
+  margin: 0;
+}
+
+.kinoma-display {
+  font-size: var(--text-display);
+  line-height: 0.96;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+}
+
+.kinoma-title {
+  font-size: var(--text-h1);
+  line-height: 1.04;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+}
+
+.kinoma-section-title {
+  font-size: var(--text-h2);
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.kinoma-eyebrow {
+  font-size: var(--text-caption);
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--kinoma-muted);
+}
+
 .kinoma-shell {
   width: min(100%, var(--content-max-width));
   margin-inline: auto;
   padding-inline: var(--spacing-page);
+  position: relative;
 }
 
 .kinoma-surface {
@@ -137,6 +206,7 @@
   border: 1px solid var(--kinoma-border-soft);
   border-radius: var(--radius-md);
   box-shadow: var(--kinoma-shadow-card);
+  min-width: 0;
 }
 
 .kinoma-pill {
@@ -164,6 +234,7 @@
   position: relative;
   overflow: hidden;
   isolation: isolate;
+  contain: paint;
 }
 
 .kinoma-media img {
@@ -268,6 +339,7 @@
 @media (max-width: 640px) {
   :root {
     --spacing-page: 16px;
+    --text-display: clamp(2.25rem, 12vw, 4rem);
   }
 }
 
