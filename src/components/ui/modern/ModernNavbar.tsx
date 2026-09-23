@@ -15,7 +15,6 @@ import {
 import { useAppearance } from '../../../lib/AppearanceContext';
 import { useAuth } from '../../../lib/AuthContext';
 import { useTVMode } from '../../../lib/TVModeContext';
-import { KinomaLogo } from '../KinomaLogo';
 import { preferencesUtil } from '../../../lib/preferences';
 import { AnimatePresence, motion } from 'motion/react';
 
@@ -64,7 +63,7 @@ export function ModernNavbar({ onOpenAuth }: ModernNavbarProps) {
             aria-label="Kinoma home"
             className="kinoma-header__brand kinoma-focus"
           >
-            <KinomaLogo size="md" variant="full" />
+            <span className="kinoma-header__wordmark">KINOMA</span>
           </Link>
 
           <nav className="kinoma-header__nav hidden md:flex" aria-label="Primary navigation">
