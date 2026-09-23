@@ -50,7 +50,7 @@ export function Card({
       className={`
         group relative flex flex-col w-full select-none cursor-pointer outline-none
         transition-all duration-200 ease-out
-        kinoma-focus kinoma-tv-focus
+        kinoma-focus
         ${isFocused ? 'is-focused' : ''}
         ${className}
       `}
