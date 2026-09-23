@@ -32,9 +32,6 @@ export function SettingsModal() {
   const { 
     isSettingsModalOpen, 
     closeSettingsModal, 
-    themeMode, 
-    setThemeMode, 
-    resolvedTheme,
     playerSettings, 
     updatePlayerSetting,
     activeSettingsTab,
@@ -193,167 +190,38 @@ export function SettingsModal() {
           {activeSettingsTab === 'appearance' && (
             <div className="space-y-4">
               <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Select Interface Style</h3>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Kinoma Interface</h3>
                 <p className="text-xs text-gray-400">
-                  Switch between Kinoma&apos;s next-generation OTT streaming layout and the preserved classic experience. Changes take effect immediately.
+                  Kinoma now uses one unified interface across web, mobile, and TV. The visual system is shared everywhere.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
-                
-                {/* Modern Theme Card */}
-                <div
-                  onClick={() => setThemeMode('modern')}
-                  className={`p-4 rounded-xl border transition-all cursor-pointer relative flex flex-col justify-between gap-3 ${
-                    themeMode === 'modern'
-                      ? 'bg-[#181524] border-[#c084fc] shadow-[0_0_20px_rgba(192,132,252,0.2)]'
-                      : 'bg-[#13141c] border-[#222230] hover:border-[#353545]'
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-[#271d3d] border border-[#4a2e7a] flex items-center justify-center text-[#c084fc]">
-                        <Sparkles className="w-4 h-4" />
-                      </div>
-                      <h4 className="font-bold text-white text-sm">Modern Mode</h4>
-                    </div>
-                    {themeMode === 'modern' && (
-                      <span className="w-5 h-5 rounded-full bg-[#c084fc] text-black flex items-center justify-center">
-                        <Check className="w-3 h-3 stroke-[3]" />
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="text-[11px] text-gray-400 leading-relaxed">
-                    Contemporary OTT streaming UI with cinematic hero art, frosted capsule pills, soft horizontal carousels, and titles placed cleanly below cards.
-                  </p>
-
-                  <div className="flex items-center gap-1.5 pt-1">
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#271d3d] text-[#e9d5ff]">
-                      Recommended
-                    </span>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#1e1e2c] text-gray-400">
-                      OTT Carousels
-                    </span>
-                  </div>
-                </div>
-
-                {/* Classic Theme Card */}
-                <div
-                  onClick={() => setThemeMode('classic')}
-                  className={`p-4 rounded-xl border transition-all cursor-pointer relative flex flex-col justify-between gap-3 ${
-                    themeMode === 'classic'
-                      ? 'bg-[#181524] border-[#c084fc] shadow-[0_0_20px_rgba(192,132,252,0.2)]'
-                      : 'bg-[#13141c] border-[#222230] hover:border-[#353545]'
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-[#1a1b26] border border-[#2b2c3a] flex items-center justify-center text-gray-300">
-                        <Tv className="w-4 h-4" />
-                      </div>
-                      <h4 className="font-bold text-white text-sm">Classic Mode</h4>
-                    </div>
-                    {themeMode === 'classic' && (
-                      <span className="w-5 h-5 rounded-full bg-[#c084fc] text-black flex items-center justify-center">
-                        <Check className="w-3 h-3 stroke-[3]" />
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="text-[11px] text-gray-400 leading-relaxed">
-                    Preserves the original Kinoma dark cinematic layout with right sidebar top rankings, catalog grid, and classic badge overlay cards.
-                  </p>
-
-                  <div className="flex items-center gap-1.5 pt-1">
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#1e1e2c] text-gray-400">
-                      Sidebar & Grid
-                    </span>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#1e1e2c] text-gray-400">
-                      Original
-                    </span>
-                  </div>
-                </div>
-
-              </div>
-
-              {/* System Default Option */}
-              <div
-                onClick={() => setThemeMode('system')}
-                className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
-                  themeMode === 'system'
-                    ? 'bg-[#181524] border-[#c084fc]'
-                    : 'bg-[#13141c] border-[#222230] hover:border-[#353545]'
-                }`}
-              >
+              <div className="p-5 rounded-2xl border border-[#3b2925] bg-[#171313]">
                 <div className="flex items-center gap-3">
-                  <Monitor className="w-4 h-4 text-gray-400" />
+                  <div className="w-9 h-9 rounded-xl bg-[#b84d41]/15 border border-[#b84d41]/25 flex items-center justify-center text-[#e8d0c0]">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
                   <div>
-                    <h5 className="text-xs font-bold text-white">System Default</h5>
-                    <p className="text-[11px] text-gray-400">
-                      Currently using: <span className="text-[#c084fc] font-semibold capitalize">{resolvedTheme}</span>
-                    </p>
+                    <h4 className="text-sm font-bold text-white">Current interface</h4>
+                    <p className="text-[11px] text-gray-400 mt-0.5">Kinoma unified experience</p>
                   </div>
                 </div>
-                {themeMode === 'system' && (
-                  <span className="w-5 h-5 rounded-full bg-[#c084fc] text-black flex items-center justify-center">
-                    <Check className="w-3 h-3 stroke-[3]" />
-                  </span>
-                )}
               </div>
 
-              <div className="p-3 bg-[#13141c] border border-[#222230] rounded-xl text-[11px] text-gray-400 leading-relaxed">
-                💡 <span className="font-semibold text-gray-300">Preserved Data Guarantee:</span> Switching themes does not affect your watch history, watchlist, saved bookmarks, player preferences, or episode timestamps.
-              </div>
-
-              {/* Cinematic Intro Card */}
-              <div className="p-4 bg-gradient-to-r from-[#171424] to-[#12131c] border border-purple-500/20 rounded-xl flex items-center justify-between gap-4">
+              <div className="p-4 bg-[#13141c] border border-[#222230] rounded-xl flex items-center justify-between gap-4">
                 <div>
                   <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-[#c084fc]" />
+                    <Sparkles className="w-3.5 h-3.5 text-[#c1935f]" />
                     <span>Kinoma Signature Intro</span>
                   </h4>
-                  <p className="text-[11px] text-gray-400 mt-0.5">
-                    Experience the Netflix-style opening animation and custom synthesized cinematic audio.
-                  </p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">Experience the cinematic opening animation.</p>
                 </div>
-                <button
-                  onClick={() => {
-                    closeSettingsModal();
-                    setTimeout(() => {
-                      window.dispatchEvent(new CustomEvent('kinoma_replay_intro'));
-                    }, 200);
-                  }}
-                  className="px-3.5 py-1.5 rounded-full bg-white text-black font-bold text-xs hover:bg-gray-200 transition-all shrink-0 cursor-pointer shadow-md"
-                >
+                <button onClick={() => { closeSettingsModal(); setTimeout(() => window.dispatchEvent(new CustomEvent('kinoma_replay_intro')), 200); }} className="px-3.5 py-1.5 rounded-full bg-white text-black font-bold text-xs hover:bg-gray-200 transition-all shrink-0 cursor-pointer shadow-md">
                   Play Intro
-                </button>
-              </div>
-
-              {/* Android TV & Big Screen App Card */}
-              <div className="p-4 bg-gradient-to-r from-[#1c162b] to-[#12131c] border border-purple-500/30 rounded-xl flex items-center justify-between gap-4">
-                <div>
-                  <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <Tv className="w-3.5 h-3.5 text-[#c084fc]" />
-                    <span>Android TV & Big Screen App</span>
-                  </h4>
-                  <p className="text-[11px] text-gray-400 mt-0.5">
-                    Install Kinoma as an app on your Android TV or toggle 10-foot remote navigation.
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    closeSettingsModal();
-                    setTimeout(() => openAndroidTVModal(), 150);
-                  }}
-                  className="px-3.5 py-1.5 rounded-full bg-[#9333ea] hover:bg-[#a855f7] text-white font-bold text-xs transition-all shrink-0 cursor-pointer shadow-md"
-                >
-                  TV Guide & App
                 </button>
               </div>
             </div>
           )}
-
           {/* PLAYER PREFERENCES TAB */}
           {activeSettingsTab === 'player' && (
             <div className="space-y-4">
@@ -660,7 +528,7 @@ export function SettingsModal() {
         {/* Modal Footer */}
         <div className="px-6 py-3.5 border-t border-[#1c1c28] bg-[#12131b] flex items-center justify-between">
           <div className="text-[11px] text-gray-500">
-            Current mode: <span className="text-gray-300 font-semibold capitalize">{resolvedTheme}</span>
+            Current interface: <span className="text-[#e8d0c0] font-semibold">Unified</span>
           </div>
           <button
             onClick={closeSettingsModal}
