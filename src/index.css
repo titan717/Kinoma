@@ -1,29 +1,78 @@
-
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --color-background: #08090d;
-  --color-background-elevated: #0e1017;
-  --color-surface: #141620;
-  --color-surface-hover: #1c1f2e;
-  --color-card: #12141c;
-  --color-card-hover: #191b26;
-  --color-foreground: #f9fafb;
-  --color-muted: #181924;
-  --color-muted-foreground: #9ca3af;
-  --color-accent: #9333ea;
-  --color-accent-hover: #a855f7;
-  --color-accent-light: #c084fc;
-  --color-primary: #9333ea;
-  --color-primary-foreground: #ffffff;
-  --color-border-subtle: rgba(255, 255, 255, 0.05);
-  --color-border-default: rgba(255, 255, 255, 0.08);
+  /* Core surfaces — near-black, warm-neutral, and deliberately restrained. */
+  --color-background: #0f0d0d;
+  --color-background-elevated: #151313;
+  --color-surface: #1b1817;
+  --color-surface-hover: #24201f;
+  --color-card: #181515;
+  --color-card-hover: #211d1c;
+
+  /* Typography — warm white hierarchy rather than pure white everywhere. */
+  --color-foreground: #f6f2ee;
+  --color-foreground-soft: #ded7d1;
+  --color-muted: #aaa19b;
+  --color-muted-foreground: #817873;
+  --color-disabled: #5e5753;
+
+  /* Accent — used as a signal, never as a full-page wash. */
+  --color-accent: #b84d41;
+  --color-accent-hover: #c45a4e;
+  --color-accent-light: #e8d0c0;
+  --color-accent-deep: #542c25;
+  --color-primary: #b84d41;
+  --color-primary-foreground: #fffaf6;
+
+  /* Neutral UI states. */
+  --color-border-subtle: rgba(246, 242, 238, 0.06);
+  --color-border-default: rgba(246, 242, 238, 0.10);
+  --color-border-strong: rgba(246, 242, 238, 0.16);
+
+  /* Shape language — soft, compact, and consistent. */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+
+  /* Layout rhythm. */
+  --spacing-page: clamp(20px, 3vw, 48px);
+  --content-max-width: 1440px;
+
+  /* Motion. */
+  --ease-kinoma: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 150ms;
+  --duration-base: 220ms;
+  --duration-slow: 360ms;
+}
+
+:root {
+  color-scheme: dark;
+  --kinoma-bg: #0f0d0d;
+  --kinoma-bg-elevated: #151313;
+  --kinoma-surface: #1b1817;
+  --kinoma-surface-hover: #24201f;
+  --kinoma-card: #181515;
+  --kinoma-card-hover: #211d1c;
+  --kinoma-text: #f6f2ee;
+  --kinoma-text-soft: #ded7d1;
+  --kinoma-muted: #aaa19b;
+  --kinoma-muted-strong: #817873;
+  --kinoma-accent: #b84d41;
+  --kinoma-accent-hover: #c45a4e;
+  --kinoma-accent-soft: #e8d0c0;
+  --kinoma-border: rgba(246, 242, 238, 0.10);
+  --kinoma-border-soft: rgba(246, 242, 238, 0.06);
+  --kinoma-shadow-card: 0 12px 36px rgba(0, 0, 0, 0.24);
+  --kinoma-shadow-float: 0 24px 70px rgba(0, 0, 0, 0.36);
 }
 
 @layer base {
-  html, body, #root {
+  html,
+  body,
+  #root {
     width: 100%;
     min-height: 100%;
     margin: 0;
@@ -31,59 +80,147 @@
 
   html {
     scroll-behavior: smooth;
+    background: var(--kinoma-bg);
   }
-  
+
   body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background: var(--kinoma-bg);
+    color: var(--kinoma-text);
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-synthesis: none;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     overflow-x: hidden;
   }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  ::selection {
+    background: rgba(184, 77, 65, 0.32);
+    color: #fffaf6;
+  }
 }
 
-/* Hardware accelerated transform utility */
+/* Shared design primitives. These are intentionally presentation-only:
+   page structure and application logic remain untouched. */
+.kinoma-shell {
+  width: min(100%, var(--content-max-width));
+  margin-inline: auto;
+  padding-inline: var(--spacing-page);
+}
+
+.kinoma-surface {
+  background: var(--kinoma-surface);
+  border: 1px solid var(--kinoma-border-soft);
+  border-radius: var(--radius-lg);
+}
+
+.kinoma-card {
+  background: var(--kinoma-card);
+  border: 1px solid var(--kinoma-border-soft);
+  border-radius: var(--radius-md);
+  box-shadow: var(--kinoma-shadow-card);
+}
+
+.kinoma-pill {
+  border-radius: var(--radius-pill);
+}
+
+.kinoma-focus {
+  outline: none;
+  transition:
+    box-shadow var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    background-color var(--duration-fast) ease;
+}
+
+.kinoma-focus:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--kinoma-bg),
+    0 0 0 4px rgba(232, 208, 192, 0.72);
+  border-color: rgba(232, 208, 192, 0.78) !important;
+}
+
+/* Shared cinematic image treatment. No permanent gradient is imposed here;
+   individual compositions can control their own artwork overlay. */
+.kinoma-media {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.kinoma-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Hardware acceleration utility. */
 .gpu-layer {
   transform: translateZ(0);
   backface-visibility: hidden;
   perspective: 1000px;
 }
 
-/* Refined custom scrollbar */
+/* Refined scrollbar. */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
+
 ::-webkit-scrollbar-track {
-  background: #0e0f11;
-}
-::-webkit-scrollbar-thumb {
-  background: #23232b;
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #393945;
+  background: var(--kinoma-bg);
 }
 
-/* Hide scrollbar for clean UI */
+::-webkit-scrollbar-thumb {
+  background: #342f2d;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4a433f;
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-/* Custom Utilities */
+/* Lightweight text treatment for artwork-heavy surfaces. */
 .text-shadow-sm {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
+/* Loading shimmer — neutral by default so it does not introduce an unrelated accent. */
 @keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .animate-shimmer {
@@ -94,54 +231,54 @@
 .animate-shimmer::after {
   content: '';
   position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  inset: 0;
   transform: translateX(-100%);
   background-image: linear-gradient(
     90deg,
     rgba(255, 255, 255, 0) 0,
-    rgba(255, 255, 255, 0.03) 20%,
-    rgba(255, 255, 255, 0.08) 60%,
+    rgba(255, 255, 255, 0.025) 20%,
+    rgba(255, 255, 255, 0.065) 60%,
     rgba(255, 255, 255, 0)
   );
   animation: shimmer 2s infinite;
 }
 
-/* Accessible Web Focus Utility */
-.kinoma-focus {
-  outline: none;
-  transition: box-shadow 150ms ease, border-color 150ms ease;
-}
-.kinoma-focus:focus-visible {
-  box-shadow: 0 0 0 2px #08090d, 0 0 0 4px rgba(168, 85, 247, 0.7);
-  border-color: rgba(168, 85, 247, 0.8) !important;
-}
-
-/* TV Remote D-Pad Focus State */
+/* TV uses the same visual system as web.
+   This class only provides a remote-visible focus state; it does not change layout. */
 .kinoma-tv-focus {
-  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    transform var(--duration-base) var(--ease-kinoma),
+    box-shadow var(--duration-base) var(--ease-kinoma),
+    border-color var(--duration-fast) ease;
   will-change: transform, box-shadow;
 }
+
 .kinoma-tv-focus.is-focused,
 .tv-mode .kinoma-tv-focus:focus,
 .tv-mode .kinoma-tv-focus:focus-visible {
-  transform: scale(1.05);
-  box-shadow: 0 0 0 3px #ffffff, 0 12px 32px rgba(0, 0, 0, 0.85), 0 0 24px rgba(255, 255, 255, 0.35);
+  transform: scale(1.025);
+  box-shadow:
+    0 0 0 2px #f6f2ee,
+    0 14px 36px rgba(0, 0, 0, 0.52);
   z-index: 30;
   outline: none;
 }
 
-/* Accessibility: Respect Reduced Motion */
+/* Mobile is a density adjustment, not a separate visual language. */
+@media (max-width: 640px) {
+  :root {
+    --spacing-page: 16px;
+  }
+}
+
+/* Accessibility: respect reduced motion. */
 @media (prefers-reduced-motion: reduce) {
   *,
-  ::before,
-  ::after {
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
 }
-
