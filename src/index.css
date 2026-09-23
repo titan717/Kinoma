@@ -313,27 +313,6 @@ p {
   animation: shimmer 2s infinite;
 }
 
-/* TV uses the same visual system as web.
-   This class only provides a remote-visible focus state; it does not change layout. */
-.kinoma-tv-focus {
-  transition:
-    transform var(--duration-base) var(--ease-kinoma),
-    box-shadow var(--duration-base) var(--ease-kinoma),
-    border-color var(--duration-fast) ease;
-  will-change: transform, box-shadow;
-}
-
-.kinoma-tv-focus.is-focused,
-.tv-mode .kinoma-tv-focus:focus,
-.tv-mode .kinoma-tv-focus:focus-visible {
-  transform: scale(1.025);
-  box-shadow:
-    0 0 0 2px #f6f2ee,
-    0 14px 36px rgba(0, 0, 0, 0.52);
-  z-index: 30;
-  outline: none;
-}
-
 /* Mobile is a density adjustment, not a separate visual language. */
 @media (max-width: 640px) {
   :root {
