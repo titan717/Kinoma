@@ -358,14 +358,33 @@ p {
   padding: 8px 14px 8px 18px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: clamp(22px, 3vw, 42px);
+  justify-content: space-between;
+  gap: clamp(18px, 2.5vw, 38px);
   border: 1px solid rgba(255, 255, 255, 0.11);
   border-radius: 999px;
   background: rgba(15, 13, 13, 0.48);
   box-shadow: 0 14px 45px rgba(0, 0, 0, 0.18);
   backdrop-filter: blur(18px) saturate(125%);
   -webkit-backdrop-filter: blur(18px) saturate(125%);
+}
+.kinoma-header__search {
+  width: clamp(260px, 34vw, 520px);
+  flex: 1 1 420px;
+  max-width: 520px;
+}
+.kinoma-header__search > div {
+  width: 100%;
+}
+.kinoma-header__search input {
+  background: rgba(255, 255, 255, 0.055) !important;
+  border-color: rgba(255, 255, 255, 0.11) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.kinoma-header__search input:focus {
+  background: rgba(255, 255, 255, 0.075) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
 }
 .kinoma-header__brand {
   display: inline-flex;
@@ -391,7 +410,7 @@ p {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(18px, 2.6vw, 34px);
+  gap: clamp(18px, 2.2vw, 32px);
   min-height: var(--header-height);
 }
 .kinoma-header__link {
@@ -495,11 +514,13 @@ p {
     width: calc(100% - 20px);
     max-width: none;
     padding: 6px 10px 6px 13px;
-    gap: 14px;
+    gap: 10px;
     border-radius: 20px;
   }
   .kinoma-header__logo { height: 34px; max-width: 142px; }
-  .kinoma-header__nav { gap: 13px; overflow-x: auto; }
+  .kinoma-header__search { flex: 1 1 auto; min-width: 0; }
+  .kinoma-header__search .w-full { min-width: 0; }
+  .kinoma-header__nav { gap: 12px; overflow-x: auto; }
   .kinoma-header__link { font-size: 0.66rem; }
 }
 .kinoma-header__mobile-icon {
