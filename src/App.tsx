@@ -15,12 +15,8 @@ import { WhatsNew } from './pages/WhatsNew';
 import { AuthProvider } from './lib/AuthContext';
 import { AuthModal } from './components/ui/AuthModal';
 import { AppearanceProvider } from './lib/AppearanceContext';
-import { TVModeProvider, useTVMode } from './lib/TVModeContext';
 import { SettingsModal } from './components/ui/SettingsModal';
-import { AndroidTVModal } from './components/ui/AndroidTVModal';
-import { TVExperiencePrompt } from './components/ui/TVExperiencePrompt';
 import { IntroSplash } from './components/ui/IntroSplash';
-import { TVApp } from './pages/TVApp';
 import { Admin } from './pages/Admin';
 import { trackPageView } from './lib/analytics';
 
@@ -47,7 +43,6 @@ function AnimatedRoutes() {
           <Route path="/browse" component={Home} />
           <Route path="/home" component={Home} />
           <Route path="/terms" component={Terms} />
-          <Route path="/tv" component={TVApp} />
           <Route path="/admin" component={Admin} />
           <Route path="/search" component={Search} />
           <Route path="/explore" component={Search} />
@@ -67,21 +62,9 @@ function AnimatedRoutes() {
 }
 
 function MainAppShell() {
-  const { isTVMode } = useTVMode();
   const [location] = useLocation();
 
   if (location === '/' || location === '/terms') return location === '/terms' ? <Terms /> : <Landing />;
-
-  if (isTVMode || location === '/tv') {
-    if (location.startsWith('/watch/')) {
-      return (
-        <div className="w-full min-h-screen bg-black">
-          <Watch />
-        </div>
-      );
-    }
-    return <TVApp />;
-  }
 
   return (
     <Layout>
@@ -102,14 +85,10 @@ export default function App() {
     >
       <AuthProvider>
         <AppearanceProvider>
-          <TVModeProvider>
-            <IntroSplash />
-            <MainAppShell />
-            <AuthModal />
-            <SettingsModal />
-            <AndroidTVModal />
-            <TVExperiencePrompt />
-          </TVModeProvider>
+          <IntroSplash />
+          <MainAppShell />
+          <AuthModal />
+          <SettingsModal />
         </AppearanceProvider>
       </AuthProvider>
     </SWRConfig>
