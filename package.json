@@ -30,7 +30,9 @@
     "react-window": "^2.3.2",
     "swr": "^2.5.1",
     "vite": "^6.2.3",
-    "wouter": "^3.10.0"
+    "wouter": "^3.10.0",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
