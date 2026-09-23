@@ -338,45 +338,34 @@ p {
    The header follows the restrained, editorial streaming chrome of the supplied
    references: low visual noise, generous spacing, warm neutrals, and one clear accent. */
 .kinoma-header {
-  --header-height: 78px;
+  --header-height: 68px;
   position: relative;
   isolation: isolate;
-  background:
-    radial-gradient(65% 190% at 100% 0%, rgba(255, 24, 150, 0.52), transparent 58%),
-    radial-gradient(48% 150% at 78% 20%, rgba(190, 28, 130, 0.26), transparent 62%),
-    linear-gradient(90deg, rgba(8, 7, 20, 0.97) 0%, rgba(18, 8, 30, 0.92) 46%, rgba(43, 8, 45, 0.78) 74%, rgba(86, 8, 68, 0.58) 100%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 14px 45px rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(12px) saturate(125%);
-  -webkit-backdrop-filter: blur(12px) saturate(125%);
+  padding-top: 12px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
-.kinoma-header::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 15% 25%, rgba(255, 255, 255, 0.045) 0 1px, transparent 1.5px),
-    radial-gradient(circle at 39% 60%, rgba(255, 255, 255, 0.035) 0 1px, transparent 1.5px),
-    radial-gradient(circle at 61% 22%, rgba(255, 255, 255, 0.03) 0 1px, transparent 1.5px);
-  background-size: 86px 86px, 113px 113px, 137px 137px;
-}
+.kinoma-header::before,
 .kinoma-header::after {
-  content: '';
-  position: absolute;
-  left: 7%;
-  right: 7%;
-  bottom: -1px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), rgba(255, 36, 160, 0.5), transparent);
+  display: none;
 }
 .kinoma-header__inner {
   min-height: var(--header-height);
+  width: fit-content;
+  max-width: calc(100% - 28px);
+  margin: 0 auto;
+  padding: 8px 14px 8px 18px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 32px;
+  justify-content: center;
+  gap: clamp(22px, 3vw, 42px);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 999px;
+  background: rgba(15, 13, 13, 0.48);
+  box-shadow: 0 14px 45px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(18px) saturate(125%);
+  -webkit-backdrop-filter: blur(18px) saturate(125%);
 }
 .kinoma-header__brand {
   display: inline-flex;
@@ -388,21 +377,21 @@ p {
 .kinoma-header__logo {
   display: block;
   width: auto;
-  height: 43px;
-  max-width: 190px;
+  height: 40px;
+  max-width: 180px;
   object-fit: contain;
-  filter: drop-shadow(0 3px 18px rgba(0, 0, 0, 0.34));
+  filter: drop-shadow(0 3px 14px rgba(0, 0, 0, 0.28));
   transition: transform 180ms ease, filter 180ms ease;
 }
 .kinoma-header__brand:hover .kinoma-header__logo {
   transform: translateY(-1px) scale(1.015);
-  filter: drop-shadow(0 5px 22px rgba(255, 35, 157, 0.2));
+  filter: drop-shadow(0 5px 18px rgba(255, 35, 157, 0.16));
 }
 .kinoma-header__nav {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: clamp(20px, 3vw, 42px);
+  justify-content: center;
+  gap: clamp(18px, 2.6vw, 34px);
   min-height: var(--header-height);
 }
 .kinoma-header__link {
@@ -498,11 +487,20 @@ p {
   background: rgba(255, 255, 255, 0.07);
 }
 @media (max-width: 720px) {
-  .kinoma-header { --header-height: 68px; }
-  .kinoma-header__inner { gap: 16px; }
-  .kinoma-header__logo { height: 35px; max-width: 145px; }
-  .kinoma-header__nav { gap: 14px; overflow-x: auto; }
-  .kinoma-header__link { font-size: 0.68rem; }
+  .kinoma-header {
+    --header-height: 62px;
+    padding-top: 8px;
+  }
+  .kinoma-header__inner {
+    width: calc(100% - 20px);
+    max-width: none;
+    padding: 6px 10px 6px 13px;
+    gap: 14px;
+    border-radius: 20px;
+  }
+  .kinoma-header__logo { height: 34px; max-width: 142px; }
+  .kinoma-header__nav { gap: 13px; overflow-x: auto; }
+  .kinoma-header__link { font-size: 0.66rem; }
 }
 .kinoma-header__mobile-icon {
   display: inline-flex;
