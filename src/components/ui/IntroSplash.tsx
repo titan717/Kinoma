@@ -45,19 +45,12 @@ export function IntroSplash({ forceShow = false, onComplete }: IntroSplashProps)
     // Trigger audio immediately (if audio policy allows)
     kinomaAudio.playIntroSound();
 
-    // Cinematic studio-style timing: brief reveal, then a soft fade to the app.
+    // Non-skippable cinematic intro: allow the full animation to complete.
     const timer = setTimeout(() => {
       completeIntro();
-    }, 2600);
+    }, 3200);
 
-    // Any key press (including an Android TV remote button) dismisses immediately.
-    const handleKey = () => completeIntro();
-    window.addEventListener('keydown', handleKey, { once: true });
-
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('keydown', handleKey);
-    };
+    return () => clearTimeout(timer);
   }, [isVisible, completeIntro]);
 
   // Click on screen also triggers sound if browser required user gesture
@@ -87,30 +80,22 @@ export function IntroSplash({ forceShow = false, onComplete }: IntroSplashProps)
             className="absolute w-[55vw] h-[55vw] max-w-[720px] max-h-[720px] rounded-full bg-[radial-gradient(circle,rgba(168,85,247,0.20),transparent_68%)] blur-2xl pointer-events-none"
           />
 
-          {/* Anamorphic Horizontal Laser Beam (Netflix / Disney flare) */}
+          {/* Light-camera inspired processing sweep. */}
           <motion.div
-            initial={{ scaleX: 0, opacity: 0 }}
-            animate={{ 
-              scaleX: [0, 0.4, 1.8, 2.2], 
-              opacity: [0, 0.9, 0.6, 0],
-              transition: { duration: 2.2, times: [0, 0.25, 0.7, 1], ease: [0.16, 1, 0.3, 1] } 
-            }}
-            className="absolute w-full h-[2px] bg-gradient-to-r from-transparent via-[#e879f9] to-transparent shadow-[0_0_40px_#c084fc] pointer-events-none"
+            initial={{ rotate: -18, x: '-65%', opacity: 0 }}
+            animate={{ x: ['-65%', '0%', '65%'], opacity: [0, 0.85, 0] }}
+            transition={{ duration: 2.6, ease: 'easeInOut' }}
+            className="absolute w-[180%] h-[12px] rounded-full bg-gradient-to-r from-transparent via-white/70 to-transparent blur-md pointer-events-none"
           />
-
-          {/* Subtle Vertical Prism Streaks */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden opacity-40">
-            {[-120, -60, 0, 60, 120].map((offset, i) => (
-              <motion.div
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            {[0,1,2,3,4,5,6,7].map((i) => (
+              <motion.span
                 key={i}
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ 
-                  height: ['0%', '100%', '100%'], 
-                  opacity: [0, 0.6, 0],
-                  transition: { duration: 1.8, delay: 0.15 + i * 0.05, ease: 'easeOut' }
-                }}
-                className="w-[1px] bg-gradient-to-b from-transparent via-purple-400 to-transparent absolute"
-                style={{ transform: `translateX(${offset}px)` }}
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: [0, 1, 0], scale: [0.4, 1.2, 0.4] }}
+                transition={{ duration: 1.8, delay: i * 0.12, repeat: 1 }}
+                className="absolute w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_18px_rgba(255,255,255,0.9)]"
+                style={{ transform: `rotate(${i * 45}deg) translateX(120px)` }}
               />
             ))}
           </div>
@@ -143,16 +128,7 @@ export function IntroSplash({ forceShow = false, onComplete }: IntroSplashProps)
             </div>
           </motion.div>
 
-          {/* Minimalist Studio Skip Button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              completeIntro();
-            }}
-            className="absolute bottom-8 sm:bottom-10 right-6 sm:right-10 z-20 px-4 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-medium tracking-wider uppercase text-gray-400 hover:text-white backdrop-blur-md transition-all active:scale-95"
-          >
-            Skip &rarr;
-          </button>
+
         </motion.div>
       )}
     </AnimatePresence>
