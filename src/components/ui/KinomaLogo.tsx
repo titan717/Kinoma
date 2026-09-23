@@ -14,7 +14,7 @@ const SIZE_MAP = {
   xl: { width: 232, height: 70 },
 } as const;
 
-const LOGO_SRC = 'https://raw.githubusercontent.com/titan717/Kinoma/main/logo.png';
+const LOGO_SRC = 'https://raw.githubusercontent.com/titan717/Kinoma/126eee1aa37038a4e78954d666c058551b517f83/KINOMA-9-23-2026.png';
 
 export function KinomaLogo({ size = 'md', variant = 'full', className = '', onClick }: KinomaLogoProps) {
   const dimensions = SIZE_MAP[size];
