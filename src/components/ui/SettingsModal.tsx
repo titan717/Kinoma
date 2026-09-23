@@ -21,7 +21,7 @@ import {
   RefreshCw,
   GitBranch
 } from 'lucide-react';
-import { useAppearance, ThemeMode } from '../../lib/AppearanceContext';
+import { useAppearance } from '../../lib/AppearanceContext';
 import { useTVMode } from '../../lib/TVModeContext';
 import { usePWAInstall } from '../../lib/usePWAInstall';
 import { historyUtil } from '../../lib/history';
