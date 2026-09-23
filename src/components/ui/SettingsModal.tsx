@@ -347,6 +347,7 @@ export function SettingsModal() {
               </div>
             </div>
           )}
+        </div>
 
         {/* Modal Footer */}
         <div className="px-6 py-3.5 border-t border-[#1c1c28] bg-[#12131b] flex items-center justify-between">
