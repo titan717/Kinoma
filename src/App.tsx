@@ -6,6 +6,7 @@ import { localCache } from './lib/localCache';
 import { Layout } from './components/Layout';
 import { Landing } from './pages/Landing';
 import { Terms } from './pages/Terms';
+import { About } from './pages/About';
 
 // Route-level code splitting keeps the initial bundle focused on the landing/home experience.
 const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
@@ -52,6 +53,7 @@ function AnimatedRoutes() {
           <Route path="/browse" component={Home} />
           <Route path="/home" component={Home} />
           <Route path="/terms" component={Terms} />
+          <Route path="/about" component={About} />
           <Route path="/admin" component={Admin} />
           <Route path="/search" component={Search} />
           <Route path="/explore" component={Search} />
@@ -59,6 +61,7 @@ function AnimatedRoutes() {
           <Route path="/details/:id" component={Details} />
           <Route path="/watch/:id" component={Watch} />
           <Route path="/library" component={Library} />
+          <Route path="/history" component={Library} />
           <Route>
             <div className="flex min-h-[60vh] items-center justify-center text-gray-500 font-medium">
               404 - Page Not Found
