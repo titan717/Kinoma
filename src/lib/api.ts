@@ -1,8 +1,9 @@
 import { animeApi, AnimeSearchResult } from '../services/animeApi';
 import { localCache } from './localCache';
 import { AnimeItem, AnimeDetails, ContentType, DEFAULT_POSTER, DEFAULT_BANNER } from '../types';
+import { jikanApi } from '../services/jikanApi';
 
-// Memory cache to preserve anilist_id and other metadata between views
+// Memory cache to preserve playback metadata and Jikan/MAL metadata between views
 const itemCache = new Map<string, AnimeItem>();
 
 function isTvSeries(item: any): boolean {
@@ -28,6 +29,7 @@ function mapItem(item: any): AnimeItem {
   const mapped: AnimeItem = {
     id: item.anime_id || item.id,
     anilist_id: item.anilist_id,
+    mal_id: item.mal_id,
     title: {
       english: item.title?.english || title,
       romaji: item.title?.romaji || title,
@@ -223,76 +225,27 @@ export const api = {
   getTrailer: async (id: string) => {
     const cleanKey = `api_trailer_${id}`;
     return localCache.getOrFetch(cleanKey, async () => {
-      // Prefer Kinoma API's curated trailer endpoint.
       try {
-        const response: any = await animeApi.getTrailer(id);
-        const raw = response?.trailer ?? response?.data?.trailer ?? response?.data ?? response;
-
-        if (raw) {
-          const trailerId = raw.id || raw.key || raw.video_id;
-          const site = String(raw.site || raw.provider || 'youtube').toLowerCase();
-          const url = raw.url || raw.youtube_url || raw.embed_url;
-
-          if (trailerId || url) {
-            let normalizedId = trailerId;
-            if (!normalizedId && typeof url === 'string') {
-              const match = url.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{6,})/);
-              normalizedId = match?.[1];
-            }
-
-            if (normalizedId) {
-              return {
-                available: true,
-                trailer: {
-                  id: normalizedId,
-                  site: site === 'youtube' || site === 'yt' ? 'youtube' : site,
-                  thumbnail: raw.thumbnail || `https://i.ytimg.com/vi/${normalizedId}/hqdefault.jpg`
-                }
-              };
-            }
-          }
-        }
-      } catch (error) {
-        console.warn('Kinoma trailer endpoint unavailable; trying AniList fallback:', error);
-      }
-
-      // Fallback: AniList exposes official trailer metadata for many titles.
-      try {
+        // Jikan is now the metadata/trailer source. We deliberately keep the
+        // Kinoma API as the playback source so existing streams remain intact.
         const cached = itemCache.get(id);
-        const info = await animeApi.getAnimeInfo(id).catch(() => null);
-        const anilistId = info?.anilist_id || cached?.anilist_id;
+        const initialTitle =
+          cached && typeof cached.title === 'object'
+            ? cached.title.english || cached.title.romaji || cached.title.native
+            : cached?.title;
 
-        if (anilistId) {
-          const response = await fetch('https://graphql.anilist.co', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-            body: JSON.stringify({
-              query: `query Trailer($id: Int) {
-                Media(id: $id, type: ANIME) {
-                  trailer { id site thumbnail }
-                }
-              }`,
-              variables: { id: anilistId }
-            })
-          });
+        let malId = cached?.mal_id;
 
-          if (response.ok) {
-            const json = await response.json();
-            const trailer = json?.data?.Media?.trailer;
-            if (trailer?.id) {
-              return {
-                available: true,
-                trailer: {
-                  id: trailer.id,
-                  site: String(trailer.site || '').toLowerCase(),
-                  thumbnail: trailer.thumbnail || `https://i.ytimg.com/vi/${trailer.id}/hqdefault.jpg`
-                }
-              };
-            }
-          }
+        if (!malId && initialTitle) {
+          const match = await jikanApi.findByTitle(initialTitle);
+          malId = match?.mal_id;
+        }
+
+        if (malId) {
+          return await jikanApi.getTrailer(malId);
         }
       } catch (error) {
-        console.warn('AniList trailer fallback failed:', error);
+        console.warn('Jikan trailer lookup failed:', error);
       }
 
       return { available: false, trailer: null };
@@ -310,6 +263,7 @@ export const api = {
 
       const cachedItem = itemCache.get(id);
       let anilistId = info.anilist_id || initialItem?.anilist_id || cachedItem?.anilist_id || 0;
+      let malId = info.mal_id || initialItem?.mal_id || cachedItem?.mal_id;
       let format = info.format || initialItem?.type || cachedItem?.type || 'TV';
       let status = info.status || initialItem?.status || cachedItem?.status || 'Finished';
       let genres = info.genres || initialItem?.genres || cachedItem?.genres || [];
@@ -317,55 +271,66 @@ export const api = {
       let rating = info.average_score || initialItem?.rating || cachedItem?.rating;
       let seasonYear = info.season_year || (initialItem?.releaseDate ? parseInt(initialItem.releaseDate) : (cachedItem?.releaseDate ? parseInt(cachedItem.releaseDate) : undefined));
       let studio = '';
-      let contentRating = typeof info.rating === 'string' ? info.rating : (typeof initialItem?.contentRating === 'string' ? initialItem.contentRating : (typeof cachedItem?.contentRating === 'string' ? cachedItem.contentRating : undefined));
+      let contentRating = typeof info.rating === 'string'
+        ? info.rating
+        : (typeof initialItem?.contentRating === 'string'
+          ? initialItem.contentRating
+          : (typeof cachedItem?.contentRating === 'string' ? cachedItem.contentRating : undefined));
 
-      const cachedTitle = typeof cachedItem?.title === 'object' ? cachedItem.title.english || cachedItem.title.romaji : cachedItem?.title;
-      const initialTitle = typeof initialItem?.title === 'object' ? initialItem.title.english || initialItem.title.romaji : initialItem?.title;
+      const cachedTitle = typeof cachedItem?.title === 'object'
+        ? cachedItem.title.english || cachedItem.title.romaji
+        : cachedItem?.title;
+      const initialTitle = typeof initialItem?.title === 'object'
+        ? initialItem.title.english || initialItem.title.romaji
+        : initialItem?.title;
       const rawTitle = info.title?.english || info.title?.romaji || initialTitle || cachedTitle || id;
 
-      if (!anilistId || genres.length === 0) {
-        try {
-          const searchRes = await animeApi.search(rawTitle, 5, 0);
-          const matched = searchRes.results?.find(r => r.anime_id === id) || searchRes.results?.[0];
-          if (matched) {
-            anilistId = matched.anilist_id || anilistId;
-            format = matched.format || format;
-            status = matched.status || status;
-            genres = matched.genres || genres;
-            rating = matched.average_score || rating;
-            seasonYear = matched.season_year || seasonYear;
-            if (!contentRating && typeof matched.rating === 'string') {
-              contentRating = matched.rating;
-            }
-          }
-        } catch (e) {}
-      }
-
-      // Fetch rich synopsis & studio from AniList GraphQL API if anilistId is available
-      if (anilistId) {
-        try {
-          const aniRes = await fetch('https://graphql.anilist.co', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({
-              query: 'query GetMedia($id: Int) { Media(id: $id, type: ANIME) { description(asHtml: true) studios(isMain: true) { nodes { name } } } }',
-              variables: { id: anilistId }
-            })
-          });
-          const aniJson = await aniRes.json();
-          if (aniJson?.data?.Media) {
-            description = aniJson.data.Media.description || '';
-            const studiosList = aniJson.data.Media.studios?.nodes;
-            if (studiosList && studiosList.length > 0) {
-              studio = studiosList[0].name;
-            }
-          }
-        } catch (e) {
-          console.warn('AniList description fetch warning:', e);
+      // Jikan/MAL is the metadata source of truth. Resolve a MAL ID by title
+      // when the playback backend does not provide one directly.
+      try {
+        if (!malId) {
+          const match = await jikanApi.findByTitle(rawTitle);
+          malId = match?.mal_id;
         }
+
+        if (malId) {
+          const jikan = await jikanApi.getAnime(malId);
+          const media = jikan.data;
+
+          description = media.synopsis || description;
+          genres = media.genres?.map((genre) => genre.name) || genres;
+          studio = media.studios?.[0]?.name || studio;
+          format = media.type || format;
+          status = media.status || status;
+          rating = media.score ?? rating;
+          seasonYear = media.year || (media.aired?.from ? new Date(media.aired.from).getFullYear() : seasonYear);
+          contentRating = media.rating || contentRating;
+
+          const jikanImage =
+            media.images?.webp?.large_image_url ||
+            media.images?.jpg?.large_image_url ||
+            media.images?.webp?.image_url ||
+            media.images?.jpg?.image_url;
+
+          if (jikanImage && !initialItem?.image) {
+            initialItem = { ...(initialItem || {} as AnimeItem), image: jikanImage };
+          }
+
+          const jikanTitle = {
+            english: media.title_english || media.title || rawTitle,
+            romaji: media.title || rawTitle,
+            native: media.title_japanese || ''
+          };
+
+          // Keep the playback/backend ID while presenting Jikan's titles.
+          if (media.title || media.title_english || media.title_japanese) {
+            initialItem = { ...(initialItem || {} as AnimeItem), title: jikanTitle };
+          }
+        }
+      } catch (error) {
+        console.warn('Jikan metadata lookup failed; retaining Kinoma API metadata:', error);
       }
 
-      // Map seasons from API
       let seasons: { seasonNumber: number; animeId: string; anilistId?: number; title: string; episodeCount: number }[] = [];
       if (seasonsRes && Array.isArray(seasonsRes.seasons) && seasonsRes.seasons.length > 0) {
         seasons = seasonsRes.seasons.map(s => ({
@@ -400,13 +365,19 @@ export const api = {
         seasonAnimeId: id
       }));
 
+      const finalTitle = initialItem?.title || info.title || { english: id, romaji: id };
+      const finalImage = initialItem?.image || String(info.cover_image?.large || info.cover_image?.extra_large || info.image || DEFAULT_POSTER);
+      const finalCover = String(info.cover_image?.extra_large || info.cover_image?.large || info.cover || DEFAULT_BANNER);
+      const finalBanner = String(info.banner_image?.extra_large || info.banner_image?.large || info.banner || info.cover_image?.extra_large || info.cover_image?.large || DEFAULT_BANNER);
+
       return {
         id,
         anilist_id: anilistId,
-        title: info.title || { english: id, romaji: id },
-        image: String(info.cover_image?.large || info.cover_image?.extra_large || info.image || DEFAULT_POSTER),
-        cover: String(info.cover_image?.extra_large || info.cover_image?.large || info.cover || DEFAULT_BANNER),
-        banner: String(info.banner_image?.extra_large || info.banner_image?.large || info.banner || info.cover_image?.extra_large || info.cover_image?.large || DEFAULT_BANNER),
+        mal_id: malId,
+        title: finalTitle,
+        image: finalImage,
+        cover: finalCover,
+        banner: finalBanner,
         description: description || 'No synopsis available for this anime.',
         genres,
         status,
@@ -421,7 +392,7 @@ export const api = {
         _reanimeSlug: id,
         _reanimeConfigured: true
       };
-    }, 1000 * 60 * 60 * 3); // 3 hours TTL for anime details & episodes
+    }, 1000 * 60 * 60 * 3);
   },
 
   getSeasonEpisodes: async (
