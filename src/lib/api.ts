@@ -136,6 +136,19 @@ export const api = {
     }, 1000 * 60 * 20);
   },
 
+  getMovies: async (limit = 24) => {
+    return localCache.getOrFetch(`api_movies_${limit}`, async () => {
+      try {
+        const res = await animeApi.search('movie', limit, 0);
+        const mapped = (res.results || []).map(mapItem);
+        return { results: deduplicate(mapped, 'id') };
+      } catch (e) {
+        console.error('Movies fetch error:', e);
+        return { results: [] as AnimeItem[] };
+      }
+    }, 1000 * 60 * 30);
+  },
+
   getGenreAnime: async (genre: string, limit = 25) => {
     const cleanKey = `api_genre_${genre.toLowerCase().trim()}_${limit}`;
     return localCache.getOrFetch(cleanKey, async () => {
