@@ -16,6 +16,7 @@ const Watch = lazy(() => import('./pages/Watch').then(m => ({ default: m.Watch }
 const Library = lazy(() => import('./pages/Library').then(m => ({ default: m.Library })));
 const WhatsNew = lazy(() => import('./pages/WhatsNew').then(m => ({ default: m.WhatsNew })));
 const Admin = lazy(() => import('./pages/Admin').then(m => ({ default: m.Admin })));
+const SettingsPage = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
 import { AuthProvider } from './lib/AuthContext';
 import { AuthModal } from './components/ui/AuthModal';
 import { AppearanceProvider } from './lib/AppearanceContext';
@@ -55,6 +56,7 @@ function AnimatedRoutes() {
           <Route path="/terms" component={Terms} />
           <Route path="/about" component={About} />
           <Route path="/admin" component={Admin} />
+          <Route path="/settings" component={SettingsPage} />
           <Route path="/search" component={Search} />
           <Route path="/explore" component={Search} />
           <Route path="/whats-new" component={WhatsNew} />
