@@ -34,10 +34,10 @@ function Rail({ title, description, items, badge }: { title: string; description
           <Link href="/search" className="kinoma-home__view-all">View all <ArrowRight size={14} /></Link>
           {pages > 1 && (
             <div className="kinoma-home__rail-buttons">
-              <button type="button" onClick={() => setPage((value) => Math.max(0, value - 1))} disabled={page === 0} aria-label={\`Previous \${title}\`}>
+              <button type="button" onClick={() => setPage((value) => Math.max(0, value - 1))} disabled={page === 0} aria-label={`Previous ${title}`}>
                 <ChevronLeft size={16} />
               </button>
-              <button type="button" onClick={() => setPage((value) => Math.min(pages - 1, value + 1))} disabled={page === pages - 1} aria-label={\`Next \${title}\`}>
+              <button type="button" onClick={() => setPage((value) => Math.min(pages - 1, value + 1))} disabled={page === pages - 1} aria-label={`Next ${title}`}>
                 <ChevronRight size={16} />
               </button>
             </div>
