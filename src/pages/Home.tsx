@@ -50,7 +50,7 @@ function Rail({ title, description, items, badge }: { title: string; description
             key={item.id}
             item={item}
             badgeText={badge}
-            subText={contentKind(item) === 'movie' ? 'Movie' : item.totalEpisodes ? \`\${item.totalEpisodes} episodes\` : 'Series'}
+            subText={contentKind(item) === 'movie' ? 'Movie' : item.totalEpisodes ? `${item.totalEpisodes} episodes` : 'Series'}
           />
         ))}
       </div>
@@ -72,16 +72,16 @@ function ContinueWatching({ items }: { items: HistoryItem[] }) {
       </div>
       <div className="kinoma-home__continue-grid">
         {items.slice(0, 3).map((item) => {
-          const episodeId = item.episodeId || \`\${item.animeId}|\${item.episodeNumber}\`;
+          const episodeId = item.episodeId || `${item.animeId}|${item.episodeNumber}`;
           const progress = Math.min(100, Math.max(0, item.completionPercentage || 0));
           return (
-            <Link key={\`\${item.slug}-\${item.episodeNumber}\`} href={\`/watch/\${encodeURIComponent(episodeId)}\`} className="kinoma-home__continue-card">
+            <Link key={`${item.slug}-${item.episodeNumber}`} href={`/watch/${encodeURIComponent(episodeId)}`} className="kinoma-home__continue-card">
               <img src={item.image} alt={item.title} loading="lazy" />
               <div className="kinoma-home__continue-overlay" />
               <div className="kinoma-home__continue-info">
                 <span>EP {item.episodeNumber} · S{item.seasonNumber}</span>
                 <strong>{item.title}</strong>
-                <div className="kinoma-home__progress"><span style={{ width: \`\${progress}%\` }} /></div>
+                <div className="kinoma-home__progress"><span style={{ width: `${progress}%` }} /></div>
                 <div className="kinoma-home__continue-bottom">
                   <small>{Math.round(progress)}% watched</small>
                   <span><Play size={12} fill="currentColor" /> Continue</span>
@@ -155,7 +155,7 @@ export function Home() {
                   </div>
                   <p>{hero.description?.replace(/<[^>]+>/g, '').slice(0, 240) || 'Start watching on Kinoma.'}</p>
                   <div className="kinoma-home__hero-actions">
-                    <Link href={\`/details/\${hero.id}\`} className="kinoma-home__play"><Play size={16} fill="currentColor" /> View title</Link>
+                    <Link href={`/details/${hero.id}`} className="kinoma-home__play"><Play size={16} fill="currentColor" /> View title</Link>
                     <Link href="/search" className="kinoma-home__secondary">Explore catalog <ArrowRight size={15} /></Link>
                   </div>
                 </div>
