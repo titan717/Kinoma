@@ -43,15 +43,13 @@ function readStorage(key: string, fallback: boolean) {
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [pinned, setPinned] = useState(() => readStorage(STORAGE_PINNED, false));
-  const [expanded, setExpanded] = useState(() => {
-    const storedPinned = readStorage(STORAGE_PINNED, false);
-    return storedPinned ? readStorage(STORAGE_EXPANDED, true) : false;
-  });
+  const [expanded, setExpanded] = useState(() => readStorage(STORAGE_EXPANDED, false));
   const [aboutOpen, setAboutOpen] = useState(() =>
     ['/about', '/terms', '/privacy', '/contact'].includes(window.location.pathname)
   );
   const collapseTimer = useRef<number | null>(null);
   const expandTimer = useRef<number | null>(null);
+  const aboutTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   const clearTimers = () => {
     if (collapseTimer.current !== null) window.clearTimeout(collapseTimer.current);
@@ -74,6 +72,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }, [location]);
 
   useEffect(() => () => clearTimers(), []);
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || !aboutOpen) return;
+      setAboutOpen(false);
+      window.requestAnimationFrame(() => aboutTriggerRef.current?.focus());
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [aboutOpen]);
 
   const expandWithDelay = () => {
     if (pinned) return;
@@ -163,6 +171,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
             <div className={`kinoma-sidebar__about ${aboutActive ? 'is-active' : ''}`}>
               <button
+                ref={aboutTriggerRef}
                 type="button"
                 className={`kinoma-sidebar__item kinoma-sidebar__about-trigger kinoma-focus ${aboutActive ? 'is-active' : ''}`}
                 aria-label="About"
