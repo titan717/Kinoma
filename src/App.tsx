@@ -1,23 +1,25 @@
-import React, { useEffect } from 'react';
+import React, { lazy, Suspense, useEffect } from 'react';
 import { Route, Switch, useLocation } from 'wouter';
 import { AnimatePresence, motion } from 'motion/react';
 import { SWRConfig } from 'swr';
 import { localCache } from './lib/localCache';
 import { Layout } from './components/Layout';
-import { Home } from './pages/Home';
 import { Landing } from './pages/Landing';
 import { Terms } from './pages/Terms';
-import { Search } from './pages/Search';
-import { Details } from './pages/Details';
-import { Watch } from './pages/Watch';
-import { Library } from './pages/Library';
-import { WhatsNew } from './pages/WhatsNew';
+
+// Route-level code splitting keeps the initial bundle focused on the landing/home experience.
+const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
+const Search = lazy(() => import('./pages/Search').then(m => ({ default: m.Search })));
+const Details = lazy(() => import('./pages/Details').then(m => ({ default: m.Details })));
+const Watch = lazy(() => import('./pages/Watch').then(m => ({ default: m.Watch })));
+const Library = lazy(() => import('./pages/Library').then(m => ({ default: m.Library })));
+const WhatsNew = lazy(() => import('./pages/WhatsNew').then(m => ({ default: m.WhatsNew })));
+const Admin = lazy(() => import('./pages/Admin').then(m => ({ default: m.Admin })));
 import { AuthProvider } from './lib/AuthContext';
 import { AuthModal } from './components/ui/AuthModal';
 import { AppearanceProvider } from './lib/AppearanceContext';
 import { SettingsModal } from './components/ui/SettingsModal';
 import { IntroSplash } from './components/ui/IntroSplash';
-import { Admin } from './pages/Admin';
 import { trackPageView } from './lib/analytics';
 
 function AnimatedRoutes() {
@@ -38,7 +40,14 @@ function AnimatedRoutes() {
         transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
         className="w-full flex-1 flex flex-col will-change-transform"
       >
-        <Switch location={location}>
+        <Suspense
+          fallback={
+            <div className="min-h-[55vh] w-full flex items-center justify-center bg-[var(--kinoma-bg)]">
+              <div className="h-8 w-8 rounded-full border-2 border-white/15 border-t-white/80 animate-spin" aria-label="Loading Kinoma" />
+            </div>
+          }
+        >
+          <Switch location={location}>
           <Route path="/" component={Landing} />
           <Route path="/browse" component={Home} />
           <Route path="/home" component={Home} />
@@ -55,7 +64,8 @@ function AnimatedRoutes() {
               404 - Page Not Found
             </div>
           </Route>
-        </Switch>
+          </Switch>
+        </Suspense>
       </motion.div>
     </AnimatePresence>
   );
