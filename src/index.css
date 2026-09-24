@@ -1476,3 +1476,128 @@ p {
     flex-direction: column;
   }
 }
+
+/* Kinoma app shell: shared cinematic background + responsive sidebar. */
+.kinoma-app-shell {
+  --sidebar-width: 236px;
+  min-height: 100dvh;
+  width: 100%;
+  display: flex;
+  overflow: hidden;
+  color: var(--kinoma-text);
+  background:
+    linear-gradient(90deg, rgba(8,8,10,.72), rgba(8,8,10,.28) 38%, rgba(8,8,10,.42)),
+    linear-gradient(180deg, rgba(8,8,10,.22), rgba(8,8,10,.58)),
+    url("https://aniwaves.ru/assets/images/bg-index2.jpg") center center / cover no-repeat fixed;
+}
+.kinoma-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 100;
+  width: var(--sidebar-width);
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 var(--sidebar-width);
+  padding: 18px 12px 16px;
+  background: rgba(10,10,12,.55);
+  border-right: 1px solid rgba(255,255,255,.075);
+  box-shadow: 16px 0 50px rgba(0,0,0,.18);
+  backdrop-filter: blur(18px) saturate(115%);
+  -webkit-backdrop-filter: blur(18px) saturate(115%);
+  transition: width 240ms cubic-bezier(.16,1,.3,1), padding 240ms cubic-bezier(.16,1,.3,1);
+}
+.kinoma-sidebar__top {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.kinoma-sidebar.is-collapsed .kinoma-sidebar__top { justify-content: center; }
+.kinoma-sidebar__brand { min-width: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.kinoma-sidebar__logo { transition: transform 240ms ease; }
+.kinoma-sidebar__toggle,
+.kinoma-sidebar__item,
+.kinoma-sidebar__profile {
+  min-height: 46px;
+  border-radius: 12px;
+}
+.kinoma-sidebar__toggle {
+  width: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 36px;
+  border: 1px solid rgba(255,255,255,.08);
+  color: rgba(255,255,255,.6);
+  background: rgba(255,255,255,.035);
+  cursor: pointer;
+  transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+.kinoma-sidebar__toggle:hover { color: #fff; background: rgba(255,255,255,.075); border-color: rgba(255,255,255,.13); }
+.kinoma-sidebar__nav { display: flex; flex-direction: column; gap: 6px; margin-top: 30px; }
+.kinoma-sidebar__item {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 0 13px;
+  color: rgba(255,255,255,.56);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+}
+.kinoma-sidebar__item:hover { color: rgba(255,255,255,.9); background: rgba(255,255,255,.055); }
+.kinoma-sidebar__item.is-active { color: #fff; background: rgba(255,255,255,.09); box-shadow: inset 2px 0 0 rgba(255,255,255,.8); }
+.kinoma-sidebar__item span,
+.kinoma-sidebar__profile span { overflow: hidden; transition: opacity 160ms ease, width 220ms ease; }
+.kinoma-sidebar.is-collapsed .kinoma-sidebar__item { justify-content: center; padding: 0; }
+.kinoma-sidebar.is-collapsed .kinoma-sidebar__item span,
+.kinoma-sidebar.is-collapsed .kinoma-sidebar__profile span { width: 0; opacity: 0; }
+.kinoma-sidebar__profile {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 10px;
+  color: rgba(255,255,255,.72);
+  border-top: 1px solid rgba(255,255,255,.07);
+  border-radius: 0;
+  padding-top: 16px;
+}
+.kinoma-sidebar.is-collapsed .kinoma-sidebar__profile { justify-content: center; padding-left: 0; padding-right: 0; }
+.kinoma-sidebar__avatar {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: rgba(255,255,255,.68);
+  background: rgba(255,255,255,.075);
+  border: 1px solid rgba(255,255,255,.10);
+}
+.kinoma-app-main {
+  min-width: 0;
+  min-height: 100dvh;
+  width: calc(100% - var(--sidebar-width));
+  margin-left: var(--sidebar-width);
+  transition: width 240ms cubic-bezier(.16,1,.3,1), margin-left 240ms cubic-bezier(.16,1,.3,1);
+}
+.kinoma-app-main > * { min-width: 0; }
+.kinoma-empty-home { min-height: 100dvh; width: 100%; }
+@media (max-width: 700px) {
+  .kinoma-app-shell { --sidebar-width: 68px !important; }
+  .kinoma-sidebar { width: 68px !important; padding: 14px 8px 12px; }
+  .kinoma-sidebar__toggle { display: none; }
+  .kinoma-sidebar__top { justify-content: center !important; }
+  .kinoma-sidebar__brand img { max-width: 38px !important; max-height: 38px !important; object-fit: contain; object-position: center; }
+  .kinoma-sidebar__nav { margin-top: 24px; gap: 4px; }
+  .kinoma-sidebar__item { justify-content: center; padding: 0 !important; min-height: 48px; }
+  .kinoma-sidebar__item span { width: 0; opacity: 0; }
+  .kinoma-sidebar__profile { justify-content: center; padding-left: 0; padding-right: 0; }
+  .kinoma-sidebar__profile span { width: 0; opacity: 0; }
+  .kinoma-app-main { width: calc(100% - 68px); margin-left: 68px; }
+}
