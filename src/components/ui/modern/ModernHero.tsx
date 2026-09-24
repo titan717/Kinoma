@@ -24,16 +24,17 @@ export function ModernHero({ items }: ModernHeroProps) {
     return () => window.removeEventListener('kinoma_progress_update', loadHistory);
   }, []);
 
-  // Auto-rotate hero every 4.2 seconds if not hovered/paused
+  const visibleItems = items.slice(0, 5);
+
+  // Auto-rotate hero every 4.2 seconds if not hovered/paused.
+  // Keep the derived list above the effect so the dependency is always initialized.
   useEffect(() => {
-    if (!items || items.length <= 1 || isPaused) return;
-    const interval = setInterval(() => {
+    if (visibleItems.length <= 1 || isPaused) return;
+    const interval = window.setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % visibleItems.length);
     }, 4200);
-    return () => clearInterval(interval);
+    return () => window.clearInterval(interval);
   }, [visibleItems.length, isPaused]);
-
-  const visibleItems = items.slice(0, 5);
   const currentItem = visibleItems[currentIndex] || visibleItems[0];
 
   // Watchlist status tracking for currentItem
