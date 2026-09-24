@@ -24,6 +24,7 @@ export type ContentType = 'anime' | 'movie' | 'series';
 export interface AnimeItem {
   id: string;
   anilist_id?: number;
+  mal_id?: number;
   title: string | { english?: string; romaji?: string; native?: string };
   image: string;
   cover?: string;
