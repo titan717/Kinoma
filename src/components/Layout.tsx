@@ -83,8 +83,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('keydown', handleEscape);
   }, [aboutOpen]);
 
+  const canHoverExpand = () => typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
   const expandWithDelay = () => {
-    if (pinned) return;
+    if (pinned || !canHoverExpand()) return;
     if (collapseTimer.current !== null) window.clearTimeout(collapseTimer.current);
     expandTimer.current = window.setTimeout(() => {
       setExpanded(true);
@@ -93,7 +95,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   };
 
   const collapseWithDelay = () => {
-    if (pinned) return;
+    if (pinned || !canHoverExpand()) return;
     if (expandTimer.current !== null) window.clearTimeout(expandTimer.current);
     collapseTimer.current = window.setTimeout(() => {
       setExpanded(false);
