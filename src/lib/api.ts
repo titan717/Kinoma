@@ -1,6 +1,6 @@
 import { animeApi, AnimeSearchResult } from '../services/animeApi';
 import { localCache } from './localCache';
-import { AnimeItem, AnimeDetails, DEFAULT_POSTER, DEFAULT_BANNER } from '../types';
+import { AnimeItem, AnimeDetails, ContentType, DEFAULT_POSTER, DEFAULT_BANNER } from '../types';
 
 // Memory cache to preserve anilist_id and other metadata between views
 const itemCache = new Map<string, AnimeItem>();
@@ -22,6 +22,9 @@ function mapItem(item: any): AnimeItem {
   const imgUrl = item.cover_image?.large || item.cover_image?.extra_large || item.image || DEFAULT_POSTER;
   const coverUrl = item.cover_image?.extra_large || item.cover_image?.large || item.cover || DEFAULT_BANNER;
 
+  const normalizedFormat = String(item.format || item.type || 'TV').toUpperCase();
+  const contentType: ContentType = normalizedFormat === 'MOVIE' ? 'movie' : 'series';
+
   const mapped: AnimeItem = {
     id: item.anime_id || item.id,
     anilist_id: item.anilist_id,
@@ -40,7 +43,8 @@ function mapItem(item: any): AnimeItem {
     description: item.description || (item.rating ? `Rating: ${item.rating}` : undefined),
     genres: item.genres || [],
     totalEpisodes: item.episodes || item.episodeCount || 0,
-    status: item.status
+    status: item.status,
+    contentType
   };
 
   // Cache the item to preserve anilist_id for getDetails
