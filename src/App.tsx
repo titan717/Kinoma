@@ -77,13 +77,9 @@ function AnimatedRoutes() {
 function MainAppShell() {
   const [location] = useLocation();
 
-  if (location === '/' || location === '/terms') return location === '/terms' ? <Terms /> : <Landing />;
+  if (location === '/') return <Landing />;
 
-  return (
-    <Layout>
-      <AnimatedRoutes />
-    </Layout>
-  );
+  return <Layout><AnimatedRoutes /></Layout>;
 }
 
 export default function App() {
