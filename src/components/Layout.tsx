@@ -1,51 +1,244 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'wouter';
-import { House, Compass, Library, Settings, ChevronsLeft, ChevronsRight, UserRound } from 'lucide-react';
+import {
+  House,
+  Search,
+  Library,
+  Settings,
+  Info,
+  UserRound,
+  Pin,
+  PinOff,
+  ChevronRight,
+  X,
+} from 'lucide-react';
 import { KinomaLogo } from './ui/KinomaLogo';
 
 const ITEMS = [
   { href: '/home', label: 'Home', Icon: House },
-  { href: '/search', label: 'Explore', Icon: Compass },
+  { href: '/search', label: 'Search', Icon: Search },
   { href: '/library', label: 'Library', Icon: Library },
   { href: '/settings', label: 'Settings', Icon: Settings },
 ];
 
+const ABOUT_ITEMS = [
+  { href: '/about', label: 'About Kinoma' },
+  { href: '/terms', label: 'Terms of Service' },
+  { href: '/privacy', label: 'Privacy Policy' },
+  { href: '/contact', label: 'Contact / Support' },
+];
+
+const STORAGE_EXPANDED = 'kinoma_sidebar_expanded';
+const STORAGE_PINNED = 'kinoma_sidebar_pinned';
+
+function readStorage(key: string, fallback: boolean) {
+  try {
+    const value = localStorage.getItem(key);
+    return value === null ? fallback : value === 'true';
+  } catch {
+    return fallback;
+  }
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  const [pinned, setPinned] = useState(() => readStorage(STORAGE_PINNED, false));
   const [expanded, setExpanded] = useState(() => {
-    try { return localStorage.getItem('kinoma_sidebar_expanded') !== 'false'; } catch { return true; }
+    const storedPinned = readStorage(STORAGE_PINNED, false);
+    return storedPinned ? readStorage(STORAGE_EXPANDED, true) : false;
   });
+  const [aboutOpen, setAboutOpen] = useState(() =>
+    ['/about', '/terms', '/privacy', '/contact'].includes(window.location.pathname)
+  );
+  const collapseTimer = useRef<number | null>(null);
+  const expandTimer = useRef<number | null>(null);
+
+  const clearTimers = () => {
+    if (collapseTimer.current !== null) window.clearTimeout(collapseTimer.current);
+    if (expandTimer.current !== null) window.clearTimeout(expandTimer.current);
+    collapseTimer.current = null;
+    expandTimer.current = null;
+  };
+
   useEffect(() => {
-    try { localStorage.setItem('kinoma_sidebar_expanded', String(expanded)); } catch {}
-  }, [expanded]);
+    try {
+      localStorage.setItem(STORAGE_PINNED, String(pinned));
+      localStorage.setItem(STORAGE_EXPANDED, String(expanded));
+    } catch {}
+  }, [expanded, pinned]);
+
+  useEffect(() => {
+    if (!['/about', '/terms', '/privacy', '/contact'].includes(location)) {
+      setAboutOpen(false);
+    }
+  }, [location]);
+
+  useEffect(() => () => clearTimers(), []);
+
+  const expandWithDelay = () => {
+    if (pinned) return;
+    if (collapseTimer.current !== null) window.clearTimeout(collapseTimer.current);
+    expandTimer.current = window.setTimeout(() => {
+      setExpanded(true);
+      expandTimer.current = null;
+    }, 120);
+  };
+
+  const collapseWithDelay = () => {
+    if (pinned) return;
+    if (expandTimer.current !== null) window.clearTimeout(expandTimer.current);
+    collapseTimer.current = window.setTimeout(() => {
+      setExpanded(false);
+      setAboutOpen(false);
+      collapseTimer.current = null;
+    }, 320);
+  };
+
+  const togglePinned = () => {
+    clearTimers();
+    setPinned(value => {
+      const next = !value;
+      setExpanded(next || expanded);
+      if (!next) setExpanded(false);
+      return next;
+    });
+  };
+
+  const aboutActive = ['/about', '/terms', '/privacy', '/contact'].includes(location);
 
   return (
-    <div className="kinoma-app-shell" style={{ '--sidebar-width': expanded ? '236px' : '76px' } as React.CSSProperties}>
-      <aside className={`kinoma-sidebar ${expanded ? 'is-expanded' : 'is-collapsed'}`} aria-label="Primary navigation">
+    <div
+      className="kinoma-app-shell"
+      style={{ '--sidebar-width': expanded ? '236px' : '72px' } as React.CSSProperties}
+    >
+      <aside
+        className={`kinoma-sidebar ${expanded ? 'is-expanded' : 'is-collapsed'} ${pinned ? 'is-pinned' : ''}`}
+        aria-label="Primary navigation"
+        onPointerEnter={expandWithDelay}
+        onPointerLeave={collapseWithDelay}
+      >
         <div className="kinoma-sidebar__top">
           <Link href="/home" className="kinoma-sidebar__brand kinoma-focus" aria-label="Kinoma home">
-            <KinomaLogo size={expanded ? 'md' : 'sm'} variant={expanded ? 'full' : 'mark'} className="kinoma-sidebar__logo" />
+            <KinomaLogo
+              size={expanded ? 'md' : 'sm'}
+              variant={expanded ? 'full' : 'mark'}
+              className="kinoma-sidebar__logo"
+            />
           </Link>
-          <button type="button" className="kinoma-sidebar__toggle kinoma-focus" onClick={() => setExpanded(v => !v)} aria-label={expanded ? 'Collapse sidebar' : 'Expand sidebar'} aria-expanded={expanded}>
-            {expanded ? <ChevronsLeft size={17} /> : <ChevronsRight size={17} />}
-          </button>
+
+          {expanded && (
+            <button
+              type="button"
+              className="kinoma-sidebar__pin kinoma-focus"
+              onClick={togglePinned}
+              aria-label={pinned ? 'Unpin sidebar' : 'Pin sidebar'}
+              aria-pressed={pinned}
+              data-tooltip={pinned ? 'Unpin sidebar' : 'Pin sidebar'}
+            >
+              {pinned ? <PinOff size={16} strokeWidth={1.8} /> : <Pin size={16} strokeWidth={1.8} />}
+            </button>
+          )}
         </div>
-        <nav className="kinoma-sidebar__nav">
-          {ITEMS.map(({ href, label, Icon }) => {
-            const active = location === href || (href === '/search' && (location === '/explore' || location === '/whats-new'));
-            return (
-              <Link key={href} href={href} className={`kinoma-sidebar__item ${active ? 'is-active' : ''}`} title={!expanded ? label : undefined}>
-                <Icon size={19} strokeWidth={1.8} aria-hidden="true" />
-                <span>{label}</span>
-              </Link>
-            );
-          })}
+
+        <nav className="kinoma-sidebar__nav" aria-label="Main navigation">
+          <div className="kinoma-sidebar__nav-group">
+            {ITEMS.map(({ href, label, Icon }) => {
+              const active =
+                location === href ||
+                (href === '/search' && (location === '/explore' || location === '/whats-new'));
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`kinoma-sidebar__item ${active ? 'is-active' : ''}`}
+                  aria-label={label}
+                  aria-current={active ? 'page' : undefined}
+                  data-tooltip={label}
+                >
+                  <Icon size={19} strokeWidth={1.8} aria-hidden="true" />
+                  <span>{label}</span>
+                </Link>
+              );
+            })}
+
+            <div className={`kinoma-sidebar__about ${aboutActive ? 'is-active' : ''}`}>
+              <button
+                type="button"
+                className={`kinoma-sidebar__item kinoma-sidebar__about-trigger kinoma-focus ${aboutActive ? 'is-active' : ''}`}
+                aria-label="About"
+                aria-expanded={aboutOpen}
+                aria-controls="kinoma-about-menu"
+                data-tooltip="About"
+                onClick={() => {
+                  if (!expanded) {
+                    setExpanded(true);
+                    setAboutOpen(true);
+                    return;
+                  }
+                  setAboutOpen(value => !value);
+                }}
+              >
+                <Info size={19} strokeWidth={1.8} aria-hidden="true" />
+                <span>About</span>
+                {expanded && (
+                  <ChevronRight
+                    className="kinoma-sidebar__about-chevron"
+                    size={15}
+                    strokeWidth={1.7}
+                    aria-hidden="true"
+                  />
+                )}
+              </button>
+
+              <div
+                id="kinoma-about-menu"
+                className={`kinoma-sidebar__submenu ${aboutOpen && expanded ? 'is-open' : ''}`}
+                aria-hidden={!aboutOpen || !expanded}
+              >
+                {ABOUT_ITEMS.map(({ href, label }) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={`kinoma-sidebar__submenu-item ${location === href ? 'is-active' : ''}`}
+                    tabIndex={aboutOpen && expanded ? 0 : -1}
+                    aria-current={location === href ? 'page' : undefined}
+                  >
+                    <span>{label}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
         </nav>
-        <div className="kinoma-sidebar__profile">
-          <div className="kinoma-sidebar__avatar" aria-hidden="true"><UserRound size={18} strokeWidth={1.7} /></div>
-          <span>Profile</span>
+
+        <div className="kinoma-sidebar__profile-area">
+          <Link
+            href="/profile"
+            className="kinoma-sidebar__profile kinoma-focus"
+            aria-label="Profile"
+            aria-current={location === '/profile' ? 'page' : undefined}
+            data-tooltip="Profile"
+          >
+            <div className="kinoma-sidebar__avatar" aria-hidden="true">
+              <UserRound size={18} strokeWidth={1.7} />
+            </div>
+            <span>Profile</span>
+          </Link>
         </div>
+
+        <button
+          type="button"
+          className="kinoma-sidebar__mobile-close kinoma-focus"
+          onClick={() => {
+            setAboutOpen(false);
+            setExpanded(false);
+          }}
+          aria-label="Collapse sidebar"
+        >
+          <X size={17} />
+        </button>
       </aside>
+
       <main className="kinoma-app-main">{children}</main>
     </div>
   );
