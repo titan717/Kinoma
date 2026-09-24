@@ -19,6 +19,8 @@ export interface AnimeSeasonItem {
   episodeCount: number;
 }
 
+export type ContentType = 'anime' | 'movie' | 'series';
+
 export interface AnimeItem {
   id: string;
   anilist_id?: number;
@@ -34,6 +36,7 @@ export interface AnimeItem {
   genres?: string[];
   totalEpisodes?: number;
   status?: string;
+  contentType?: ContentType;
 }
 
 export interface AnimeDetails extends AnimeItem {
