@@ -45,6 +45,9 @@ export function Search() {
   const [submittedQuery, setSubmittedQuery] = useState(initialQuery);
   const [searchOpen, setSearchOpen] = useState(Boolean(initialQuery));
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [results, setResults] = useState<ContentItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const isSearching = submittedQuery.length > 0;
