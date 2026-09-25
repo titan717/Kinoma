@@ -3241,3 +3241,72 @@ p {
 @media(max-width:800px){.kinoma-details-hero{min-height:auto;padding-bottom:0}.kinoma-details-trailer{position:relative;right:auto;top:auto;width:calc(100% - 32px);margin:22px 16px 0;aspect-ratio:16/9}.kinoma-details-hero__content{min-height:auto;padding:34px 20px 56px}.kinoma-details-hero__backdrop{height:100%}.kinoma-details-hero__scrim{background:linear-gradient(0deg,rgba(8,7,7,.98) 0%,rgba(8,7,7,.68) 45%,rgba(8,7,7,.28) 100%)}.kinoma-details-copy h1{font-size:clamp(2.8rem,12vw,4.8rem)}.kinoma-episode-card{grid-template-columns:120px minmax(0,1fr) 18px}.kinoma-more-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:560px){.kinoma-details-trailer{width:calc(100% - 24px);margin-inline:12px;border-radius:18px}.kinoma-details-hero__content{padding:28px 14px 48px}.kinoma-details-synopsis{font-size:12px}.kinoma-details-actions{gap:9px}.kinoma-details-3d-button span{padding:12px 15px}.kinoma-details-section{padding-top:46px}.kinoma-episode-card{grid-template-columns:96px minmax(0,1fr);gap:11px}.kinoma-episode-arrow{display:none}.kinoma-episode-copy p{font-size:9px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}.kinoma-more-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.kinoma-details-bottom{margin-top:42px}}
 @media(prefers-reduced-motion:reduce){.kinoma-details-3d-button,.kinoma-season-tabs button,.kinoma-episode-card,.kinoma-more-card{transition:none!important}}
+
+
+/* Seamless Home refresh — tighter rhythm, fewer layers, better viewport use. */
+.kinoma-home{min-height:100dvh;overflow:clip}
+.kinoma-home__inner{padding-inline:clamp(14px,2.4vw,34px);padding-top:clamp(18px,3vw,38px)}
+.kinoma-home__ambient{opacity:.42}
+.kinoma-home-hero{min-height:clamp(430px,58dvh,650px);display:grid;grid-template-columns:minmax(0,.86fr) minmax(340px,1.14fr);align-items:center;gap:clamp(24px,5vw,72px);padding:clamp(26px,4vw,54px);border-radius:clamp(22px,2.5vw,34px);overflow:hidden}
+.kinoma-home-hero__copy{max-width:590px;z-index:2}
+.kinoma-home-hero__copy h1{font-size:clamp(3.1rem,6.4vw,6.8rem);line-height:.86;letter-spacing:-.075em;text-wrap:balance}
+.kinoma-home-hero__copy p{max-width:500px;margin-top:20px;font-size:clamp(12px,1.1vw,14px);line-height:1.75;color:rgba(246,242,238,.52)}
+.kinoma-home-hero__actions{gap:10px;margin-top:26px}
+.kinoma-home-hero__banner{min-width:0;min-height:300px;aspect-ratio:16/10;border-radius:24px;overflow:hidden}
+.kinoma-home-section{margin-top:clamp(38px,5vw,62px)}
+.kinoma-home-section__heading{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:13px}
+.kinoma-home-section__heading h2{font-size:clamp(1.35rem,2.2vw,2rem);line-height:1}
+.kinoma-home-section__eyebrow{font-size:8px;letter-spacing:.16em;margin-bottom:7px}
+.kinoma-home-section__link{flex:0 0 auto}
+.kinoma-rail{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(190px,1fr);grid-template-rows:1fr;gap:11px;overflow-x:auto;overflow-y:hidden;padding:3px 2px 12px;scroll-snap-type:x proximity;scrollbar-width:none}
+.kinoma-rail::-webkit-scrollbar{display:none}
+.kinoma-rail-card{scroll-snap-align:start;min-width:0;transition:transform 170ms var(--ease-kinoma)}
+.kinoma-rail-card:hover{transform:translateY(-4px)}
+.kinoma-rail-card__art{aspect-ratio:16/10;border-radius:15px}
+.kinoma-rail-card__copy{padding:9px 2px 0}
+.kinoma-rail-card__copy h3{font-size:11px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kinoma-rail-card__copy p{margin-top:4px;font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:rgba(246,242,238,.34)}
+.kinoma-home-section--split{padding-bottom:clamp(4px,1vw,16px)}
+.kinoma-home-format-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.kinoma-home-format-card{position:relative;display:flex;flex-direction:column;justify-content:flex-end;min-height:150px;padding:20px;border:1px solid rgba(246,242,238,.08);border-radius:19px;overflow:hidden;color:#fff;text-decoration:none;background:linear-gradient(145deg,rgba(184,77,65,.18),rgba(24,21,21,.88));transition:transform 170ms var(--ease-kinoma),border-color 170ms ease}
+.kinoma-home-format-card::before{content:'';position:absolute;width:170px;height:170px;right:-45px;top:-55px;border-radius:50%;background:rgba(232,208,192,.09);filter:blur(18px)}
+.kinoma-home-format-card:hover{transform:translateY(-3px);border-color:rgba(232,208,192,.18)}
+.kinoma-home-format-card svg,.kinoma-home-format-card span,.kinoma-home-format-card small{position:relative}
+.kinoma-home-format-card svg{margin-bottom:auto;color:rgba(232,208,192,.72)}
+.kinoma-home-format-card span{font-size:17px;font-weight:800;letter-spacing:-.03em}
+.kinoma-home-format-card small{margin-top:4px;color:rgba(246,242,238,.35);font-size:9px}
+.kinoma-home-footer{margin-top:clamp(62px,9vw,110px)}
+@media(max-width:1050px){
+  .kinoma-home-hero{grid-template-columns:1fr 1fr;gap:28px}
+  .kinoma-home-hero__copy h1{font-size:clamp(3rem,6.8vw,5.6rem)}
+  .kinoma-rail{grid-auto-columns:minmax(205px,30vw)}
+}
+@media(max-width:760px){
+  .kinoma-home__inner{padding-inline:12px;padding-top:12px}
+  .kinoma-home-hero{grid-template-columns:1fr;min-height:auto;padding:24px 18px 18px;border-radius:22px}
+  .kinoma-home-hero__copy h1{font-size:clamp(3rem,15vw,5rem)}
+  .kinoma-home-hero__copy p{margin-top:16px}
+  .kinoma-home-hero__actions{margin-top:20px}
+  .kinoma-home-hero__banner{min-height:0;width:100%;aspect-ratio:16/8.5;border-radius:18px}
+  .kinoma-home-section{margin-top:42px}
+  .kinoma-home-section__heading{margin-bottom:11px}
+  .kinoma-rail{grid-auto-columns:minmax(175px,58vw);gap:9px;padding-bottom:9px}
+  .kinoma-rail-card__art{border-radius:13px}
+  .kinoma-home-format-grid{grid-template-columns:1fr}
+  .kinoma-home-format-card{min-height:125px}
+}
+@media(max-width:430px){
+  .kinoma-home-hero{padding:21px 15px 15px}
+  .kinoma-home-hero__copy h1{font-size:clamp(2.75rem,14.5vw,4rem)}
+  .kinoma-home-hero__copy p{font-size:11px;line-height:1.65}
+  .kinoma-home-hero__actions{flex-direction:column;align-items:stretch}
+  .kinoma-home-hero__actions .kinoma-3d-button{width:100%}
+  .kinoma-home-hero__banner{aspect-ratio:16/9}
+  .kinoma-home-section{margin-top:36px}
+  .kinoma-home-section__heading h2{font-size:1.28rem}
+  .kinoma-home-section__link{font-size:8px}
+  .kinoma-rail{grid-auto-columns:minmax(164px,62vw)}
+}
+@media(prefers-reduced-motion:reduce){
+  .kinoma-rail-card,.kinoma-home-format-card{transition:none!important}
+}
