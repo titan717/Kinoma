@@ -10,8 +10,6 @@ import { AnimeDetails, AnimeItem } from '../types';
  * pages directly to a provider.
  */
 
-const empty = <T,>(value: T) => Promise.resolve(value);
-
 const placeholder = (id: string): AnimeItem => ({
   id,
   title: id || 'Untitled',
@@ -28,7 +26,7 @@ export const api = {
   getAiringToday: async () => ({ results: [] as AnimeItem[], day: 'Today' }),
   getMovies: async () => ({ results: [] as AnimeItem[] }),
   getGenreAnime: async () => ({ results: [] as AnimeItem[] }),
-  getSeasons: async () => ({ seasons: [] }),
+  getSeasons: async (..._args: unknown[]) => ({ seasons: [] }),
   search: async () => ({ results: [] as AnimeItem[] }),
   searchPaged: async () => ({ results: [] as AnimeItem[], total: 0 }),
   getRecommendations: async () => ({ results: [] as AnimeItem[] }),
@@ -48,12 +46,12 @@ export const api = {
     season_anime_id: originalAnimeId,
     episodes: [],
   }),
-  getWatchLink: async () => {
+  getWatchLink: async (..._args: unknown[]) => {
     throw new Error('Playback is disconnected until the new content API is connected.');
   },
   getSchedule: async () => ({ results: [] as AnimeItem[] }),
-  getServers: async () => ({ servers: [] }),
-  getStream: async () => ({ url: '' }),
+  getServers: async (..._args: unknown[]) => ({ servers: [] }),
+  getStream: async (..._args: unknown[]) => ({ url: '' }),
 };
 
 export type KinomaContentApi = typeof api;
