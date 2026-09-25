@@ -6,7 +6,7 @@ import { SearchBar } from '../SearchBar';
 
 const NAV = [
   { href: '/search', label: 'Explore', items: [{ href: '/search', label: 'Browse Anime' }, { href: '/whats-new', label: "What's New" }] },
-  { href: '/library', label: 'Library', items: [{ href: '/library', label: 'My List' }, { href: '/history', label: 'History' }] },
+  { href: '/library', label: 'My List', items: [{ href: '/library', label: 'My List' }, { href: '/history', label: 'History' }] },
   { href: '/about', label: 'About', items: [{ href: '/about', label: 'Kinoma' }, { href: '/terms', label: 'Terms' }] },
 ];
 
