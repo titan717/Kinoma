@@ -53,7 +53,7 @@ export function ModernCard({
             loading="lazy"
             referrerPolicy="no-referrer"
             onLoad={() => setImageLoaded(true)}
-            className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-105 ${
+            className={`w-full h-full object-cover object-center transition-all duration-500 group-hover:scale-105 ${
               imageLoaded ? 'opacity-100' : 'opacity-0'
             }`}
           />
