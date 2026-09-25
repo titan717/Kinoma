@@ -7,6 +7,9 @@ import { Layout } from './components/Layout';
 import { Landing } from './pages/Landing';
 import { Terms } from './pages/Terms';
 import { About } from './pages/About';
+import { Profile } from './pages/Profile';
+import { Privacy } from './pages/Privacy';
+import { Contact } from './pages/Contact';
 
 // Route-level code splitting keeps the initial bundle focused on the landing/home experience.
 const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
@@ -54,6 +57,9 @@ function AnimatedRoutes() {
           <Route path="/browse" component={Home} />
           <Route path="/home" component={Home} />
           <Route path="/terms" component={Terms} />
+          <Route path="/privacy" component={Privacy} />
+          <Route path="/contact" component={Contact} />
+          <Route path="/profile" component={Profile} />
           <Route path="/about" component={About} />
           <Route path="/admin" component={Admin} />
           <Route path="/settings" component={SettingsPage} />
