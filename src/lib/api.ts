@@ -20,7 +20,7 @@ function isTvSeries(item: any): boolean {
 
 function mapItem(item: any): AnimeItem {
   const title = item.title?.english || item.title?.romaji || item.title?.native || 'Unknown';
-  const imgUrl = item.cover_image?.large || item.cover_image?.extra_large || item.image || DEFAULT_POSTER;
+  const imgUrl = item.cover_image?.extra_large || item.cover_image?.large || item.image || DEFAULT_POSTER;
   const coverUrl = item.cover_image?.extra_large || item.cover_image?.large || item.cover || DEFAULT_BANNER;
 
   const normalizedFormat = String(item.format || item.type || 'TV').toUpperCase();
@@ -312,7 +312,8 @@ export const api = {
             media.images?.webp?.image_url ||
             media.images?.jpg?.image_url;
 
-          if (jikanImage && !initialItem?.image) {
+          jikanPoster = jikanImage || '';
+          if (jikanImage) {
             initialItem = { ...(initialItem || {} as AnimeItem), image: jikanImage };
           }
 
@@ -366,8 +367,8 @@ export const api = {
       }));
 
       const finalTitle = initialItem?.title || info.title || { english: id, romaji: id };
-      const finalImage = initialItem?.image || String(info.cover_image?.large || info.cover_image?.extra_large || info.image || DEFAULT_POSTER);
-      const finalCover = String(info.cover_image?.extra_large || info.cover_image?.large || info.cover || DEFAULT_BANNER);
+      const finalImage = String(jikanPoster || initialItem?.image || info.cover_image?.extra_large || info.cover_image?.large || info.image || DEFAULT_POSTER);
+      const finalCover = String(info.cover_image?.extra_large || info.cover_image?.large || info.cover || jikanPoster || DEFAULT_BANNER);
       const finalBanner = String(info.banner_image?.extra_large || info.banner_image?.large || info.banner || info.cover_image?.extra_large || info.cover_image?.large || DEFAULT_BANNER);
 
       return {
