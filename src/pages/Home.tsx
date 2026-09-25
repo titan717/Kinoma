@@ -115,8 +115,9 @@ function KindIcon({ kind }: { kind: RailKind }) {
 }
 
 function RailCard({ item }: { item: RailItem }) {
+  const contentType = item.kind === 'anime' ? 'anime' : /movie/i.test(item.meta) ? 'movie' : 'series';
   return (
-    <article className={`kinoma-rail-card ${toneClass[item.tone] || ''}`}>
+    <Link href={`/details/${encodeURIComponent(item.title)}?type=${contentType}`} className={`kinoma-rail-card ${toneClass[item.tone] || ''}`} aria-label={`Open ${item.title}`}>
       <div className="kinoma-rail-card__art" aria-hidden="true">
         <span className="kinoma-rail-card__orb kinoma-rail-card__orb--one" />
         <span className="kinoma-rail-card__orb kinoma-rail-card__orb--two" />
@@ -128,7 +129,7 @@ function RailCard({ item }: { item: RailItem }) {
         <h3>{item.title}</h3>
         <p>{item.meta}</p>
       </div>
-    </article>
+    </Link>
   );
 }
 
@@ -226,10 +227,10 @@ export function Home() {
         <ContentRail kind="trending" items={RAILS.trending} />
         <ContentRail kind="latest" items={RAILS.latest} />
         <ContentRail kind="popular" items={RAILS.popular} />
-        <ContentRail kind="airing" items={RAILS.airing} />
-        <ContentRail kind="tv" items={RAILS.tv} />
-        <ContentRail kind="movie" items={RAILS.movie} />
-        <ContentRail kind="anime" items={RAILS.anime} />
+        <div className="kinoma-home-pair">
+          <ContentRail kind="tv" items={RAILS.tv.slice(0, 4)} />
+          <ContentRail kind="movie" items={RAILS.movie.slice(0, 4)} />
+        </div>
 
         <footer className="kinoma-home-footer">
           <div className="kinoma-home-footer__art" aria-hidden="true">
