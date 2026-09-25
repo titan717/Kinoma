@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRoute, Link } from 'wouter';
 import useSWR from 'swr';
 import { api } from '../lib/api';
-import { animeApi } from '../services/animeApi';
 import Hls from 'hls.js';
 import { 
   Play, 
@@ -79,7 +78,7 @@ export function Watch() {
   // Fetch servers list
   const { data: serversData, isLoading: loadingServers } = useSWR(
     slug && epNum ? `servers-${slug}-${epNum}-${effectiveAnilistId}` : null,
-    () => animeApi.getServers(slug, epNum, effectiveAnilistId)
+    () => api.getServers(slug, epNum, effectiveAnilistId)
   );
 
   const servers = serversData?.servers || [];
@@ -90,7 +89,7 @@ export function Watch() {
   // Fetch stream URL
   const { data: streamData, isLoading: loadingStream } = useSWR(
     slug && epNum && currentServer ? `stream-${slug}-${epNum}-${currentServer.serverName}-${currentServer.dataType || selectedType}-${effectiveAnilistId}` : null,
-    () => animeApi.getStream(
+    () => api.getStream(
       slug, 
       epNum, 
       currentServer.serverName, 
