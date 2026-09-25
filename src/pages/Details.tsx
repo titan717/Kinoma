@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useRoute } from 'wouter';
-import { Play, Plus, Check, Volume2, VolumeX, ChevronRight, Film, Tv, Clock3 } from 'lucide-react';
+import { Play, Plus, Check, ChevronRight, Film, Tv, Clock3 } from 'lucide-react';
 import { api } from '../lib/api';
 import { DEFAULT_POSTER, DEFAULT_BANNER } from '../types';
 import { libraryManager } from '../lib/library';
