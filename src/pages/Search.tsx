@@ -3,7 +3,8 @@ import { ArrowLeft, Clock3, Search as SearchIcon, Sparkles, X } from 'lucide-rea
 import { Link, useLocation } from 'wouter';
 import { updateSEO } from '../lib/seo';
 import { preferencesUtil } from '../lib/preferences';
-import { ContentItem, contentProvider } from '../lib/content';
+import { ContentItem } from '../lib/content';
+import { api, MovieApiError } from '../lib/api';
 
 const FALLBACK_TRENDING: ContentItem[] = [
   { id: 'trend-1', title: 'Trending Title', type: 'movie', meta: 'Movie · 2026', tone: 'rose' },
@@ -162,7 +163,11 @@ export function Search() {
             {!isSearching && <Sparkles size={18} aria-hidden="true" />}
           </div>
 
-          {results.length ? (
+          {loading ? (
+            <div className="kinoma-search-empty"><SearchIcon size={28} /><h3>Searching…</h3><p>Finding movies and series from MovieApi.</p></div>
+          ) : error ? (
+            <div className="kinoma-search-empty"><SearchIcon size={28} /><h3>Search unavailable</h3><p>{error}</p><button type="button" onClick={() => setSubmittedQuery(submittedQuery)}>Try again</button></div>
+          ) : results.length ? (
             <div className="kinoma-search-grid">
               {results.map(item => <ContentCard key={item.id} item={item} />)}
             </div>
