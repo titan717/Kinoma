@@ -56,6 +56,8 @@ export function Details() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [isInList, setIsInList] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -121,7 +123,7 @@ export function Details() {
   };
 
   return (
-    <main className="kinoma-details-page">
+    <main className="kinoma-details-page">\n      {loading && <div className="kinoma-details-bottom">Loading metadata from MovieApi…</div>}\n      {error && <div className="kinoma-details-bottom">{error}</div>}
       <section className="kinoma-details-hero">
         <div className="kinoma-details-hero__backdrop" aria-hidden="true">
           <img src={model.backdrop} alt="" />
