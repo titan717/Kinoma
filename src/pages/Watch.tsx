@@ -239,45 +239,11 @@ export function Watch() {
     };
   }, [streamUrl, isDirectMedia]);
 
-  // Network Quality Monitoring (subtle latency / buffer test)
+  // Network checks are intentionally disabled while the new MovieApi boundary is being built.
+  // Keeping this local avoids background requests to the retired anime backend.
   useEffect(() => {
-    let active = true;
-    const checkNetwork = async () => {
-      const start = Date.now();
-      try {
-        await fetch('https://kinomaapi.vercel.app/health', { cache: 'no-store' });
-        const latency = Date.now() - start;
-        if (!active) return;
-        if (latency < 450) {
-          setNetworkQuality('excellent');
-          setShowNetworkNotice(false);
-        } else if (latency < 1200) {
-          setNetworkQuality('good');
-          setShowNetworkNotice(false);
-        } else {
-          setNetworkQuality('poor');
-          setShowNetworkNotice(true);
-        }
-      } catch {
-        if (active) {
-          setNetworkQuality('poor');
-          setShowNetworkNotice(true);
-        }
-      }
-    };
-
-    const runInitialCheck = () => {
-      if (document.visibilityState !== 'hidden') checkNetwork();
-    };
-    const initialIdle = (window as any).requestIdleCallback;
-    if (typeof initialIdle === 'function') initialIdle(runInitialCheck, { timeout: 2000 });
-    else window.setTimeout(runInitialCheck, 1000);
-
-    const netInterval = setInterval(runInitialCheck, 120000);
-    return () => {
-      active = false;
-      clearInterval(netInterval);
-    };
+    setNetworkQuality('excellent');
+    setShowNetworkNotice(false);
   }, []);
 
   const toggleFullscreen = () => {
