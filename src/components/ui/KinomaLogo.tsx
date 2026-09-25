@@ -18,19 +18,18 @@ const LOGO_SRC = 'https://raw.githubusercontent.com/titan717/Kinoma/126eee1aa370
 
 export function KinomaLogo({ size = 'md', variant = 'full', className = '', onClick }: KinomaLogoProps) {
   const dimensions = SIZE_MAP[size];
-  const isMark = variant === 'mark';
+
+  if (variant === 'mark') {
+    return (
+      <span className={`inline-flex shrink-0 items-center justify-center overflow-hidden select-none ${className}`} style={{ width: dimensions.height, height: dimensions.height }} onClick={onClick}>
+        <img src={LOGO_SRC} alt={onClick ? 'Kinoma' : ''} draggable={false} className="block max-w-none" style={{ width: dimensions.width, height: dimensions.height, objectFit: 'contain', objectPosition: 'left center' }} />
+      </span>
+    );
+  }
 
   return (
     <span className={`inline-flex shrink-0 items-center select-none ${className}`} onClick={onClick}>
-      <img
-        src={LOGO_SRC}
-        alt={onClick ? 'Kinoma' : ''}
-        width={isMark ? dimensions.height : dimensions.width}
-        height={dimensions.height}
-        draggable={false}
-        className="block h-auto w-full object-contain object-left"
-        style={{ maxWidth: isMark ? dimensions.height : dimensions.width, maxHeight: dimensions.height }}
-      />
+      <img src={LOGO_SRC} alt={onClick ? 'Kinoma' : ''} width={dimensions.width} height={dimensions.height} draggable={false} className="block h-auto w-full object-contain object-left" style={{ maxWidth: dimensions.width, maxHeight: dimensions.height }} />
     </span>
   );
 }
