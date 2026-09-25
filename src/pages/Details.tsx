@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useRoute } from 'wouter';
 import { Play, Plus, Check, Volume2, VolumeX, ChevronRight, Film, Tv, Clock3 } from 'lucide-react';
 import { api } from '../lib/api';
@@ -86,7 +86,7 @@ export function Details() {
       synopsis: cleanText(data?.description) || 'A cinematic synopsis will appear here once the MovieApi connection is active. This space is deliberately shaped for long-form metadata so the API can drop in the real story without another UI rebuild.',
       poster: data?.image || DEFAULT_POSTER,
       backdrop: data?.cover || data?.banner || DEFAULT_BANNER,
-      trailerUrl: trailer?.trailer?.url || trailer?.url || undefined,
+      trailerUrl: trailer?.trailer?.embedUrl || trailer?.trailer?.url || trailer?.url || undefined,
       seasons,
     };
   }, [data, id, queryType, trailer]);
@@ -95,15 +95,6 @@ export function Details() {
     updateSEO({ title: model.title, description: model.synopsis.slice(0, 160), image: model.poster, type: 'video.tv_show' });
     setIsInList(libraryManager.isInWatchlist(model.id));
   }, [model.title, model.synopsis, model.poster, model.id]);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !model.trailerUrl) return;
-    video.muted = false;
-    setMuted(false);
-    const attempt = video.play();
-    if (attempt) attempt.catch(() => setTrailerBlocked(true));
-  }, [model.trailerUrl]);
 
   const toggleList = () => {
     const added = libraryManager.toggleWatchlist({
@@ -132,27 +123,13 @@ export function Details() {
 
         <div className="kinoma-details-trailer" aria-label={`${model.title} trailer preview`}>
           {model.trailerUrl ? (
-            <>
-              <video
-                ref={videoRef}
-                src={model.trailerUrl}
-                autoPlay
-                playsInline
-                preload="metadata"
-                className="kinoma-details-trailer__video"
-                onPlay={() => setTrailerBlocked(false)}
-              />
-              <button className="kinoma-details-trailer__sound" onClick={() => {
-                const next = !muted;
-                setMuted(next);
-                if (videoRef.current) videoRef.current.muted = next;
-              }} aria-label={muted ? 'Turn trailer sound on' : 'Turn trailer sound off'}>
-                {muted ? <VolumeX size={17} /> : <Volume2 size={17} />}
-              </button>
-              {trailerBlocked && (
-                <button className="kinoma-details-trailer__play" onClick={() => videoRef.current?.play()}><Play size={18} fill="currentColor" /> Play preview</button>
-              )}
-            </>
+            <iframe
+              src={model.trailerUrl}
+              title={`${model.title} trailer`}
+              className="kinoma-details-trailer__video"
+              allow="autoplay; encrypted-media; picture-in-picture"
+              allowFullScreen
+            />
           ) : (
             <div className="kinoma-details-trailer__placeholder">
               <div className="kinoma-details-trailer__placeholder-art">
