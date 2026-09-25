@@ -2670,3 +2670,78 @@ p {
   .kinoma-home-footer__cube,
   .kinoma-home-footer__star { animation: none !important; }
 }
+
+
+/* Shared destination-page shell for previously missing sidebar routes. */
+.kinoma-simple-page {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 40px 20px 100px;
+  background:
+    radial-gradient(circle at 70% 20%, rgba(184,77,65,.10), transparent 25rem),
+    var(--kinoma-bg);
+}
+
+.kinoma-simple-page__card,
+.kinoma-simple-page__document {
+  width: min(100%, 760px);
+  padding: clamp(28px, 5vw, 52px);
+  border: 1px solid rgba(246,242,238,.08);
+  border-radius: 28px;
+  background: rgba(24,21,21,.72);
+  box-shadow: 0 30px 90px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.035);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.kinoma-simple-page__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 18px;
+  border: 1px solid rgba(232,208,192,.14);
+  border-radius: 14px;
+  color: var(--kinoma-accent-soft);
+  background: rgba(184,77,65,.10);
+}
+
+.kinoma-simple-page h1 {
+  margin-top: 8px;
+  font-size: clamp(2.2rem, 5vw, 4.4rem);
+  line-height: .92;
+  letter-spacing: -.065em;
+}
+
+.kinoma-simple-page p {
+  max-width: 620px;
+  margin-top: 16px;
+  color: rgba(246,242,238,.52);
+  font-size: 13px;
+  line-height: 1.85;
+}
+
+.kinoma-simple-page__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 26px;
+  padding: 11px 16px;
+  border: 1px solid rgba(246,242,238,.10);
+  border-radius: 13px;
+  color: var(--kinoma-text);
+  background: rgba(255,255,255,.05);
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 800;
+  transition: background 160ms ease, transform 160ms var(--ease-kinoma);
+}
+
+.kinoma-simple-page__button:hover { background: rgba(255,255,255,.09); transform: translateY(-2px); }
+.kinoma-simple-page__notice { display:flex; align-items:center; gap:9px; margin-top:22px; padding:13px 14px; border:1px solid rgba(232,208,192,.10); border-radius:14px; color:rgba(246,242,238,.48); background:rgba(255,255,255,.025); font-size:11px; }
+
+@media (max-width: 700px) {
+  .kinoma-simple-page { padding: 28px 14px 100px; }
+  .kinoma-simple-page__card, .kinoma-simple-page__document { border-radius: 22px; padding: 26px 20px; }
+}
