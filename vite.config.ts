@@ -51,6 +51,32 @@ export default defineConfig(() => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+          runtimeCaching: [
+            {
+              urlPattern: ({ request }) => ['image', 'font'].includes(request.destination),
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'kinoma-static-media-v1',
+                expiration: {
+                  maxEntries: 120,
+                  maxAgeSeconds: 60 * 60 * 24 * 30,
+                },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
+            {
+              urlPattern: ({ url }) => url.origin === self.location.origin && url.pathname.startsWith('/api/'),
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'kinoma-api-v1',
+                expiration: {
+                  maxEntries: 80,
+                  maxAgeSeconds: 60 * 60 * 24,
+                },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
+          ],
         },
         devOptions: {
           enabled: true,
