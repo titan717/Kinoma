@@ -3310,3 +3310,88 @@ p {
 @media(prefers-reduced-motion:reduce){
   .kinoma-rail-card,.kinoma-home-format-card{transition:none!important}
 }
+
+
+/* New Watch page — focused player, simple navigation, responsive episode browsing. */
+.kinoma-player-page{min-height:100dvh;background:var(--kinoma-bg);color:var(--kinoma-text);padding-bottom:60px}
+.kinoma-player-topbar{width:min(100%,1500px);margin:auto;padding:clamp(16px,2.5vw,28px) var(--spacing-page);display:flex;align-items:center;justify-content:space-between;gap:18px}
+.kinoma-player-back,.kinoma-player-titlebar,.kinoma-player-footer a{display:inline-flex;align-items:center;gap:8px;color:rgba(246,242,238,.62);text-decoration:none;font-size:11px;font-weight:800}
+.kinoma-player-back{padding:9px 12px;border:1px solid rgba(246,242,238,.08);border-radius:11px;background:rgba(255,255,255,.025);transition:background 150ms ease,color 150ms ease,transform 150ms ease}
+.kinoma-player-back:hover{color:#fff;background:rgba(255,255,255,.055);transform:translateX(-2px)}
+.kinoma-player-titlebar{max-width:48%;min-width:0;color:rgba(246,242,238,.42)}
+.kinoma-player-titlebar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kinoma-player-titlebar small{padding-left:8px;border-left:1px solid rgba(246,242,238,.1);color:rgba(246,242,238,.3)}
+.kinoma-player-stage{width:min(100%,1500px);margin:0 auto;padding:0 var(--spacing-page)}
+.kinoma-player-frame{position:relative;aspect-ratio:16/9;max-height:78dvh;overflow:hidden;border:1px solid rgba(246,242,238,.09);border-radius:clamp(15px,2vw,24px);background:#080707;box-shadow:0 30px 90px rgba(0,0,0,.3)}
+.kinoma-player-video{width:100%;height:100%;display:block;object-fit:contain;background:#000}
+.kinoma-player-placeholder{width:100%;height:100%;display:grid;place-items:center;align-content:center;gap:9px;padding:24px;text-align:center;background:radial-gradient(circle at 50% 42%,rgba(184,77,65,.16),transparent 35%),#100e0e}
+.kinoma-player-placeholder__icon{display:grid;place-items:center;width:58px;height:58px;border:1px solid rgba(232,208,192,.13);border-radius:18px;color:rgba(232,208,192,.72);background:rgba(255,255,255,.035)}
+.kinoma-player-placeholder>span{font-size:8px;letter-spacing:.2em;font-weight:900;color:rgba(232,208,192,.52)}
+.kinoma-player-placeholder strong{font-size:clamp(1.1rem,2vw,1.7rem)}
+.kinoma-player-placeholder p{max-width:420px;color:rgba(246,242,238,.3);font-size:10px;line-height:1.7}
+.kinoma-player-placeholder button{display:flex;align-items:center;gap:7px;margin-top:6px;padding:10px 14px;border:1px solid rgba(255,255,255,.11);border-radius:11px;color:#fff;background:rgba(255,255,255,.06);font-size:10px;font-weight:850;cursor:pointer}
+.kinoma-player-controls{display:flex;align-items:center;gap:8px;padding:9px 2px;color:rgba(246,242,238,.34);font-size:9px}
+.kinoma-player-controls button{display:grid;place-items:center;width:34px;height:32px;border:1px solid rgba(246,242,238,.08);border-radius:9px;color:rgba(246,242,238,.65);background:rgba(255,255,255,.025);cursor:pointer}
+.kinoma-player-controls button:hover{color:#fff;background:rgba(255,255,255,.055)}
+.kinoma-player-controls span{margin-left:4px}
+.kinoma-player-info{width:min(100%,1500px);margin:20px auto 0;padding:24px var(--spacing-page);display:flex;align-items:center;justify-content:space-between;gap:28px;border-top:1px solid rgba(246,242,238,.06);border-bottom:1px solid rgba(246,242,238,.06)}
+.kinoma-player-info__main{display:flex;align-items:center;gap:17px;min-width:0}
+.kinoma-player-poster{width:70px;aspect-ratio:2/3;flex:0 0 auto;display:grid;place-items:center;overflow:hidden;border:1px solid rgba(246,242,238,.09);border-radius:11px;background:linear-gradient(145deg,#382523,#151212);color:rgba(232,208,192,.5)}
+.kinoma-player-poster img{width:100%;height:100%;object-fit:cover}
+.kinoma-player-copy{min-width:0;max-width:820px}
+.kinoma-player-eyebrow{font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:rgba(232,208,192,.56);font-weight:900}
+.kinoma-player-copy h1{margin-top:6px;font-size:clamp(1.35rem,2.5vw,2.25rem);letter-spacing:-.045em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kinoma-player-copy h2{margin-top:3px;font-size:11px;color:rgba(246,242,238,.46);font-weight:750}
+.kinoma-player-copy p{margin-top:9px;max-width:720px;color:rgba(246,242,238,.4);font-size:10px;line-height:1.7}
+.kinoma-player-list-button{display:flex;align-items:center;gap:8px;flex:0 0 auto;padding:11px 15px;border:1px solid rgba(246,242,238,.1);border-radius:11px;color:rgba(246,242,238,.72);background:rgba(255,255,255,.035);font-size:10px;font-weight:850;cursor:pointer}
+.kinoma-player-list-button:hover{color:#fff;background:rgba(255,255,255,.07)}
+.kinoma-player-list-button.is-added{border-color:rgba(184,77,65,.35);background:rgba(184,77,65,.15);color:#fff}
+.kinoma-player-section{width:min(100%,1500px);margin:0 auto;padding:clamp(38px,5vw,62px) var(--spacing-page) 0}
+.kinoma-player-section__heading{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:15px}
+.kinoma-player-section__heading span{display:block;font-size:8px;letter-spacing:.17em;font-weight:900;color:rgba(232,208,192,.48)}
+.kinoma-player-section__heading h2{margin-top:6px;font-size:clamp(1.35rem,2.4vw,2rem);letter-spacing:-.045em}
+.kinoma-player-section__heading small{color:rgba(246,242,238,.27);font-size:9px}
+.kinoma-player-seasons{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 13px;scrollbar-width:none}
+.kinoma-player-seasons::-webkit-scrollbar{display:none}
+.kinoma-player-seasons button{flex:0 0 auto;padding:10px 14px;border:1px solid rgba(246,242,238,.08);border-radius:13px;color:rgba(246,242,238,.45);background:rgba(255,255,255,.025);box-shadow:0 4px 0 rgba(0,0,0,.2);font-size:9px;font-weight:850;cursor:pointer;transition:transform 150ms ease,background 150ms ease,color 150ms ease}
+.kinoma-player-seasons button:hover{transform:translateY(-2px);color:#fff}
+.kinoma-player-seasons button.is-active{color:#fff;background:linear-gradient(145deg,#a82a25,#661b18);border-color:rgba(255,255,255,.12);box-shadow:0 5px 0 #3d1110}
+.kinoma-player-episodes{display:grid;gap:8px}
+.kinoma-player-episode{display:grid;grid-template-columns:175px minmax(0,1fr) 18px;align-items:center;gap:16px;padding:8px;border:1px solid rgba(246,242,238,.06);border-radius:15px;color:inherit;text-decoration:none;background:rgba(255,255,255,.018);transition:transform 150ms ease,border-color 150ms ease,background 150ms ease}
+.kinoma-player-episode:hover,.kinoma-player-episode.is-current{border-color:rgba(184,77,65,.24);background:rgba(184,77,65,.055);transform:translateX(2px)}
+.kinoma-player-episode__image{position:relative;aspect-ratio:16/9;display:grid;place-items:center;overflow:hidden;border-radius:10px;background:linear-gradient(145deg,#332322,#151212);color:rgba(232,208,192,.5)}
+.kinoma-player-episode__image img{width:100%;height:100%;object-fit:cover}
+.kinoma-player-episode__image b{position:absolute;left:7px;bottom:6px;padding:3px 5px;border-radius:5px;background:rgba(8,7,7,.72);font-size:7px}
+.kinoma-player-episode__copy{min-width:0}
+.kinoma-player-episode__copy strong{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kinoma-player-episode__copy p{max-width:900px;margin-top:5px;color:rgba(246,242,238,.31);font-size:9px;line-height:1.65}
+.kinoma-player-episode>svg{color:rgba(246,242,238,.25)}
+.kinoma-player-more-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:11px}
+.kinoma-player-more-card{min-width:0;overflow:hidden;border:1px solid rgba(246,242,238,.06);border-radius:15px;color:inherit;text-decoration:none;background:rgba(255,255,255,.018);transition:transform 150ms ease,border-color 150ms ease}
+.kinoma-player-more-card:hover{transform:translateY(-4px);border-color:rgba(232,208,192,.15)}
+.kinoma-player-more-card__art{display:grid;place-items:center;aspect-ratio:2/3;color:rgba(255,255,255,.45);background:linear-gradient(145deg,#3e2928,#171313)}
+.kinoma-player-more-card__art.tone-2{background:linear-gradient(145deg,#443727,#181510)}
+.kinoma-player-more-card__art.tone-3{background:linear-gradient(145deg,#2c3d46,#121719)}
+.kinoma-player-more-card__art.tone-4{background:linear-gradient(145deg,#3f2c46,#17131a)}
+.kinoma-player-more-card__art.tone-5{background:linear-gradient(145deg,#492b3a,#181217)}
+.kinoma-player-more-card strong,.kinoma-player-more-card span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kinoma-player-more-card strong{padding:10px 10px 0;font-size:10px}.kinoma-player-more-card span{padding:4px 10px 11px;color:rgba(246,242,238,.27);font-size:8px}
+.kinoma-player-footer{width:min(100%,1500px);margin:50px auto 0;padding:18px var(--spacing-page);border-top:1px solid rgba(246,242,238,.06);display:flex;justify-content:space-between;gap:12px}
+@media(max-width:800px){
+ .kinoma-player-topbar{padding-top:13px;padding-bottom:13px}.kinoma-player-titlebar{display:none}
+ .kinoma-player-stage{padding:0 10px}.kinoma-player-frame{border-radius:14px}
+ .kinoma-player-info{align-items:flex-start;flex-direction:column;padding-top:20px;padding-bottom:20px}.kinoma-player-list-button{width:100%;justify-content:center}
+ .kinoma-player-episode{grid-template-columns:125px minmax(0,1fr) 16px;gap:12px}
+ .kinoma-player-more-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:520px){
+ .kinoma-player-back{font-size:10px}.kinoma-player-back svg{width:15px}
+ .kinoma-player-controls{padding-inline:2px}.kinoma-player-poster{width:58px}
+ .kinoma-player-info__main{gap:12px}.kinoma-player-copy h1{font-size:1.2rem}.kinoma-player-copy p{font-size:9px}
+ .kinoma-player-section{padding-top:40px}.kinoma-player-episode{grid-template-columns:94px minmax(0,1fr);gap:10px}.kinoma-player-episode>svg{display:none}
+ .kinoma-player-episode__copy strong{font-size:10px}.kinoma-player-episode__copy p{font-size:8px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+ .kinoma-player-more-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.kinoma-player-footer{margin-top:38px}
+}
+@media(prefers-reduced-motion:reduce){
+ .kinoma-player-back,.kinoma-player-seasons button,.kinoma-player-episode,.kinoma-player-more-card{transition:none!important}
+}
