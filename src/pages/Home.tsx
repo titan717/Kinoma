@@ -1,20 +1,9 @@
 import React from 'react';
 import { Link } from 'wouter';
 import { KinomaLogo } from '../components/ui/KinomaLogo';
-import {
-  ArrowRight,
-  Clapperboard,
-  Film,
-  Github,
-  Instagram,
-  Play,
-  Plus,
-  Sparkles,
-  Tv,
-  Youtube,
-} from 'lucide-react';
+import { ArrowRight, Clapperboard, Film, Github, Instagram, Play, Plus, Sparkles, Tv, Youtube } from 'lucide-react';
 
-type RailKind = 'recommended' | 'trending' | 'latest' | 'popular' | 'airing' | 'tv' | 'movie' | 'anime';
+type RailKind = 'trending' | 'latest' | 'popular' | 'tv' | 'movie' | 'anime';
 
 type RailItem = {
   title: string;
@@ -23,7 +12,7 @@ type RailItem = {
   kind: RailKind;
 };
 
-const RAILS: Record<Exclude<RailKind, 'recommended'>, RailItem[]> = {
+const RAILS: Record<RailKind, RailItem[]> = {
   trending: [
     { title: 'Midnight Stories', meta: 'Drama • 8 episodes', tone: 'rose', kind: 'trending' },
     { title: 'Neon Skies', meta: 'Sci-Fi • 2h 04m', tone: 'blue', kind: 'trending' },
@@ -48,14 +37,6 @@ const RAILS: Record<Exclude<RailKind, 'recommended'>, RailItem[]> = {
     { title: 'Little Moon', meta: 'Romance • Movie', tone: 'pink', kind: 'popular' },
     { title: 'Paper Kingdom', meta: 'Fantasy • Movie', tone: 'slate', kind: 'popular' },
   ],
-  airing: [
-    { title: 'Tonight at 8', meta: 'Airing soon • Series', tone: 'rose', kind: 'airing' },
-    { title: 'Blue Hour', meta: 'Airing today • Series', tone: 'blue', kind: 'airing' },
-    { title: 'Afterglow', meta: 'Airing today • Series', tone: 'violet', kind: 'airing' },
-    { title: 'Late Shift', meta: 'Airing tomorrow • Series', tone: 'amber', kind: 'airing' },
-    { title: 'Open Skies', meta: 'Airing • Series', tone: 'pink', kind: 'airing' },
-    { title: 'Northbound', meta: 'Airing • Series', tone: 'slate', kind: 'airing' },
-  ],
   tv: [
     { title: 'Midnight Stories', meta: 'Drama • 8 episodes', tone: 'rose', kind: 'tv' },
     { title: 'Tiny Worlds', meta: 'Comedy • 10 episodes', tone: 'violet', kind: 'tv' },
@@ -72,31 +53,7 @@ const RAILS: Record<Exclude<RailKind, 'recommended'>, RailItem[]> = {
     { title: 'Sunday Cinema', meta: 'Drama • 1h 51m', tone: 'pink', kind: 'movie' },
     { title: 'Soft Static', meta: 'Thriller • 2h 01m', tone: 'slate', kind: 'movie' },
   ],
-  anime: [
-    { title: 'Anime Placeholder', meta: 'Anime • API disconnected', tone: 'pink', kind: 'anime' },
-    { title: 'Anime Placeholder', meta: 'Anime • API disconnected', tone: 'blue', kind: 'anime' },
-    { title: 'Anime Placeholder', meta: 'Anime • API disconnected', tone: 'violet', kind: 'anime' },
-    { title: 'Anime Placeholder', meta: 'Anime • API disconnected', tone: 'amber', kind: 'anime' },
-    { title: 'Anime Placeholder', meta: 'Anime • API disconnected', tone: 'rose', kind: 'anime' },
-    { title: 'Anime Placeholder', meta: 'Anime • API disconnected', tone: 'slate', kind: 'anime' },
-  ],
-};
-
-const RECOMMENDED: RailItem[] = [
-  { title: 'A Little Afterglow', meta: 'Because you like mysteries', tone: 'rose', kind: 'recommended' },
-  { title: 'Neon Skies', meta: 'Picked for your next movie night', tone: 'blue', kind: 'recommended' },
-  { title: 'Tiny Worlds', meta: 'A cozy series for you', tone: 'violet', kind: 'recommended' },
-  { title: 'Paper Kingdom', meta: 'A fantasy you may enjoy', tone: 'amber', kind: 'recommended' },
-];
-
-const RAIL_META: Record<Exclude<RailKind, 'recommended'>, { title: string; eyebrow: string; subtitle: string }> = {
-  trending: { title: 'Trending now', eyebrow: 'In the spotlight', subtitle: 'The titles everyone is talking about.' },
-  latest: { title: 'Latest', eyebrow: 'Fresh arrivals', subtitle: 'New shelves, new stories, ready to discover.' },
-  popular: { title: 'Popular', eyebrow: 'Crowd favourites', subtitle: 'The most-loved picks on the shelf.' },
-  airing: { title: 'Airing', eyebrow: 'Right now', subtitle: 'Keep up with what is coming next.' },
-  tv: { title: 'TV Series', eyebrow: 'Series', subtitle: 'Longer stories made for your next binge.' },
-  movie: { title: 'Movies', eyebrow: 'Cinema', subtitle: 'One sitting. One story. Movie night starts here.' },
-  anime: { title: 'Anime', eyebrow: 'Placeholder shelf', subtitle: 'Ready for the future MovieApi connection.' },
+  anime: [],
 };
 
 const toneClass: Record<string, string> = {
@@ -109,21 +66,26 @@ const toneClass: Record<string, string> = {
 };
 
 function KindIcon({ kind }: { kind: RailKind }) {
-  if (kind === 'movie') return <Film size={16} strokeWidth={1.8} />;
-  if (kind === 'anime') return <Sparkles size={16} strokeWidth={1.8} />;
-  return <Tv size={16} strokeWidth={1.8} />;
+  if (kind === 'movie') return <Film size={15} strokeWidth={1.8} />;
+  if (kind === 'anime') return <Sparkles size={15} strokeWidth={1.8} />;
+  return <Tv size={15} strokeWidth={1.8} />;
 }
 
 function RailCard({ item }: { item: RailItem }) {
-  const contentType = item.kind === 'anime' ? 'anime' : /movie/i.test(item.meta) ? 'movie' : 'series';
+  const contentType = /movie/i.test(item.meta) ? 'movie' : 'series';
+
   return (
-    <Link href={`/details/${encodeURIComponent(item.title)}?type=${contentType}`} className={`kinoma-rail-card ${toneClass[item.tone] || ''}`} aria-label={`Open ${item.title}`}>
+    <Link
+      href={`/details/${encodeURIComponent(item.title)}?type=${contentType}`}
+      className={`kinoma-rail-card ${toneClass[item.tone] || ''}`}
+      aria-label={`Open ${item.title}`}
+    >
       <div className="kinoma-rail-card__art" aria-hidden="true">
         <span className="kinoma-rail-card__orb kinoma-rail-card__orb--one" />
         <span className="kinoma-rail-card__orb kinoma-rail-card__orb--two" />
         <span className="kinoma-rail-card__shine" />
         <span className="kinoma-rail-card__icon"><KindIcon kind={item.kind} /></span>
-        <span className="kinoma-rail-card__badge">{item.kind === 'anime' ? 'Soon' : 'KINOMA'}</span>
+        <span className="kinoma-rail-card__badge">KINOMA</span>
       </div>
       <div className="kinoma-rail-card__copy">
         <h3>{item.title}</h3>
@@ -133,49 +95,21 @@ function RailCard({ item }: { item: RailItem }) {
   );
 }
 
-function ContentRail({
-  kind,
-  items,
-}: {
-  kind: Exclude<RailKind, 'recommended'>;
-  items: RailItem[];
-}) {
-  const meta = RAIL_META[kind];
+function ContentRail({ kind, title, items }: { kind: RailKind; title: string; items: RailItem[] }) {
+  if (!items.length) return null;
+
   return (
     <section className="kinoma-home-section" aria-labelledby={`kinoma-${kind}-heading`}>
       <div className="kinoma-home-section__heading">
         <div>
-          <div className="kinoma-home-section__eyebrow"><KindIcon kind={kind} /> {meta.eyebrow}</div>
-          <h2 id={`kinoma-${kind}-heading`}>{meta.title}</h2>
-          <p>{meta.subtitle}</p>
+          <div className="kinoma-home-section__eyebrow"><KindIcon kind={kind} /> {kind === 'trending' ? 'For tonight' : kind === 'latest' ? 'Fresh' : kind === 'popular' ? 'Most watched' : kind === 'tv' ? 'Series' : 'Cinema'}</div>
+          <h2 id={`kinoma-${kind}-heading`}>{title}</h2>
         </div>
-        <Link href="/search" className="kinoma-home-section__link">
-          See all <ArrowRight size={15} />
-        </Link>
+        <Link href="/search" className="kinoma-home-section__link">See all <ArrowRight size={14} /></Link>
       </div>
-      <div className="kinoma-rail" tabIndex={0} aria-label={meta.title}>
-        {items.map((item, index) => <RailCard key={`${kind}-${item.title}-${index}`} item={item} />)}
-      </div>
-    </section>
-  );
-}
 
-function RecommendedSection() {
-  return (
-    <section className="kinoma-recommended" aria-labelledby="kinoma-recommended-heading">
-      <div className="kinoma-recommended__glow" aria-hidden="true" />
-      <div className="kinoma-recommended__heading">
-        <div>
-          <div className="kinoma-home-section__eyebrow"><Sparkles size={16} /> Made for you</div>
-          <h2 id="kinoma-recommended-heading">Recommended for you</h2>
-          <p>Personalised shelves will plug into your profile once MovieApi is connected.</p>
-        </div>
-        <span className="kinoma-recommended__signal">PERSONAL PICKS</span>
-      </div>
-      <div className="kinoma-recommended__grid">
-        {RECOMMENDED.map((item, index) => (
-          <RailCard key={`recommended-${index}`} item={item} />
-        ))}
+      <div className="kinoma-rail" tabIndex={0} aria-label={title}>
+        {items.map((item, index) => <RailCard key={`${kind}-${item.title}-${index}`} item={item} />)}
       </div>
     </section>
   );
@@ -192,7 +126,7 @@ function ThreeDButton({ children, secondary = false }: { children: React.ReactNo
 
 export function Home() {
   return (
-    <div className="kinoma-home">
+    <main className="kinoma-home">
       <div className="kinoma-home__ambient" aria-hidden="true">
         <span className="kinoma-home__ambient-orb kinoma-home__ambient-orb--one" />
         <span className="kinoma-home__ambient-orb kinoma-home__ambient-orb--two" />
@@ -201,36 +135,52 @@ export function Home() {
       <div className="kinoma-home__inner">
         <section className="kinoma-home-hero" aria-labelledby="kinoma-home-title">
           <div className="kinoma-home-hero__copy">
-            <div className="kinoma-home-hero__eyebrow"><Sparkles size={14} /> YOUR SCREEN, YOUR MOOD</div>
+            <div className="kinoma-home-hero__eyebrow"><Sparkles size={14} /> YOUR NEXT WATCH</div>
             <h1 id="kinoma-home-title">Something good<br /><span>is waiting.</span></h1>
-            <p>A softer place for movies, TV shows, and anime. Pick something fun, press play, and settle in.</p>
+            <p>Movies, series and stories worth pressing play for. Discover something, save it, and come back whenever you like.</p>
             <div className="kinoma-home-hero__actions">
-              <ThreeDButton><Play size={16} fill="currentColor" /> Play Now</ThreeDButton>
-              <ThreeDButton secondary><Plus size={16} /> Continue Watching</ThreeDButton>
+              <ThreeDButton><Play size={16} fill="currentColor" /> Explore</ThreeDButton>
+              <ThreeDButton secondary><Plus size={16} /> My List</ThreeDButton>
             </div>
           </div>
 
-          <div className="kinoma-home-hero__banner" role="img" aria-label="Kinoma featured banner placeholder">
+          <div className="kinoma-home-hero__banner" role="img" aria-label="Kinoma featured artwork placeholder">
             <div className="kinoma-home-hero__banner-grid" />
             <div className="kinoma-home-hero__banner-glow" />
             <div className="kinoma-home-hero__banner-copy">
-              <span>FEATURED BANNER</span>
+              <span>FEATURED</span>
               <strong>Your artwork<br />goes here.</strong>
-              <small>21:9 cinematic safe area</small>
+              <small>API-ready cinematic space</small>
             </div>
             <div className="kinoma-home-hero__banner-film" aria-hidden="true"><Clapperboard size={28} strokeWidth={1.5} /></div>
           </div>
         </section>
 
-        <RecommendedSection />
+        <ContentRail kind="trending" title="Trending now" items={RAILS.trending} />
+        <ContentRail kind="latest" title="New on Kinoma" items={RAILS.latest} />
+        <ContentRail kind="popular" title="Popular right now" items={RAILS.popular} />
 
-        <ContentRail kind="trending" items={RAILS.trending} />
-        <ContentRail kind="latest" items={RAILS.latest} />
-        <ContentRail kind="popular" items={RAILS.popular} />
-        <div className="kinoma-home-pair">
-          <ContentRail kind="tv" items={RAILS.tv.slice(0, 4)} />
-          <ContentRail kind="movie" items={RAILS.movie.slice(0, 4)} />
-        </div>
+        <section className="kinoma-home-section kinoma-home-section--split" aria-label="Browse by format">
+          <div className="kinoma-home-section__heading">
+            <div>
+              <div className="kinoma-home-section__eyebrow"><Tv size={15} /> Browse</div>
+              <h2>Pick your format</h2>
+            </div>
+            <Link href="/search" className="kinoma-home-section__link">Discover <ArrowRight size={14} /></Link>
+          </div>
+          <div className="kinoma-home-format-grid">
+            <Link href="/search?keyword=series" className="kinoma-home-format-card kinoma-home-format-card--series">
+              <Tv size={22} />
+              <span>TV Series</span>
+              <small>Stories made for a binge.</small>
+            </Link>
+            <Link href="/search?keyword=movie" className="kinoma-home-format-card kinoma-home-format-card--movie">
+              <Film size={22} />
+              <span>Movies</span>
+              <small>One story. One sitting.</small>
+            </Link>
+          </div>
+        </section>
 
         <footer className="kinoma-home-footer">
           <div className="kinoma-home-footer__art" aria-hidden="true">
@@ -247,9 +197,7 @@ export function Home() {
           </div>
           <div className="kinoma-home-footer__content">
             <div className="kinoma-home-footer__brand">
-              <div className="kinoma-home-footer__logo" aria-label="Kinoma">
-                <KinomaLogo size="lg" variant="full" />
-              </div>
+              <div className="kinoma-home-footer__logo" aria-label="Kinoma"><KinomaLogo size="lg" variant="full" /></div>
               <p>Stories, shelves and little moments worth pressing play for.</p>
             </div>
             <div className="kinoma-home-footer__links">
@@ -259,12 +207,10 @@ export function Home() {
             </div>
           </div>
           <div className="kinoma-home-footer__bottom">
-            <span>© 2026 Kinoma</span>
-            <span>Built for the next watch.</span>
-            <Link href="/contact">Contact / Support</Link>
+            <span>© 2026 Kinoma</span><span>Built for the next watch.</span><Link href="/contact">Contact / Support</Link>
           </div>
         </footer>
       </div>
-    </div>
+    </main>
   );
 }
