@@ -1,521 +1,208 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRoute, Link } from 'wouter';
-import useSWR from 'swr';
+import { ArrowLeft, ChevronRight, Film, Pause, Play, Plus, Tv, Volume2, VolumeX } from 'lucide-react';
 import { api } from '../lib/api';
-import Hls from 'hls.js';
-import { 
-  Play, 
-  ArrowLeft, 
-  ArrowRight, 
-  CheckCircle2, 
-
-  Bookmark, 
-  Maximize, 
-  Minimize, 
-  X
-} from 'lucide-react';
-import { historyUtil, parseSeasonNumber } from '../lib/history';
 import { libraryManager } from '../lib/library';
-import { preferencesUtil } from '../lib/preferences';
 import { updateSEO } from '../lib/seo';
-import { AnimeGrid } from '../components/ui/AnimeGrid';
-import { AnimeItem, DEFAULT_POSTER } from '../types';
-import { trackEvent } from '../lib/analytics';
+
+type WatchKind = 'movie' | 'series';
+type Episode = { id: string; number: number; title?: string; synopsis?: string; image?: string };
+type WatchModel = {
+  id: string; title: string; kind: WatchKind; synopsis: string; poster: string;
+  episodes: Episode[]; seasons: Array<{ number: number; episodes?: Episode[] }>; streamUrl?: string;
+};
+
+const placeholderEpisodes = (season: number): Episode[] =>
+  Array.from({ length: 6 }, (_, index) => ({
+    id: 'episode-' + season + '-' + (index + 1),
+    number: index + 1,
+    title: 'Episode ' + (index + 1),
+    synopsis: 'Episode synopsis from MovieApi / TVMaze will appear here once the content provider is connected.',
+    image: '',
+  }));
+
+function cleanText(value: unknown) {
+  return typeof value === 'string' ? value.replace(/<[^>]*>/g, '').trim() : '';
+}
+
+function detectKind(data: any, query: URLSearchParams): WatchKind {
+  const type = query.get('type');
+  if (type === 'movie') return 'movie';
+  if (type === 'series' || type === 'tv') return 'series';
+  return data?.contentType === 'movie' || /movie/i.test(data?.type || '') ? 'movie' : 'series';
+}
+
+function parseWatchId(raw: string) {
+  const decoded = decodeURIComponent(raw);
+  const marker = '$episode$';
+  const index = decoded.indexOf(marker);
+  return index >= 0
+    ? { id: decoded.slice(0, index), episode: Number(decoded.slice(index + marker.length)) || 1 }
+    : { id: decoded, episode: 1 };
+}
 
 export function Watch() {
-  const [isMatch, params] = useRoute<{id: string}>('/watch/:id');
-  const playerContainerRef = useRef<HTMLDivElement | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  
-  // Decoding parameter
-  const rawId = decodeURIComponent((isMatch && params) ? params.id : '');
-  
-  let initialSlug = '';
-  let initialEpNum = '1';
-  let initialAnilistId = '0';
+  const [isMatch, params] = useRoute<{ id: string }>('/watch/:id');
+  const raw = isMatch && params ? params.id : '';
+  const parsed = useMemo(() => parseWatchId(raw), [raw]);
+  const query = useMemo(() => new URLSearchParams(typeof window !== 'undefined' ? window.location.search : ''), []);
+  const [data, setData] = useState<any>(null);
+  const [activeSeason, setActiveSeason] = useState(1);
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [isInList, setIsInList] = useState(false);
 
-  if (rawId.includes('|')) {
-    const parts = rawId.split('|');
-    initialSlug = parts[0] || '';
-    initialEpNum = parts[1] || '1';
-    initialAnilistId = parts[2] || '0';
-  } else if (rawId.includes('$episode$')) {
-    const parts = rawId.split('$episode$');
-    initialSlug = parts[0] || '';
-    initialEpNum = parts[1] || '1';
-  } else {
-    initialSlug = rawId;
-  }
-
-  // Parse query parameters for ep or anilist if present
-  const queryParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
-  const searchEp = queryParams.get('ep') || queryParams.get('episode');
-  const searchAnilist = queryParams.get('anilist') || queryParams.get('anilist_id');
-
-  const slug = initialSlug;
-  const epNum = searchEp || initialEpNum;
-  const anilistId = (searchAnilist && searchAnilist !== '0') ? searchAnilist : initialAnilistId;
-
-  // Local preferences: Audio (sub/dub) and Server with per-anime memory
-  const [selectedType, setSelectedType] = useState<'sub' | 'dub'>(() => {
-    return preferencesUtil.getAudioPreference(slug);
-  });
-  const [selectedServer, setSelectedServer] = useState<string>(() => {
-    return preferencesUtil.getServerPreference(slug);
-  });
-
-  const [isCinemaFullscreen, setIsCinemaFullscreen] = useState(false);
-  const [isBookmarked, setIsBookmarked] = useState(false);
-  const [networkQuality, setNetworkQuality] = useState<'excellent' | 'good' | 'poor'>('excellent');
-  const [showNetworkNotice, setShowNetworkNotice] = useState(false);
-
-  // Fetch Anime details & recommendations
-  const { data: animeData } = useSWR(slug ? `info-${slug}` : null, () => api.getDetails(slug));
-  const { data: recommendationsData } = useSWR(slug ? `recs-${slug}` : null, () => api.getRecommendations(slug));
-
-  const effectiveAnilistId = Number(anilistId) || animeData?.anilist_id || 0;
-
-  // Fetch servers list
-  const { data: serversData, isLoading: loadingServers } = useSWR(
-    slug && epNum ? `servers-${slug}-${epNum}-${effectiveAnilistId}` : null,
-    () => api.getServers(slug, epNum, effectiveAnilistId)
-  );
-
-  const servers = serversData?.servers || [];
-  const currentServer = servers.find(s => s.serverName === selectedServer && s.dataType === selectedType) 
-    || servers.find(s => s.dataType === selectedType) 
-    || servers[0];
-
-  // Fetch stream URL
-  const { data: streamData, isLoading: loadingStream } = useSWR(
-    slug && epNum && currentServer ? `stream-${slug}-${epNum}-${currentServer.serverName}-${currentServer.dataType || selectedType}-${effectiveAnilistId}` : null,
-    () => api.getStream(
-      slug, 
-      epNum, 
-      currentServer.serverName, 
-      currentServer.dataType || selectedType, 
-      effectiveAnilistId,
-      currentServer.dataLink
-    ),
-    {
-      revalidateOnFocus: false,
-      shouldRetryOnError: false
-    }
-  );
-
-  const streamUrl = (streamData && streamData.url) ? streamData.url : (currentServer?.dataLink || '');
-  const isDirectMedia = /\.(m3u8|mp4|webm)(?:\?|$)/i.test(streamUrl);
-
-  const episodes = animeData?.episodes || [];
-  const currentEpIndex = episodes.findIndex((e: any) => e.number.toString() === epNum || e.id === rawId);
-  const currentEpObj = currentEpIndex !== -1 ? episodes[currentEpIndex] : null;
-  const prevEp = currentEpIndex > 0 ? episodes[currentEpIndex - 1] : null;
-  const nextEp = currentEpIndex !== -1 && currentEpIndex < episodes.length - 1 ? episodes[currentEpIndex + 1] : null;
-
-  const animeTitle = animeData 
-    ? (typeof animeData.title === 'string' ? animeData.title : animeData.title?.english || animeData.title?.romaji || slug)
-    : slug;
-
-  const detectedSeason = (currentEpObj as any)?.season || parseSeasonNumber(animeData?.title, 1);
-
-  // Update SEO for the active episode
   useEffect(() => {
-    if (animeTitle) {
-      updateSEO({
-        title: `Episode ${epNum} — ${animeTitle}`,
-        description: `Watch ${animeTitle} Episode ${epNum} streaming in HD on Kinoma with subtitle and audio options.`,
-        image: currentEpObj?.image || animeData?.image,
-        type: 'video.episode'
-      });
-    }
-  }, [animeTitle, epNum, currentEpObj, animeData]);
-
-  // Save Audio & Subtitle memory when user changes them
-  const handleSelectType = (type: 'sub' | 'dub') => {
-    setSelectedType(type);
-    preferencesUtil.setAudioPreference(type, slug);
-  };
-
-  const handleSelectServer = (srv: string) => {
-    setSelectedServer(srv);
-    preferencesUtil.setServerPreference(srv, slug);
-  };
-
-  // Check Watchlist status
-  useEffect(() => {
-    if (animeData) {
-      setIsBookmarked(libraryManager.isInWatchlist(animeData.id || slug));
-    }
-  }, [animeData, slug]);
-
-  const toggleWatchlist = () => {
-    if (!animeData) return;
-    const inWatch = libraryManager.toggleWatchlist({
-      id: animeData.id || slug,
-      title: animeTitle,
-      image: animeData.image || DEFAULT_POSTER
+    let active = true;
+    if (!parsed.id) return;
+    api.getDetails(parsed.id).then(result => {
+      if (active) setData(result);
+    }).catch(() => {
+      if (active) setData(null);
     });
-    setIsBookmarked(inWatch);
-  };
+    return () => { active = false; };
+  }, [parsed.id]);
 
-  // Save real playback progress when the player exposes it.
-  // Never fabricate playback time when the provider is an external iframe.
-  useEffect(() => {
-    if (!slug || !epNum) return;
-
-    const queryParams = new URLSearchParams(window.location.search);
-    const timeParam = queryParams.get('t') || queryParams.get('time');
-    const startSec = timeParam ? Math.max(0, parseInt(timeParam, 10) || 0) : 0;
-
-    const save = () => {
-      const video = videoRef.current;
-      const currentSeconds = video && Number.isFinite(video.currentTime)
-        ? video.currentTime
-        : startSec;
-      const duration = video && Number.isFinite(video.duration) && video.duration > 0
-        ? video.duration
-        : 0;
-
-      historyUtil.saveProgress(slug, rawId, epNum, currentSeconds, duration, {
-        title: animeTitle,
-        image: currentEpObj?.image || animeData?.image || '',
-        animeId: animeData?.id || slug,
-        seasonNumber: detectedSeason
-      });
-
-      if (duration > 0 && currentSeconds > 0) {
-        void trackEvent({
-          type: currentSeconds / duration >= 0.88 ? 'watch_complete' : 'watch_progress',
-          animeId: animeData?.id || slug,
-          animeTitle,
-          episodeId: rawId,
-          episodeNumber: epNum,
-          durationSeconds: Math.min(30, currentSeconds),
-          metadata: { playbackSeconds: currentSeconds, durationSeconds: duration }
-        });
-      }
+  const model: WatchModel = useMemo(() => {
+    const kind = detectKind(data, query);
+    const apiEpisodes: Episode[] = Array.isArray(data?.episodes)
+      ? data.episodes.map((ep: any, index: number) => ({
+          id: String(ep.id || parsed.id + '-episode-' + (ep.number || index + 1)),
+          number: Number(ep.number || index + 1),
+          title: cleanText(ep.title) || 'Episode ' + (ep.number || index + 1),
+          synopsis: cleanText(ep.synopsis || ep.description) || 'Episode synopsis from MovieApi / TVMaze will appear here once the content provider is connected.',
+          image: ep.image || ep.thumbnail || '',
+        }))
+      : [];
+    const apiSeasons = Array.isArray(data?.seasons) ? data.seasons : [];
+    const seasons = apiSeasons.length
+      ? apiSeasons.map((season: any, index: number) => ({
+          number: Number(season.number || index + 1),
+          episodes: Array.isArray(season.episodes) ? season.episodes : undefined,
+        }))
+      : [{ number: 1 }, { number: 2 }, { number: 3 }];
+    return {
+      id: parsed.id,
+      title: cleanText(data?.title) || parsed.id || 'Untitled',
+      kind,
+      synopsis: cleanText(data?.description || data?.synopsis) || 'The synopsis will appear here when MovieApi is connected.',
+      poster: data?.image || data?.poster || '',
+      episodes: apiEpisodes.length ? apiEpisodes : placeholderEpisodes(activeSeason),
+      seasons,
+      streamUrl: data?.streamUrl || data?.stream?.url || '',
     };
+  }, [data, parsed.id, activeSeason, query]);
 
-    const scheduleSave = () => {
-      if (document.visibilityState === 'hidden') return;
-      const idle = (window as any).requestIdleCallback;
-      if (typeof idle === 'function') idle(save, { timeout: 1500 });
-      else window.setTimeout(save, 250);
-    };
-
-    scheduleSave();
-    const interval = window.setInterval(scheduleSave, 10000);
-    const handleVisibility = () => {
-      if (document.visibilityState === 'hidden') save();
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => {
-      window.clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibility);
-    };
-  }, [slug, epNum, rawId, animeData, currentEpObj, detectedSeason, animeTitle]);
+  const currentEpisode = model.kind === 'series'
+    ? model.episodes.find(ep => ep.number === parsed.episode) || model.episodes[0]
+    : null;
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !streamUrl || !isDirectMedia) return;
+    setIsInList(libraryManager.isInWatchlist(model.id));
+    updateSEO({ title: 'Watching ' + model.title + ' — Kinoma', description: model.synopsis, image: model.poster, type: 'video.other' });
+  }, [model.id, model.title, model.synopsis, model.poster]);
 
-    const isHls = /\.m3u8(?:\?|$)/i.test(streamUrl);
-    let hls: Hls | null = null;
-
-    if (isHls && Hls.isSupported()) {
-      hls = new Hls({ enableWorker: true, lowLatencyMode: false, maxBufferLength: 20, backBufferLength: 30, maxBufferHole: 0.5, capLevelToPlayerSize: true });
-      hls.loadSource(streamUrl);
-      hls.attachMedia(video);
-    } else if (isHls && video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = streamUrl;
-    } else if (!isHls) {
-      video.src = streamUrl;
-    }
-
-    return () => {
-      hls?.destroy();
-      if (!isHls) video.removeAttribute('src');
-      video.load();
-    };
-  }, [streamUrl, isDirectMedia]);
-
-  // Network checks are intentionally disabled while the new MovieApi boundary is being built.
-  // Keeping this local avoids background requests to the retired anime backend.
-  useEffect(() => {
-    setNetworkQuality('excellent');
-    setShowNetworkNotice(false);
-  }, []);
-
-  const toggleFullscreen = () => {
-    if (!isCinemaFullscreen) {
-      setIsCinemaFullscreen(true);
-      if (playerContainerRef.current && !document.fullscreenElement) {
-        playerContainerRef.current.requestFullscreen?.().catch(() => {});
-      }
-    } else {
-      setIsCinemaFullscreen(false);
-      if (document.fullscreenElement) {
-        document.exitFullscreen?.().catch(() => {});
-      }
-    }
+  const handleAddToList = () => {
+    const result = libraryManager.toggleWatchlist({ id: model.id, title: model.title, image: model.poster });
+    setIsInList(result);
   };
 
   return (
-    <div className="w-full bg-[#07080c] min-h-screen text-white font-sans pb-20">
-      
-      {/* VIDEO PLAYER CONTAINER */}
-      <div className={`w-full bg-black transition-all duration-300 ${
-        isCinemaFullscreen ? 'fixed inset-0 z-50 flex flex-col justify-center' : 'border-b border-white/10'
-      }`}>
-        <div className={`w-full mx-auto ${isCinemaFullscreen ? 'h-full max-w-none p-0 flex flex-col' : 'max-w-6xl px-0 sm:px-4 sm:py-4'}`}>
-          <div 
-            ref={playerContainerRef}
-            className={`w-full bg-black overflow-hidden relative border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.85)] ${
-              isCinemaFullscreen ? 'flex-1 h-full w-full rounded-none border-none' : 'aspect-video sm:rounded-2xl'
-            }`}
-          >
-            {streamUrl ? (
-              isDirectMedia ? (
-                <video
-                  ref={videoRef}
-                  key={streamUrl}
-                  className="h-full w-full bg-black object-contain"
-                  playsInline
-                  autoPlay
-                  preload="metadata"
-                  controls={false}
-                  onLoadedMetadata={(e) => {
-                    const start = Number(new URLSearchParams(window.location.search).get('t') || 0);
-                    if (start > 0 && Number.isFinite(start)) e.currentTarget.currentTime = start;
-                  }}
-                  onEnded={() => setIsCinemaFullscreen(false)}
-                  onClick={(e) => {
-                    if (e.currentTarget.paused) e.currentTarget.play().catch(() => {});
-                    else e.currentTarget.pause();
-                  }}
-                />
-              ) : (
-                <iframe
-                  key={streamUrl}
-                  src={streamUrl}
-                  title={'Episode ' + epNum}
-                  className="w-full h-full border-0 outline-none"
-                  allowFullScreen
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                />
-              )
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-[#090a10] text-center p-4">
-                <div className="w-10 h-10 border-3 border-[#7b1fa2]/30 border-t-[#7b1fa2] rounded-full animate-spin mb-4" />
-                <p className="text-gray-200 font-bold text-sm tracking-wide">Connecting to stream...</p>
-                <p className="text-gray-400 text-xs mt-1">Episode {epNum} • {selectedServer} • {selectedType.toUpperCase()}</p>
-              </div>
-            )}
-
-            {/* Subtle Network Quality Indicator in player corner */}
-            <div className="absolute top-3 left-3 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[11px] font-medium text-gray-300">
-              <span className={`w-2 h-2 rounded-full ${
-                networkQuality === 'excellent' ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]' :
-                networkQuality === 'good' ? 'bg-amber-400' : 'bg-rose-500 animate-pulse'
-              }`} />
-              <span className="capitalize">{networkQuality}</span>
-            </div>
-
-            {/* Unstable Connection Notice (subtle, non-interrupting) */}
-            {showNetworkNotice && (
-              <div className="absolute top-12 left-3 z-30 max-w-xs px-3 py-2 rounded-xl bg-black/80 backdrop-blur-md border border-amber-500/30 text-amber-200 text-xs flex items-center justify-between gap-2 shadow-lg">
-                <span>Connection is unstable. Changing server or audio may improve playback.</span>
-                <button onClick={() => setShowNetworkNotice(false)} className="text-gray-400 hover:text-white">
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-
-            {/* Quick Exit Fullscreen Button for normal desktop/mobile cinema mode */}
-            {isCinemaFullscreen && (
-              <button
-                onClick={toggleFullscreen}
-                className="absolute top-3 right-3 z-40 px-3 py-1.5 rounded-xl bg-black/70 hover:bg-black/90 border border-white/20 text-xs font-bold text-white flex items-center gap-1.5 backdrop-blur-md transition-all cursor-pointer shadow-lg"
-                title="Exit Fullscreen (Esc)"
-              >
-                <Minimize className="w-3.5 h-3.5" />
-                <span>Exit Fullscreen</span>
-              </button>
-            )}
-
-
-          </div>
-
-          {/* Minimalist Web Player Controls Bar */}
-            <div className={`flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-[#0d0e15] border border-white/10 ${
-              isCinemaFullscreen ? 'rounded-none border-x-0 border-b-0 shrink-0' : 'sm:rounded-xl mt-3'
-            }`}>
-              
-              {/* Audio Track & Server Selectors (with persistent memory) */}
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="flex items-center bg-[#141520] p-1 rounded-xl border border-white/10">
-                  <button
-                    onClick={() => handleSelectType('sub')}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                      selectedType === 'sub' ? 'bg-[#7b1fa2] text-white shadow-sm' : 'text-gray-400 hover:text-white'
-                    }`}
-                  >
-                    SUB
-                  </button>
-                  <button
-                    onClick={() => handleSelectType('dub')}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                      selectedType === 'dub' ? 'bg-[#7b1fa2] text-white shadow-sm' : 'text-gray-400 hover:text-white'
-                    }`}
-                  >
-                    DUB
-                  </button>
-                </div>
-
-                {servers.length > 0 && (
-                  <div className="flex items-center gap-1 bg-[#141520] p-1 rounded-xl border border-white/10">
-                    {Array.from(new Set(servers.map(s => s.serverName))).map(sName => (
-                      <button
-                        key={sName}
-                        onClick={() => handleSelectServer(sName)}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                          selectedServer === sName ? 'bg-[#7b1fa2]/30 text-[#c084fc] border border-[#ba68c8]/40' : 'text-gray-400 hover:text-white'
-                        }`}
-                      >
-                        {sName}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Prev / Next Episode & Fullscreen Toggle */}
-              <div className="flex items-center gap-2 ml-auto">
-                <button
-                  onClick={toggleFullscreen}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#141520] hover:bg-[#1c1e2e] text-gray-300 hover:text-white text-xs font-bold border border-white/10 transition-colors cursor-pointer"
-                  title="Toggle Fullscreen"
-                >
-                  {isCinemaFullscreen ? <Minimize className="w-3.5 h-3.5" /> : <Maximize className="w-3.5 h-3.5 text-[#c084fc]" />}
-                  <span>{isCinemaFullscreen ? 'Exit' : 'Fullscreen'}</span>
-                </button>
-
-                {prevEp && (
-                  <Link href={`/watch/${encodeURIComponent(prevEp.id)}`}>
-                    <button className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#141520] hover:bg-[#1c1e2e] text-gray-300 hover:text-white text-xs font-bold border border-white/10 transition-colors cursor-pointer">
-                      <ArrowLeft className="w-3.5 h-3.5" />
-                      <span>Prev</span>
-                    </button>
-                  </Link>
-                )}
-
-                {nextEp && (
-                  <Link href={`/watch/${encodeURIComponent(nextEp.id)}`}>
-                    <button className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#7b1fa2] hover:bg-[#9c27b0] text-white text-xs font-bold shadow-md transition-all cursor-pointer">
-                      <span>Next Ep {nextEp.number}</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </Link>
-                )}
-              </div>
-
-            </div>
-
-
+    <main className="kinoma-player-page">
+      <header className="kinoma-player-topbar">
+        <Link href="/home" className="kinoma-player-back"><ArrowLeft size={17} /><span>Back to Kinoma</span></Link>
+        <div className="kinoma-player-titlebar">
+          {model.kind === 'movie' ? <Film size={14} /> : <Tv size={14} />}
+          <span>{model.title}</span>
+          {model.kind === 'series' && currentEpisode && <small>Episode {currentEpisode.number}</small>}
         </div>
-      </div>
+      </header>
 
-      {/* WEB PLAYER: DETAIL & EPISODE SELECTOR SECTION */}
-      <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 mt-6 flex flex-col gap-8">
-          
-          {/* Header Title & Actions */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Link href={`/details/${slug}`}>
-                  <span className="text-xs font-bold text-[#c084fc] hover:underline cursor-pointer">
-                    {animeTitle}
-                  </span>
-                </Link>
-                <span className="text-xs text-gray-500">•</span>
-                <span className="text-xs font-semibold text-gray-400">Season {detectedSeason}</span>
-              </div>
-
-              <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                Episode {epNum}: {currentEpObj?.title || `Episode ${epNum}`}
-              </h1>
-            </div>
-
-            <div className="flex items-center gap-2.5">
-              <button
-                onClick={toggleWatchlist}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
-                  isBookmarked
-                    ? 'bg-[#7b1fa2]/25 text-white border-[#ba68c8]/50'
-                    : 'bg-[#141520] text-gray-300 hover:text-white border-white/10 hover:bg-[#1b1c2b]'
-                }`}
-              >
-                <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-[#c084fc] text-[#c084fc]' : ''}`} />
-                <span>{isBookmarked ? 'In List' : 'Add to List'}</span>
-              </button>
-
-              <Link href={`/details/${slug}`}>
-                <button className="px-4 py-2 rounded-xl bg-[#141520] hover:bg-[#1b1c2b] text-gray-300 hover:text-white text-xs font-bold border border-white/10 transition-colors cursor-pointer">
-                  All Episodes
-                </button>
-              </Link>
-            </div>
-          </div>
-
-          {/* Quick Episode Grid */}
-          <div>
-            <div className="flex items-center justify-between mb-3.5">
-              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">All Episodes</h2>
-              <span className="text-xs text-gray-400 bg-white/5 px-2.5 py-0.5 rounded-full border border-white/5">
-                {episodes.length} total
-              </span>
-            </div>
-
-            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
-              {episodes.map((ep: any) => {
-                const isCurrent = ep.number.toString() === epNum;
-                const epProg = historyUtil.getEpisodeProgress(slug, ep.number);
-                const isWatched = epProg?.isCompleted || (epProg && epProg.completionPercentage >= 85);
-
-                return (
-                  <Link key={ep.id} href={`/watch/${encodeURIComponent(ep.id)}`}>
-                    <button
-                      className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all relative flex items-center justify-center border cursor-pointer ${
-                        isCurrent
-                          ? 'bg-[#7b1fa2] text-white border-[#ba68c8] shadow-[0_0_15px_rgba(123,31,162,0.45)]'
-                          : isWatched
-                            ? 'bg-[#111818] text-emerald-400 border-emerald-500/30 hover:bg-[#162020]'
-                            : 'bg-[#12131c] text-gray-400 border-white/5 hover:text-white hover:bg-[#181926] hover:border-white/15'
-                      }`}
-                    >
-                      <span>{ep.number}</span>
-                      {isWatched && !isCurrent && (
-                        <CheckCircle2 className="w-3 h-3 text-emerald-400 absolute top-1 right-1" />
-                      )}
-                    </button>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Recommendations */}
-          {recommendationsData?.results && recommendationsData.results.length > 0 && (
-            <div className="mt-4">
-              <AnimeGrid 
-                title="You May Also Like" 
-                items={recommendationsData.results.slice(0, 10)} 
-              />
+      <section className="kinoma-player-stage" aria-label="Video player">
+        <div className="kinoma-player-frame">
+          {model.streamUrl ? (
+            <video
+              src={model.streamUrl}
+              className="kinoma-player-video"
+              controls
+              playsInline
+              autoPlay
+              muted={muted}
+              onPlay={() => setPlaying(true)}
+              onPause={() => setPlaying(false)}
+              onVolumeChange={event => setMuted(event.currentTarget.muted)}
+            />
+          ) : (
+            <div className="kinoma-player-placeholder">
+              <div className="kinoma-player-placeholder__icon">{playing ? <Pause size={24} /> : <Play size={24} fill="currentColor" />}</div>
+              <span>PLAYER READY</span>
+              <strong>Your video will play here.</strong>
+              <p>MovieApi playback source placeholder — the player is already prepared for the API stream URL.</p>
+              <button type="button" onClick={() => setPlaying(value => !value)}><Play size={15} fill="currentColor" />{playing ? 'Pause' : 'Preview'}</button>
             </div>
           )}
-
         </div>
+        <div className="kinoma-player-controls">
+          <button type="button" onClick={() => setPlaying(value => !value)} aria-label={playing ? 'Pause' : 'Play'}>{playing ? <Pause size={16} /> : <Play size={16} fill="currentColor" />}</button>
+          <button type="button" onClick={() => setMuted(value => !value)} aria-label={muted ? 'Unmute' : 'Mute'}>{muted ? <VolumeX size={16} /> : <Volume2 size={16} />}</button>
+          <span>{model.kind === 'movie' ? 'Movie' : 'Episode ' + parsed.episode}</span>
+        </div>
+      </section>
 
-    </div>
+      <section className="kinoma-player-info">
+        <div className="kinoma-player-info__main">
+          <div className="kinoma-player-poster">{model.poster ? <img src={model.poster} alt="" /> : <Film size={25} />}</div>
+          <div className="kinoma-player-copy">
+            <div className="kinoma-player-eyebrow">{model.kind === 'movie' ? 'Movie' : 'Season ' + activeSeason + ' • Episode ' + parsed.episode}</div>
+            <h1>{model.title}</h1>
+            {model.kind === 'series' && currentEpisode && <h2>{currentEpisode.title}</h2>}
+            <p>{model.synopsis}</p>
+          </div>
+        </div>
+        <button type="button" className={'kinoma-player-list-button ' + (isInList ? 'is-added' : '')} onClick={handleAddToList}><Plus size={16} />{isInList ? 'In My List' : 'Add to My List'}</button>
+      </section>
+
+      {model.kind === 'series' ? (
+        <section className="kinoma-player-section">
+          <div className="kinoma-player-section__heading">
+            <div><span>KEEP WATCHING</span><h2>Seasons & Episodes</h2></div>
+            <small>{model.episodes.length} episodes</small>
+          </div>
+          <div className="kinoma-player-seasons" role="tablist" aria-label="Seasons">
+            {model.seasons.map(season => (
+              <button type="button" role="tab" aria-selected={activeSeason === season.number} key={season.number} className={activeSeason === season.number ? 'is-active' : ''} onClick={() => setActiveSeason(season.number)}>
+                Season {season.number}
+              </button>
+            ))}
+          </div>
+          <div className="kinoma-player-episodes">
+            {model.episodes.map(episode => (
+              <Link key={episode.id} href={'/watch/' + encodeURIComponent(model.id + '$episode$' + episode.number) + '?type=series'} className={'kinoma-player-episode ' + (episode.number === parsed.episode ? 'is-current' : '')}>
+                <div className="kinoma-player-episode__image">{episode.image ? <img src={episode.image} alt="" /> : <Tv size={19} />}<b>{episode.number}</b></div>
+                <div className="kinoma-player-episode__copy">
+                  <strong>Episode {episode.number}{episode.title && episode.title !== 'Episode ' + episode.number ? ' — ' + episode.title : ''}</strong>
+                  <p>{episode.synopsis}</p>
+                </div>
+                <ChevronRight size={17} />
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : (
+        <section className="kinoma-player-section">
+          <div className="kinoma-player-section__heading"><div><span>KEEP EXPLORING</span><h2>More like this</h2></div></div>
+          <div className="kinoma-player-more-grid">
+            {['After Midnight', 'Paper Kingdom', 'Little Moon', 'Neon Skies', 'Sunday Cinema'].map((title, index) => (
+              <Link key={title} href={'/details/' + encodeURIComponent(title) + '?type=movie'} className="kinoma-player-more-card">
+                <div className={'kinoma-player-more-card__art tone-' + (index + 1)}><Film size={20} /></div>
+                <strong>{title}</strong><span>Similar movie</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <footer className="kinoma-player-footer"><Link href="/home">Home</Link><Link href={'/details/' + encodeURIComponent(model.id)}>View details</Link></footer>
+    </main>
   );
 }
