@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'wouter';
+import { KinomaLogo } from '../components/ui/KinomaLogo';
 import {
   ArrowRight,
   Clapperboard,
@@ -232,16 +233,22 @@ export function Home() {
 
         <footer className="kinoma-home-footer">
           <div className="kinoma-home-footer__art" aria-hidden="true">
-            <div className="kinoma-home-footer__ring kinoma-home-footer__ring--one" />
-            <div className="kinoma-home-footer__ring kinoma-home-footer__ring--two" />
-            <div className="kinoma-home-footer__cube">
-              <span>Ｋ</span>
+            <div className="kinoma-home-footer__halo" />
+            <div className="kinoma-home-footer__orbit kinoma-home-footer__orbit--one" />
+            <div className="kinoma-home-footer__orbit kinoma-home-footer__orbit--two" />
+            <div className="kinoma-home-footer__orbit kinoma-home-footer__orbit--three" />
+            <div className="kinoma-home-footer__core">
+              <span className="kinoma-home-footer__core-glow" />
+              <KinomaLogo size="md" variant="mark" className="kinoma-home-footer__mark" />
             </div>
-            <div className="kinoma-home-footer__star">✦</div>
+            <div className="kinoma-home-footer__spark kinoma-home-footer__spark--one">✦</div>
+            <div className="kinoma-home-footer__spark kinoma-home-footer__spark--two">·</div>
           </div>
           <div className="kinoma-home-footer__content">
             <div className="kinoma-home-footer__brand">
-              <span className="kinoma-home-footer__logo">KINOMA</span>
+              <div className="kinoma-home-footer__logo" aria-label="Kinoma">
+                <KinomaLogo size="lg" variant="full" />
+              </div>
               <p>Stories, shelves and little moments worth pressing play for.</p>
             </div>
             <div className="kinoma-home-footer__links">
