@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRoute, Link } from 'wouter';
 import { ArrowLeft, ChevronRight, Film, Pause, Play, Plus, Tv, Volume2, VolumeX } from 'lucide-react';
-import { api } from '../lib/api';
+import { api, MovieApiError } from '../lib/api';
 import { libraryManager } from '../lib/library';
 import { updateSEO } from '../lib/seo';
 
@@ -51,6 +51,8 @@ export function Watch() {
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [isInList, setIsInList] = useState(false);
+  const [playbackError, setPlaybackError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
@@ -109,7 +111,7 @@ export function Watch() {
 
   return (
     <main className="kinoma-player-page">
-      <header className="kinoma-player-topbar">
+      {playbackError && <div className="kinoma-details-bottom" role="alert">{playbackError}</div>}\n      <header className="kinoma-player-topbar">
         <Link href="/home" className="kinoma-player-back"><ArrowLeft size={17} /><span>Back to Kinoma</span></Link>
         <div className="kinoma-player-titlebar">
           {model.kind === 'movie' ? <Film size={14} /> : <Tv size={14} />}
@@ -137,7 +139,7 @@ export function Watch() {
               <div className="kinoma-player-placeholder__icon">{playing ? <Pause size={24} /> : <Play size={24} fill="currentColor" />}</div>
               <span>PLAYER READY</span>
               <strong>Your video will play here.</strong>
-              <p>MovieApi playback source placeholder — the player is already prepared for the API stream URL.</p>
+              <p>{playbackError || (loading ? 'Loading metadata and playback source…' : 'MovieApi did not return a playback source for this title.')}</p>
               <button type="button" onClick={() => setPlaying(value => !value)}><Play size={15} fill="currentColor" />{playing ? 'Pause' : 'Preview'}</button>
             </div>
           )}
