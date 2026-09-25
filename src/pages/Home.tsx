@@ -68,7 +68,7 @@ function ContinueWatching({ items }: { items: HistoryItem[] }) {
           <h2 id="continue-watching">Continue Watching</h2>
           <p>Your progress is kept locally so your next episode is always close.</p>
         </div>
-        <Link href="/library" className="kinoma-home__view-all">Library <ArrowRight size={14} /></Link>
+        <Link href="/library" className="kinoma-home__view-all">My List <ArrowRight size={14} /></Link>
       </div>
       <div className="kinoma-home__continue-grid">
         {items.slice(0, 3).map((item) => {
@@ -177,7 +177,7 @@ export function Home() {
                   <div className="kinoma-home__side-head"><div><span>QUICK DISCOVERY</span><h2>Explore Kinoma</h2></div><Sparkles size={16} /></div>
                   <Link href="/search?keyword=action"><Tv size={16} /> Anime <ArrowRight size={14} /></Link>
                   <Link href="/search?keyword=movie"><Film size={16} /> Movies <ArrowRight size={14} /></Link>
-                  <Link href="/library"><Play size={16} /> My Library <ArrowRight size={14} /></Link>
+                  <Link href="/library"><Play size={16} /> My List <ArrowRight size={14} /></Link>
                 </div>
                 <div className="kinoma-home__side-card kinoma-home__side-card--note">
                   <span>BUILT FOR WHAT COMES NEXT</span>
