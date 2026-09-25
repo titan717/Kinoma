@@ -1974,7 +1974,7 @@ p {
 .kinoma-home { min-height: 100dvh; color: #fff; background: linear-gradient(180deg, rgba(7,7,10,.08), rgba(7,7,10,.88) 24%, #08090d 62%, #08090d); }
 .kinoma-home__content { width: min(100%, 1680px); margin: 0 auto; padding: 0 clamp(16px, 3vw, 46px) 80px; }
 .kinoma-home__hero { position: relative; min-height: clamp(430px, 61vh, 650px); margin: 0 calc(clamp(16px, 3vw, 46px) * -1) 36px; overflow: hidden; isolation: isolate; border-bottom: 1px solid rgba(255,255,255,.07); }
-.kinoma-home__hero-art { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; z-index:-3; }
+.kinoma-home__hero-art { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center center; z-index:-3; image-rendering:auto; }
 .kinoma-home__hero-shade { position:absolute; inset:0; z-index:-2; background:linear-gradient(90deg,rgba(6,7,10,.96) 0%,rgba(6,7,10,.82) 28%,rgba(6,7,10,.28) 68%,rgba(6,7,10,.62) 100%),linear-gradient(0deg,#08090d 0%,transparent 38%); }
 .kinoma-home__hero-copy { position:absolute; left:clamp(24px,6vw,92px); bottom:clamp(38px,7vh,76px); max-width:min(690px,70%); }
 .kinoma-home__hero-kicker,.kinoma-home__section-kicker,.kinoma-home__side-head>div>span,.kinoma-home__side-card--note>span { display:flex; align-items:center; gap:7px; color:#c1935f; font-size:9px; font-weight:900; letter-spacing:.2em; }
