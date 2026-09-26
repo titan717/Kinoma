@@ -26,6 +26,8 @@ jobs:
     steps:
       - name: Checkout Kinoma
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Resolve release version
         id: version
@@ -36,9 +38,17 @@ jobs:
           if [[ -n "${{ inputs.version_name }}" ]]; then
             VERSION_NAME="${{ inputs.version_name }}"
           else
-            # Every main-branch commit gets a monotonically increasing
-            # production version based on the GitHub Actions run number.
-            VERSION_NAME="0.0.3"
+            # Advance the patch version from the latest release tag so
+            # automatic main-branch builds never reuse an existing tag.
+            LATEST_TAG="$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n 1)"
+            if [[ "$LATEST_TAG" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+              MAJOR="${BASH_REMATCH[1]}"
+              MINOR="${BASH_REMATCH[2]}"
+              PATCH="${BASH_REMATCH[3]}"
+              VERSION_NAME="${MAJOR}.${MINOR}.$((PATCH + 1))"
+            else
+              VERSION_NAME="0.0.1"
+            fi
           fi
 
           if [[ ! "$VERSION_NAME" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$ ]]; then

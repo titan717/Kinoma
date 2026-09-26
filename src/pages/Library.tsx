@@ -42,7 +42,7 @@ function PosterCard({ item, action }: { item: LibraryItem; action?: React.ReactN
       </Link>
       <div className="kinoma-library-card__copy">
         <h3>{item.title}</h3>
-        <p>Ready for MovieApi metadata</p>
+        <p>Saved to your Kinoma library</p>
         {action}
       </div>
     </article>
