@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'wouter';
-import { Panda.funLogo } from './Panda.funLogo';
+import { KinomaLogo } from './KinomaLogo';
 
 export function Footer() {
   return (
@@ -39,7 +39,7 @@ export function Footer() {
         {/* Brand & Links */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-4 border-t border-white/5">
           <div className="flex flex-col gap-3">
-            <Panda.funLogo size="md" variant="full" />
+            <KinomaLogo size="md" variant="full" />
             <p className="text-xs text-gray-400 font-medium leading-relaxed">
               Copyright © Panda.fun. Crafted with passion for anime lovers worldwide.
             </p>
