@@ -14,7 +14,6 @@ export interface Episode {
 export interface AnimeSeasonItem {
   seasonNumber: number;
   animeId: string;
-  anilistId?: number;
   title: string;
   episodeCount: number;
 }
