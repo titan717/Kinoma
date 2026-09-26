@@ -1,13 +1,13 @@
 
 import React, { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { Clock3, Search as SearchIcon, Sparkles, X } from 'lucide-react';
+import { Clock3, Filter, Search as SearchIcon, Sparkles, X } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { updateSEO } from '../lib/seo';
 import { preferencesUtil } from '../lib/preferences';
 import { api, MovieApiError } from '../lib/api';
 import type { AnimeItem } from '../types';
 
-type SearchItem = { id: string; title: string; type: 'movie' | 'series'; meta: string; image?: string; href: string };
+type SearchItem = { id: string; title: string; type: 'movie' | 'series'; meta: string; image?: string; href: string; rating?: number; year?: number; };
 const titleOf = (item: AnimeItem) => typeof item.title === 'string' ? item.title : item.title.english || item.title.romaji || item.title.native || 'Untitled';
 const mapItem = (item: AnimeItem): SearchItem => {
   const type = item.contentType === 'movie' ? 'movie' : 'series';
@@ -17,6 +17,8 @@ const mapItem = (item: AnimeItem): SearchItem => {
     type,
     meta: [item.year, item.rating ? '★ ' + item.rating : null, type === 'movie' ? 'Movie' : 'Series'].filter(Boolean).join(' • ') || 'MovieApi',
     image: item.image,
+    rating: Number(item.rating || 0) || 0,
+    year: item.releaseDate ? Number(String(item.releaseDate).slice(0, 4)) || undefined : undefined,
     href: '/details/' + encodeURIComponent(item.id) + '?type=' + type,
   };
 };
@@ -40,8 +42,22 @@ export function Search() {
   const [results, setResults] = useState<SearchItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'all' | 'movie' | 'series'>('all');
   const inputRef = useRef<HTMLInputElement>(null);
   const isSearching = submittedQuery.length > 0;
+  const visibleResults = useMemo(() => {
+    const normalized = submittedQuery.toLocaleLowerCase();
+    return results
+      .filter(item => filter === 'all' || item.type === filter)
+      .sort((a, b) => {
+        if (!normalized) return b.rating - a.rating;
+        const score = (item: SearchItem) => {
+          const title = item.title.toLocaleLowerCase();
+          return (title === normalized ? 1000 : 0) + (title.startsWith(normalized) ? 300 : 0) + (title.includes(normalized) ? 100 : 0) + item.rating;
+        };
+        return score(b) - score(a);
+      });
+  }, [results, filter, submittedQuery]);
 
   useEffect(() => {
     setRecentSearches(preferencesUtil.getRecentSearches());
@@ -74,7 +90,12 @@ export function Search() {
     setSubmittedQuery(clean);
     setLocation('/search?keyword=' + encodeURIComponent(clean));
   };
-  const clearSearch = () => { setQuery(''); setSubmittedQuery(''); setError(null); setLocation('/search'); };
+  const clearSearch = () => { setQuery(''); setSubmittedQuery(''); setError(null); setFilter('all'); setLocation('/search'); };
+  const clearRecent = () => { preferencesUtil.clearRecentSearches(); setRecentSearches([]); };
+  const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Escape' && query) { setQuery(''); return; }
+    if (event.key === 'Escape' && !query) inputRef.current?.blur();
+  };
   const chooseRecent = (value: string) => { setQuery(value); setSubmittedQuery(value); setLocation('/search?keyword=' + encodeURIComponent(value)); };
 
   return <main className="kinoma-search-page">
@@ -83,18 +104,19 @@ export function Search() {
       <header className="kinoma-search-head">
         <div><span className="kinoma-eyebrow">{isSearching ? 'Search results' : 'Discover'}</span><h1>{isSearching ? 'Results for “' + submittedQuery + '”' : 'Find your next watch.'}</h1><p>{isSearching ? 'Movies, series and anime matching your search.' : 'Start with what is trending, or search whenever you have something specific in mind.'}</p></div>
         <form className="kinoma-search-control is-open" onSubmit={submitSearch}>
-          <SearchIcon size={18} /><input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)} placeholder="Search movies, series or anime" aria-label="Search movies, series or anime" autoComplete="off" />
+          <SearchIcon size={18} /><input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)} onKeyDown={handleInputKeyDown} placeholder="Search movies, series or anime" aria-label="Search movies, series or anime" autoComplete="off" />
           {query && <button type="button" className="kinoma-search-control__clear" onClick={() => setQuery('')} aria-label="Clear search"><X size={16} /></button>}
           <button type="submit" className="kinoma-search-control__submit">Search</button>
         </form>
       </header>
-      {!isSearching && recentSearches.length > 0 && <section className="kinoma-search-recent" aria-label="Recent searches"><div className="kinoma-search-recent__label"><Clock3 size={14} /> Recent</div><div className="kinoma-search-recent__items">{recentSearches.slice(0, 5).map(item => <button key={item} type="button" onClick={() => chooseRecent(item)}>{item}</button>)}</div></section>}
+      {!isSearching && recentSearches.length > 0 && <section className="kinoma-search-recent" aria-label="Recent searches"><div className="kinoma-search-recent__label"><Clock3 size={14} /> Recent</div><div className="kinoma-search-recent__items">{recentSearches.slice(0, 5).map(item => <button key={item} type="button" onClick={() => chooseRecent(item)}>{item}</button>)}<button type="button" className="kinoma-search-recent__clear" onClick={clearRecent}>Clear</button></div></section>}
       <section className="kinoma-search-results">
         <div className="kinoma-search-results__heading"><div><span className="kinoma-eyebrow">{isSearching ? 'Your search' : 'Live discovery'}</span><h2>{isSearching ? 'Matches' : 'Trending now'}</h2></div>{!isSearching && <Sparkles size={18} />}</div>
+        {!loading && !error && results.length > 0 && <div className="kinoma-search-toolbar"><div className="kinoma-search-filters" role="tablist" aria-label="Filter search results"><button type="button" className={filter === 'all' ? 'is-active' : ''} onClick={() => setFilter('all')}><Filter size={13} /> All <span>{results.length}</span></button><button type="button" className={filter === 'movie' ? 'is-active' : ''} onClick={() => setFilter('movie')}>Movies <span>{results.filter(item => item.type === 'movie').length}</span></button><button type="button" className={filter === 'series' ? 'is-active' : ''} onClick={() => setFilter('series')}>Series <span>{results.filter(item => item.type === 'series').length}</span></button></div><span className="kinoma-search-toolbar__count">{visibleResults.length} {visibleResults.length === 1 ? 'title' : 'titles'}</span></div>
         {loading ? <div className="kinoma-search-empty"><SearchIcon size={28} /><h3>Searching…</h3><p>Finding movies and series from MovieApi.</p></div>
         : error ? <div className="kinoma-search-empty"><SearchIcon size={28} /><h3>Search unavailable</h3><p>{error}</p><button type="button" onClick={() => setSubmittedQuery(submittedQuery)}>Try again</button></div>
         : results.length ? <div className="kinoma-search-grid">{results.map(item => <ContentCard key={item.id} item={item} />)}</div>
-        : <div className="kinoma-search-empty"><SearchIcon size={28} /><h3>Nothing found yet</h3><p>Try a different title.</p><button type="button" onClick={clearSearch}>Back to trending</button></div>}
+        : <div className="kinoma-search-empty"><SearchIcon size={28} /><h3>{results.length ? 'No titles in this filter' : 'Nothing found yet'}</h3><p>{results.length ? 'Try another filter to see more matches.' : 'Try a different title, spelling, or a broader search.'}</p><button type="button" onClick={results.length ? () => setFilter('all') : clearSearch}>{results.length ? 'Show all results' : 'Back to trending'}</button></div>}
       </section>
       <footer className="kinoma-search-foot"><span>Kinoma</span><span>One simple search. Everything you want to watch.</span></footer>
     </div>
