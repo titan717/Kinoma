@@ -34,11 +34,11 @@ function detectKind(data: any, query: URLSearchParams): WatchKind {
 
 function parseWatchId(raw: string) {
   const decoded = decodeURIComponent(raw);
-  const marker = '$episode$';
-  const index = decoded.indexOf(marker);
-  return index >= 0
-    ? { id: decoded.slice(0, index), episode: Number(decoded.slice(index + marker.length)) || 1 }
-    : { id: decoded, episode: 1 };
+  const match = decoded.match(/^(.*)\\$season\\$(\\d+)\\$episode\\$(\\d+)$/);
+  if (match) return { id: match[1], season: Number(match[2]) || 1, episode: Number(match[3]) || 1 };
+  const legacy = decoded.match(/^(.*)\\$episode\\$(\\d+)$/);
+  if (legacy) return { id: legacy[1], season: 1, episode: Number(legacy[2]) || 1 };
+  return { id: decoded, season: 1, episode: 1 };
 }
 
 export function Watch() {
@@ -47,23 +47,36 @@ export function Watch() {
   const parsed = useMemo(() => parseWatchId(raw), [raw]);
   const query = useMemo(() => new URLSearchParams(typeof window !== 'undefined' ? window.location.search : ''), []);
   const [data, setData] = useState<any>(null);
-  const [activeSeason, setActiveSeason] = useState(1);
+  const [activeSeason, setActiveSeason] = useState(parsed.season);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [isInList, setIsInList] = useState(false);
   const [playbackError, setPlaybackError] = useState<string | null>(null);
+  const [streamUrl, setStreamUrl] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
     if (!parsed.id) return;
-    api.getDetails(parsed.id).then(result => {
-      if (active) setData(result);
-    }).catch(() => {
-      if (active) setData(null);
+    setLoading(true);
+    setPlaybackError(null);
+    Promise.all([
+      api.getDetails(parsed.id),
+      api.getWatchLink(parsed.id, parsed.season, parsed.episode),
+    ]).then(([result, playback]) => {
+      if (!active) return;
+      setData(result);
+      setStreamUrl(playback.url);
+      setLoading(false);
+    }).catch((err) => {
+      if (!active) return;
+      setData(null);
+      setStreamUrl('');
+      setPlaybackError(err instanceof Error ? err.message : 'Playback is unavailable right now.');
+      setLoading(false);
     });
     return () => { active = false; };
-  }, [parsed.id]);
+  }, [parsed.id, parsed.season, parsed.episode]);
 
   const model: WatchModel = useMemo(() => {
     const kind = detectKind(data, query);
@@ -91,9 +104,9 @@ export function Watch() {
       poster: data?.image || data?.poster || '',
       episodes: apiEpisodes.length ? apiEpisodes : placeholderEpisodes(activeSeason),
       seasons,
-      streamUrl: data?.streamUrl || data?.stream?.url || '',
+      streamUrl: streamUrl || data?.streamUrl || data?.stream?.url || '',
     };
-  }, [data, parsed.id, activeSeason, query]);
+  }, [data, parsed.id, activeSeason, query, streamUrl]);
 
   const currentEpisode = model.kind === 'series'
     ? model.episodes.find(ep => ep.number === parsed.episode) || model.episodes[0]
@@ -175,7 +188,97 @@ export function Watch() {
               </div>
               <div className="kinoma-player-episodes">
                 {model.episodes.map(episode => (
-                  <Link key={episode.id} href={'/watch/' + encodeURIComponent(model.id + '$episode$' + episode.number) + '?type=series'} className={'kinoma-player-episode ' + (episode.number === parsed.episode ? 'is-current' : '')}>
+                  <Link key={episode.id} href={'/watch/' + encodeURIComponent(model.id + '$season className={'kinoma-player-episode ' + (episode.number === parsed.episode ? 'is-current' : '')}>
+                    <div className="kinoma-player-episode__image">{episode.image ? <img src={episode.image} alt="" /> : <Tv size={19} />}<b>{episode.number}</b></div>
+                    <div className="kinoma-player-episode__copy">
+                      <strong>Episode {episode.number}{episode.title && episode.title !== 'Episode ' + episode.number ? ' — ' + episode.title : ''}</strong>
+                      <p>{episode.synopsis}</p>
+                    </div>
+                    <ChevronRight size={17} />
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+          <aside className="kinoma-player-episode-sidebar" aria-label="Season and episode navigation">
+            <div className="kinoma-player-episode-sidebar__header">
+              <span>QUICK ACCESS</span>
+              <strong>Seasons</strong>
+            </div>
+            <div className="kinoma-player-seasons" role="tablist" aria-label="Seasons">
+              {model.seasons.map(season => (
+                <button type="button" role="tab" aria-selected={activeSeason === season.number} key={season.number} className={activeSeason === season.number ? 'is-active' : ''} onClick={() => setActiveSeason(season.number)}>
+                  Season {season.number}
+                </button>
+              ))}
+            </div>
+            <div className="kinoma-player-episode-sidebar__hint">Select a season to load its episodes.</div>
+          </aside>
+        </section>
+      ) : (
+        <section className="kinoma-player-section">
+          <div className="kinoma-player-section__heading"><div><span>KEEP EXPLORING</span><h2>More like this</h2></div></div>
+          <div className="kinoma-player-more-grid">
+            {['After Midnight', 'Paper Kingdom', 'Little Moon', 'Neon Skies', 'Sunday Cinema'].map((title, index) => (
+              <Link key={title} href={'/details/' + encodeURIComponent(title) + '?type=movie'} className="kinoma-player-more-card">
+                <div className={'kinoma-player-more-card__art tone-' + (index + 1)}><Film size={20} /></div>
+                <strong>{title}</strong><span>Similar movie</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <footer className="kinoma-player-footer"><Link href="/home">Home</Link><Link href={'/details/' + encodeURIComponent(model.id)}>View details</Link></footer>
+    </main>
+  );
+}
+ + activeSeason + '$episode className={'kinoma-player-episode ' + (episode.number === parsed.episode ? 'is-current' : '')}>
+                    <div className="kinoma-player-episode__image">{episode.image ? <img src={episode.image} alt="" /> : <Tv size={19} />}<b>{episode.number}</b></div>
+                    <div className="kinoma-player-episode__copy">
+                      <strong>Episode {episode.number}{episode.title && episode.title !== 'Episode ' + episode.number ? ' — ' + episode.title : ''}</strong>
+                      <p>{episode.synopsis}</p>
+                    </div>
+                    <ChevronRight size={17} />
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+          <aside className="kinoma-player-episode-sidebar" aria-label="Season and episode navigation">
+            <div className="kinoma-player-episode-sidebar__header">
+              <span>QUICK ACCESS</span>
+              <strong>Seasons</strong>
+            </div>
+            <div className="kinoma-player-seasons" role="tablist" aria-label="Seasons">
+              {model.seasons.map(season => (
+                <button type="button" role="tab" aria-selected={activeSeason === season.number} key={season.number} className={activeSeason === season.number ? 'is-active' : ''} onClick={() => setActiveSeason(season.number)}>
+                  Season {season.number}
+                </button>
+              ))}
+            </div>
+            <div className="kinoma-player-episode-sidebar__hint">Select a season to load its episodes.</div>
+          </aside>
+        </section>
+      ) : (
+        <section className="kinoma-player-section">
+          <div className="kinoma-player-section__heading"><div><span>KEEP EXPLORING</span><h2>More like this</h2></div></div>
+          <div className="kinoma-player-more-grid">
+            {['After Midnight', 'Paper Kingdom', 'Little Moon', 'Neon Skies', 'Sunday Cinema'].map((title, index) => (
+              <Link key={title} href={'/details/' + encodeURIComponent(title) + '?type=movie'} className="kinoma-player-more-card">
+                <div className={'kinoma-player-more-card__art tone-' + (index + 1)}><Film size={20} /></div>
+                <strong>{title}</strong><span>Similar movie</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <footer className="kinoma-player-footer"><Link href="/home">Home</Link><Link href={'/details/' + encodeURIComponent(model.id)}>View details</Link></footer>
+    </main>
+  );
+}
+ + episode.number) + '?type=series'} className={'kinoma-player-episode ' + (episode.number === parsed.episode ? 'is-current' : '')}>
                     <div className="kinoma-player-episode__image">{episode.image ? <img src={episode.image} alt="" /> : <Tv size={19} />}<b>{episode.number}</b></div>
                     <div className="kinoma-player-episode__copy">
                       <strong>Episode {episode.number}{episode.title && episode.title !== 'Episode ' + episode.number ? ' — ' + episode.title : ''}</strong>
