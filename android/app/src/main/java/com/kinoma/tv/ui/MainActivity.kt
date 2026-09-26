@@ -365,8 +365,8 @@ class MainActivity : ComponentActivity() {
             domStorageEnabled = true
             databaseEnabled = true
             mediaPlaybackRequiresUserGesture = false
-            allowFileAccess = true
-            allowContentAccess = true
+            allowFileAccess = false
+            allowContentAccess = false
             cacheMode = WebSettings.LOAD_DEFAULT
             useWideViewPort = true
             loadWithOverviewMode = true
@@ -377,7 +377,10 @@ class MainActivity : ComponentActivity() {
             // Identify as Android TV Leanback environment for automatic TV layout
             val defaultUa = userAgentString
             userAgentString = "$defaultUa KinomaTV/1.0.0 (Android TV; Leanback; SmartTV)"
-            mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW\n            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {\n                safeBrowsingEnabled = true\n            }
+            mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                safeBrowsingEnabled = true
+            }
         }
     }
 
@@ -483,7 +486,9 @@ class MainActivity : ComponentActivity() {
     private fun showUpdatePrompt(update: UpdateInfo) {
         val builder = AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
         builder.setTitle("Kinoma TV Update")
-        builder.setMessage("A new version (${update.latestVersionName}) is available.\n\n${update.releaseNotes}")
+        builder.setMessage("A new version (${update.latestVersionName}) is available.
+
+${update.releaseNotes}")
 
         builder.setPositiveButton("Update Now") { dialog, _ ->
             dialog.dismiss()
