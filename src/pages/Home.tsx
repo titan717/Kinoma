@@ -66,6 +66,7 @@ export function Home() {
   const [error, setError] = useState<string | null>(null);
   const [trailer, setTrailer] = useState<any>(null);
   const [isInList, setIsInList] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -82,6 +83,7 @@ export function Home() {
   const popular = [...(sections?.popularMovies || []), ...(sections?.popularTv || [])];
   const featuredType = featured?.type === 'movie' ? 'movie' : 'series';
   const featuredWatchUrl = featured?.id ? '/watch/' + encodeURIComponent(featured.id) + '?type=' + featuredType : '/search';
+  const enableTrailerSound = () => setSoundEnabled(true);
   const toggleFeaturedList = () => { if (featured) setIsInList(libraryManager.toggleWatchlist({ id: featured.id, title: featured.title, image: featured.poster || '' })); };
   useEffect(() => { if (featured?.id) setIsInList(libraryManager.isInWatchlist(featured.id)); }, [featured?.id]);
 
@@ -91,7 +93,7 @@ export function Home() {
       <div className="kinoma-home__inner">
         <section className="kinoma-home-hero kinoma-home-hero--trailer" aria-labelledby="kinoma-home-title">
           <div className="kinoma-home-hero__trailer-bg" aria-label={featured?.title ? featured.title + ' trailer' : 'Featured trailer'}>
-            {trailer?.trailer?.embedUrl ? <iframe src={trailerSrc(trailer.trailer.embedUrl)} title={featured?.title ? featured.title + ' trailer' : 'Featured trailer'} className="kinoma-home-hero__trailer-video" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen /> : featured?.backdrop ? <img src={featured.backdrop} alt="" className="kinoma-home-hero__banner-image" loading="eager" fetchPriority="high" decoding="async" /> : <div className="kinoma-home-hero__banner-grid" />}
+            {trailer?.trailer?.embedUrl ? <iframe src={trailerSrc(trailer.trailer.embedUrl) + (soundEnabled ? '&kinomaSound=1' : '')} title={featured?.title ? featured.title + ' trailer' : 'Featured trailer'} className="kinoma-home-hero__trailer-video" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen /> : featured?.backdrop ? <img src={featured.backdrop} alt="" className="kinoma-home-hero__banner-image" loading="eager" fetchPriority="high" decoding="async" /> : <div className="kinoma-home-hero__banner-grid" />}
             <div className="kinoma-home-hero__trailer-shade" />
           </div>
           <div className="kinoma-home-hero__copy">
@@ -104,6 +106,17 @@ export function Home() {
             </div>
           </div>
         </section>
+
+        {trailer?.trailer?.embedUrl && !soundEnabled && (
+          <div className="kinoma-sound-permission" role="dialog" aria-modal="false" aria-label="Enable trailer sound">
+            <div className="kinoma-sound-permission__panel">
+              <span>TRAILER SOUND</span>
+              <strong>Turn sound on?</strong>
+              <p>Allow Kinoma to play the featured trailer with sound.</p>
+              <button type="button" onClick={enableTrailerSound}><span><Play size={15} fill="currentColor" /> Enable sound</span></button>
+            </div>
+          </div>
+        )}
 
         <ModernContinueWatching />
         {trending.length > 0 && <ContentRail kind="trending" title="Trending now" items={trending} />}
