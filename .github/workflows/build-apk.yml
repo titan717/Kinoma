@@ -93,13 +93,13 @@ jobs:
       - name: Verify production signing secrets
         shell: bash
         env:
-          PANDA_KEYSTORE_BASE64: ${{ secrets.PANDA_KEYSTORE_BASE64 }}
-          PANDA_KEYSTORE_PASSWORD: ${{ secrets.PANDA_KEYSTORE_PASSWORD }}
-          PANDA_KEY_ALIAS: ${{ secrets.PANDA_KEY_ALIAS }}
-          PANDA_KEY_PASSWORD: ${{ secrets.PANDA_KEY_PASSWORD }}
+          KINOMA_KEYSTORE_BASE64: ${{ secrets.KINOMA_KEYSTORE_BASE64 }}
+          KINOMA_KEYSTORE_PASSWORD: ${{ secrets.KINOMA_KEYSTORE_PASSWORD }}
+          KINOMA_KEY_ALIAS: ${{ secrets.KINOMA_KEY_ALIAS }}
+          KINOMA_KEY_PASSWORD: ${{ secrets.KINOMA_KEY_PASSWORD }}
         run: |
           set -euo pipefail
-          for name in PANDA_KEYSTORE_BASE64 PANDA_KEYSTORE_PASSWORD PANDA_KEY_ALIAS PANDA_KEY_PASSWORD; do
+          for name in KINOMA_KEYSTORE_BASE64 KINOMA_KEYSTORE_PASSWORD KINOMA_KEY_ALIAS KINOMA_KEY_PASSWORD; do
             if [[ -z "${!name}" ]]; then
               echo "Missing required GitHub Actions secret: $name"
               exit 1
@@ -109,23 +109,23 @@ jobs:
       - name: Restore production keystore
         shell: bash
         env:
-          PANDA_KEYSTORE_BASE64: ${{ secrets.PANDA_KEYSTORE_BASE64 }}
+          KINOMA_KEYSTORE_BASE64: ${{ secrets.KINOMA_KEYSTORE_BASE64 }}
         run: |
           set -euo pipefail
           mkdir -p android/keystore
-          printf '%s' "$PANDA_KEYSTORE_BASE64" | base64 --decode > android/keystore/panda-release.keystore
+          printf '%s' "$KINOMA_KEYSTORE_BASE64" | base64 --decode > android/keystore/panda-release.keystore
           test -s android/keystore/panda-release.keystore
           chmod 600 android/keystore/panda-release.keystore
 
       - name: Configure Gradle signing and release version
         shell: bash
         env:
-          PANDA_VERSION_CODE: ${{ steps.version.outputs.version_code }}
-          PANDA_VERSION_NAME: ${{ steps.version.outputs.version_name }}
+          KINOMA_VERSION_CODE: ${{ steps.version.outputs.version_code }}
+          KINOMA_VERSION_NAME: ${{ steps.version.outputs.version_name }}
         run: |
           {
-            echo "PANDA_VERSION_CODE=$PANDA_VERSION_CODE"
-            echo "PANDA_VERSION_NAME=$PANDA_VERSION_NAME"
+            echo "KINOMA_VERSION_CODE=$KINOMA_VERSION_CODE"
+            echo "KINOMA_VERSION_NAME=$KINOMA_VERSION_NAME"
           } >> "$GITHUB_ENV"
 
       - name: Install web dependencies
@@ -145,16 +145,16 @@ jobs:
       - name: Build signed release APK
         working-directory: android
         env:
-          PANDA_KEYSTORE_BASE64: ${{ secrets.PANDA_KEYSTORE_BASE64 }}
-          PANDA_KEYSTORE_PASSWORD: ${{ secrets.PANDA_KEYSTORE_PASSWORD }}
-          PANDA_KEY_ALIAS: ${{ secrets.PANDA_KEY_ALIAS }}
-          PANDA_KEY_PASSWORD: ${{ secrets.PANDA_KEY_PASSWORD }}
+          KINOMA_KEYSTORE_BASE64: ${{ secrets.KINOMA_KEYSTORE_BASE64 }}
+          KINOMA_KEYSTORE_PASSWORD: ${{ secrets.KINOMA_KEYSTORE_PASSWORD }}
+          KINOMA_KEY_ALIAS: ${{ secrets.KINOMA_KEY_ALIAS }}
+          KINOMA_KEY_PASSWORD: ${{ secrets.KINOMA_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           gradle --version
           gradle clean assembleRelease --no-daemon --stacktrace --warning-mode all \
-            -PPANDA_VERSION_CODE="${PANDA_VERSION_CODE}" \
-            -PPANDA_VERSION_NAME="${PANDA_VERSION_NAME}"
+            -PKINOMA_VERSION_CODE="${KINOMA_VERSION_CODE}" \
+            -PKINOMA_VERSION_NAME="${KINOMA_VERSION_NAME}"
 
       - name: Verify release APK
         shell: bash
