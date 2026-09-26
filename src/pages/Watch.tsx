@@ -201,7 +201,19 @@ export function Watch() {
             <div className="kinoma-player-episode-sidebar__hint">Select a season to load its episodes.</div>
           </aside>
         </section>
-      ) : (   )}
+      ) : (
+        <section className="kinoma-player-section">
+          <div className="kinoma-player-section__heading"><div><span>KEEP EXPLORING</span><h2>More like this</h2></div></div>
+          <div className="kinoma-player-more-grid">
+            {['After Midnight', 'Paper Kingdom', 'Little Moon', 'Neon Skies', 'Sunday Cinema'].map((title, index) => (
+              <Link key={title} href={'/details/' + encodeURIComponent(title) + '?type=movie'} className="kinoma-player-more-card">
+                <div className={'kinoma-player-more-card__art tone-' + (index + 1)}><Film size={20} /></div>
+                <strong>{title}</strong><span>Similar movie</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <footer className="kinoma-player-footer"><Link href="/home">Home</Link><Link href={'/details/' + encodeURIComponent(model.id)}>View details</Link></footer>
     </main>
