@@ -400,11 +400,11 @@ export function ModernHero({ items }: ModernHeroProps) {
 }
  + heroEpisode;
   const watchUrl = hasHistory && activeHistory
-    ? `/watch/${encodeURIComponent(heroWatchId)}?type=${heroType}&t=${Math.floor(activeHistory.playbackTimestamp ?? activeHistory.progress ?? 0)}`
-    : `/watch/${encodeURIComponent(heroWatchId)}?type=${heroType}`;
+    ? '/watch/' + encodeURIComponent(heroWatchId) + '?type=' + heroType + '&t=' + Math.floor(activeHistory.playbackTimestamp ?? activeHistory.progress ?? 0)
+    : '/watch/' + encodeURIComponent(heroWatchId) + '?type=' + heroType;
 
   const primaryLabel = hasHistory && activeHistory
-    ? `Continue Watching${heroType === 'series' ? ' (S' + heroSeason + ' E' + heroEpisode + ')' : ''}`
+    ? 'Continue Watching' + (heroType === 'series' ? ' (S' + heroSeason + ' E' + heroEpisode + ')' : '')
     : 'Watch Now';
 
   // Format rating percentage (0-100 or 0-10)

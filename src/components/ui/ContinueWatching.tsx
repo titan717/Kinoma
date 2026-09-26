@@ -54,7 +54,7 @@ export function ContinueWatching() {
                 transition={{ duration: 0.25, ease: "easeOut" }}
                 className="transform-gpu"
               >
-                <Link href={`/watch/${encodeURIComponent((item.animeId || item.slug) + '$season}>
+                <Link href={'/watch/' + encodeURIComponent((item.animeId || item.slug) + '$season
                   <div className="relative w-full group cursor-pointer bg-[#121217] border border-[#1f1f27] hover:border-[#9c27b0]/60 hover:shadow-[0_8px_24px_rgba(156,39,176,0.2)] rounded-xl overflow-hidden transition-all duration-300">
                     
                     <div className="relative aspect-video w-full overflow-hidden bg-black">
@@ -117,7 +117,7 @@ export function ContinueWatching() {
     </div>
   );
 }
- + seasonNum + '$episode}>
+ + seasonNum + '$episode
                   <div className="relative w-full group cursor-pointer bg-[#121217] border border-[#1f1f27] hover:border-[#9c27b0]/60 hover:shadow-[0_8px_24px_rgba(156,39,176,0.2)] rounded-xl overflow-hidden transition-all duration-300">
                     
                     <div className="relative aspect-video w-full overflow-hidden bg-black">
@@ -180,7 +180,7 @@ export function ContinueWatching() {
     </div>
   );
 }
- + Math.max(1, Number(item.episodeNumber) || 1))}?type=series&t=${Math.floor(curTime)}`}>
+ + Math.max(1, Number(item.episodeNumber) || 1)) + '?type=series&t=' + Math.floor(curTime)}>
                   <div className="relative w-full group cursor-pointer bg-[#121217] border border-[#1f1f27] hover:border-[#9c27b0]/60 hover:shadow-[0_8px_24px_rgba(156,39,176,0.2)] rounded-xl overflow-hidden transition-all duration-300">
                     
                     <div className="relative aspect-video w-full overflow-hidden bg-black">
