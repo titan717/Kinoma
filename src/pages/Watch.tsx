@@ -165,44 +165,43 @@ export function Watch() {
       </section>
 
       {model.kind === 'series' ? (
-        <section className="kinoma-player-section">
-          <div className="kinoma-player-section__heading">
-            <div><span>KEEP WATCHING</span><h2>Seasons & Episodes</h2></div>
-            <small>{model.episodes.length} episodes</small>
+        <section className="kinoma-player-layout">
+          <div className="kinoma-player-main-column">
+            <div className="kinoma-player-section kinoma-player-section--episodes">
+              <div className="kinoma-player-section__heading">
+                <div><span>KEEP WATCHING</span><h2>Seasons & Episodes</h2></div>
+                <small>{model.episodes.length} episodes</small>
+              </div>
+              <div className="kinoma-player-episodes">
+                {model.episodes.map(episode => (
+                  <Link key={episode.id} href={'/watch/' + encodeURIComponent(model.id + '$episode$' + episode.number) + '?type=series'} className={'kinoma-player-episode ' + (episode.number === parsed.episode ? 'is-current' : '')}>
+                    <div className="kinoma-player-episode__image">{episode.image ? <img src={episode.image} alt="" /> : <Tv size={19} />}<b>{episode.number}</b></div>
+                    <div className="kinoma-player-episode__copy">
+                      <strong>Episode {episode.number}{episode.title && episode.title !== 'Episode ' + episode.number ? ' — ' + episode.title : ''}</strong>
+                      <p>{episode.synopsis}</p>
+                    </div>
+                    <ChevronRight size={17} />
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
-          <div className="kinoma-player-seasons" role="tablist" aria-label="Seasons">
-            {model.seasons.map(season => (
-              <button type="button" role="tab" aria-selected={activeSeason === season.number} key={season.number} className={activeSeason === season.number ? 'is-active' : ''} onClick={() => setActiveSeason(season.number)}>
-                Season {season.number}
-              </button>
-            ))}
-          </div>
-          <div className="kinoma-player-episodes">
-            {model.episodes.map(episode => (
-              <Link key={episode.id} href={'/watch/' + encodeURIComponent(model.id + '$episode$' + episode.number) + '?type=series'} className={'kinoma-player-episode ' + (episode.number === parsed.episode ? 'is-current' : '')}>
-                <div className="kinoma-player-episode__image">{episode.image ? <img src={episode.image} alt="" /> : <Tv size={19} />}<b>{episode.number}</b></div>
-                <div className="kinoma-player-episode__copy">
-                  <strong>Episode {episode.number}{episode.title && episode.title !== 'Episode ' + episode.number ? ' — ' + episode.title : ''}</strong>
-                  <p>{episode.synopsis}</p>
-                </div>
-                <ChevronRight size={17} />
-              </Link>
-            ))}
-          </div>
+          <aside className="kinoma-player-episode-sidebar" aria-label="Season and episode navigation">
+            <div className="kinoma-player-episode-sidebar__header">
+              <span>QUICK ACCESS</span>
+              <strong>Seasons</strong>
+            </div>
+            <div className="kinoma-player-seasons" role="tablist" aria-label="Seasons">
+              {model.seasons.map(season => (
+                <button type="button" role="tab" aria-selected={activeSeason === season.number} key={season.number} className={activeSeason === season.number ? 'is-active' : ''} onClick={() => setActiveSeason(season.number)}>
+                  Season {season.number}
+                </button>
+              ))}
+            </div>
+            <div className="kinoma-player-episode-sidebar__hint">Select a season to load its episodes.</div>
+          </aside>
         </section>
-      ) : (
-        <section className="kinoma-player-section">
-          <div className="kinoma-player-section__heading"><div><span>KEEP EXPLORING</span><h2>More like this</h2></div></div>
-          <div className="kinoma-player-more-grid">
-            {['After Midnight', 'Paper Kingdom', 'Little Moon', 'Neon Skies', 'Sunday Cinema'].map((title, index) => (
-              <Link key={title} href={'/details/' + encodeURIComponent(title) + '?type=movie'} className="kinoma-player-more-card">
-                <div className={'kinoma-player-more-card__art tone-' + (index + 1)}><Film size={20} /></div>
-                <strong>{title}</strong><span>Similar movie</span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
+      ) : (   )}
 
       <footer className="kinoma-player-footer"><Link href="/home">Home</Link><Link href={'/details/' + encodeURIComponent(model.id)}>View details</Link></footer>
     </main>
