@@ -1,4 +1,4 @@
-name: Build and Release Kinoma Android TV APK
+name: Build and Release Panda.fun Android TV APK
 
 on:
   workflow_dispatch:
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Kinoma
+      - name: Checkout Panda.fun
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -93,13 +93,13 @@ jobs:
       - name: Verify production signing secrets
         shell: bash
         env:
-          KINOMA_KEYSTORE_BASE64: ${{ secrets.KINOMA_KEYSTORE_BASE64 }}
-          KINOMA_KEYSTORE_PASSWORD: ${{ secrets.KINOMA_KEYSTORE_PASSWORD }}
-          KINOMA_KEY_ALIAS: ${{ secrets.KINOMA_KEY_ALIAS }}
-          KINOMA_KEY_PASSWORD: ${{ secrets.KINOMA_KEY_PASSWORD }}
+          PANDA_KEYSTORE_BASE64: ${{ secrets.PANDA_KEYSTORE_BASE64 }}
+          PANDA_KEYSTORE_PASSWORD: ${{ secrets.PANDA_KEYSTORE_PASSWORD }}
+          PANDA_KEY_ALIAS: ${{ secrets.PANDA_KEY_ALIAS }}
+          PANDA_KEY_PASSWORD: ${{ secrets.PANDA_KEY_PASSWORD }}
         run: |
           set -euo pipefail
-          for name in KINOMA_KEYSTORE_BASE64 KINOMA_KEYSTORE_PASSWORD KINOMA_KEY_ALIAS KINOMA_KEY_PASSWORD; do
+          for name in PANDA_KEYSTORE_BASE64 PANDA_KEYSTORE_PASSWORD PANDA_KEY_ALIAS PANDA_KEY_PASSWORD; do
             if [[ -z "${!name}" ]]; then
               echo "Missing required GitHub Actions secret: $name"
               exit 1
@@ -109,23 +109,23 @@ jobs:
       - name: Restore production keystore
         shell: bash
         env:
-          KINOMA_KEYSTORE_BASE64: ${{ secrets.KINOMA_KEYSTORE_BASE64 }}
+          PANDA_KEYSTORE_BASE64: ${{ secrets.PANDA_KEYSTORE_BASE64 }}
         run: |
           set -euo pipefail
           mkdir -p android/keystore
-          printf '%s' "$KINOMA_KEYSTORE_BASE64" | base64 --decode > android/keystore/kinoma-release.keystore
-          test -s android/keystore/kinoma-release.keystore
-          chmod 600 android/keystore/kinoma-release.keystore
+          printf '%s' "$PANDA_KEYSTORE_BASE64" | base64 --decode > android/keystore/panda-release.keystore
+          test -s android/keystore/panda-release.keystore
+          chmod 600 android/keystore/panda-release.keystore
 
       - name: Configure Gradle signing and release version
         shell: bash
         env:
-          KINOMA_VERSION_CODE: ${{ steps.version.outputs.version_code }}
-          KINOMA_VERSION_NAME: ${{ steps.version.outputs.version_name }}
+          PANDA_VERSION_CODE: ${{ steps.version.outputs.version_code }}
+          PANDA_VERSION_NAME: ${{ steps.version.outputs.version_name }}
         run: |
           {
-            echo "KINOMA_VERSION_CODE=$KINOMA_VERSION_CODE"
-            echo "KINOMA_VERSION_NAME=$KINOMA_VERSION_NAME"
+            echo "PANDA_VERSION_CODE=$PANDA_VERSION_CODE"
+            echo "PANDA_VERSION_NAME=$PANDA_VERSION_NAME"
           } >> "$GITHUB_ENV"
 
       - name: Install web dependencies
@@ -145,16 +145,16 @@ jobs:
       - name: Build signed release APK
         working-directory: android
         env:
-          KINOMA_KEYSTORE_BASE64: ${{ secrets.KINOMA_KEYSTORE_BASE64 }}
-          KINOMA_KEYSTORE_PASSWORD: ${{ secrets.KINOMA_KEYSTORE_PASSWORD }}
-          KINOMA_KEY_ALIAS: ${{ secrets.KINOMA_KEY_ALIAS }}
-          KINOMA_KEY_PASSWORD: ${{ secrets.KINOMA_KEY_PASSWORD }}
+          PANDA_KEYSTORE_BASE64: ${{ secrets.PANDA_KEYSTORE_BASE64 }}
+          PANDA_KEYSTORE_PASSWORD: ${{ secrets.PANDA_KEYSTORE_PASSWORD }}
+          PANDA_KEY_ALIAS: ${{ secrets.PANDA_KEY_ALIAS }}
+          PANDA_KEY_PASSWORD: ${{ secrets.PANDA_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           gradle --version
           gradle clean assembleRelease --no-daemon --stacktrace --warning-mode all \
-            -PKINOMA_VERSION_CODE="${KINOMA_VERSION_CODE}" \
-            -PKINOMA_VERSION_NAME="${KINOMA_VERSION_NAME}"
+            -PPANDA_VERSION_CODE="${PANDA_VERSION_CODE}" \
+            -PPANDA_VERSION_NAME="${PANDA_VERSION_NAME}"
 
       - name: Verify release APK
         shell: bash
@@ -164,31 +164,31 @@ jobs:
           test -s "$APK"
 
           mkdir -p release
-          cp "$APK" release/Kinoma-Android-TV.apk
+          cp "$APK" release/Panda.fun-Android-TV.apk
 
           if command -v apksigner >/dev/null 2>&1; then
-            apksigner verify --verbose release/Kinoma-Android-TV.apk
+            apksigner verify --verbose release/Panda.fun-Android-TV.apk
           fi
 
-          sha256sum release/Kinoma-Android-TV.apk | tee release/Kinoma-Android-TV.apk.sha256
+          sha256sum release/Panda.fun-Android-TV.apk | tee release/Panda.fun-Android-TV.apk.sha256
 
       - name: Publish GitHub Release
         id: release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.version_name }}
-          name: Kinoma Android TV v${{ steps.version.outputs.version_name }}
+          name: Panda.fun Android TV v${{ steps.version.outputs.version_name }}
           body: |
-            # Kinoma Android TV v${{ steps.version.outputs.version_name }}
+            # Panda.fun Android TV v${{ steps.version.outputs.version_name }}
 
             Production signed Android TV release.
 
             - Version code: ${{ steps.version.outputs.version_code }}
-            - APK: Kinoma-Android-TV.apk
+            - APK: Panda.fun-Android-TV.apk
             - SHA-256 is published in the release asset and update manifest.
           files: |
-            release/Kinoma-Android-TV.apk
-            release/Kinoma-Android-TV.apk.sha256
+            release/Panda.fun-Android-TV.apk
+            release/Panda.fun-Android-TV.apk.sha256
           generate_release_notes: true
 
       - name: Publish update manifest to main
@@ -201,8 +201,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          SHA256="$(sha256sum release/Kinoma-Android-TV.apk | awk '{print $1}')"
-          APK_URL="https://github.com/titan717/Kinoma/releases/download/${RELEASE_TAG}/Kinoma-Android-TV.apk"
+          SHA256="$(sha256sum release/Panda.fun-Android-TV.apk | awk '{print $1}')"
+          APK_URL="https://github.com/titan717/Panda.fun/releases/download/${RELEASE_TAG}/Panda.fun-Android-TV.apk"
           export SHA256 APK_URL
 
           python - <<'PY'
@@ -211,7 +211,7 @@ jobs:
               "latestVersionCode": int(os.environ["VERSION_CODE"]),
               "latestVersionName": os.environ["VERSION_NAME"],
               "releaseTag": os.environ["RELEASE_TAG"],
-              "releaseNotes": f"Kinoma Android TV {os.environ['VERSION_NAME']}",
+              "releaseNotes": f"Panda.fun Android TV {os.environ['VERSION_NAME']}",
               "apkUrl": os.environ["APK_URL"],
               "sha256": os.environ["SHA256"],
               "mandatory": False
@@ -226,5 +226,5 @@ jobs:
           git fetch origin main
           git checkout main
           git add update/latest.json
-          git commit -m "chore(update): publish Kinoma ${VERSION_NAME} manifest [skip ci]" || echo "latest.json already up to date"
+          git commit -m "chore(update): publish Panda.fun ${VERSION_NAME} manifest [skip ci]" || echo "latest.json already up to date"
           git push origin HEAD:main
