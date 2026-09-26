@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useRoute } from 'wouter';
 import { Play, Plus, Check, ChevronRight, Film, Tv, Clock3 } from 'lucide-react';
 import { api } from '../lib/api';
+import type { AnimeItem, Episode, AnimeSeasonItem } from '../types';
 import { DEFAULT_POSTER, DEFAULT_BANNER } from '../types';
 import { libraryManager } from '../lib/library';
 import { updateSEO } from '../lib/seo';
@@ -52,26 +53,77 @@ export function Details() {
   const [data, setData] = useState<any>(null);
   const [trailer, setTrailer] = useState<any>(null);
   const [selectedSeason, setSelectedSeason] = useState(1);
+  const [seasonItems, setSeasonItems] = useState<AnimeSeasonItem[]>([]);
+  const [seasonEpisodes, setSeasonEpisodes] = useState<Episode[]>([]);
+  const [recommendations, setRecommendations] = useState<AnimeItem[]>([]);
   const [isInList, setIsInList] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
-    api.getDetails(id).then(result => active && setData(result)).catch(() => active && setData(null));
-    api.getTrailer(id).then(result => active && setTrailer(result)).catch(() => active && setTrailer(null));
+    setLoading(true);
+    setError(null);
+    setSeasonItems([]);
+    setSeasonEpisodes([]);
+    setRecommendations([]);
+    Promise.all([
+      api.getDetails(id),
+      api.getTrailer(id).catch(() => ({ available: false, trailer: null })),
+      api.getRecommendations(id).catch(() => ({ results: [] as AnimeItem[] })),
+    ]).then(([details, trailerResult, recommendationResult]) => {
+      if (!active) return;
+      setData(details);
+      setTrailer(trailerResult);
+      setRecommendations(recommendationResult.results);
+      setLoading(false);
+    }).catch((err) => {
+      if (!active) return;
+      setData(null);
+      setError(err instanceof Error ? err.message : 'Unable to load this title.');
+      setLoading(false);
+    });
     return () => { active = false; };
   }, [id]);
+
+  useEffect(() => {
+    if (!data || normaliseKind(queryType, data) !== 'series') return;
+    let active = true;
+    api.getSeasons(id).then(result => {
+      if (!active) return;
+      setSeasonItems(result.seasons);
+      setSelectedSeason(result.seasons[0]?.seasonNumber || 1);
+    }).catch(() => active && setSeasonItems([]));
+    return () => { active = false; };
+  }, [data, id, queryType]);
+
+  useEffect(() => {
+    if (!data || normaliseKind(queryType, data) !== 'series' || !seasonItems.length) return;
+    let active = true;
+    api.getSeasonEpisodes(id, selectedSeason).then(result => {
+      if (active) setSeasonEpisodes(result.episodes);
+    }).catch(() => active && setSeasonEpisodes([]));
+    return () => { active = false; };
+  }, [data, id, queryType, selectedSeason, seasonItems.length]);
 
   const model: DetailModel = useMemo(() => {
     const title = typeof data?.title === 'string'
       ? data.title
       : data?.title?.english || data?.title?.romaji || id || 'Untitled';
     const kind = normaliseKind(queryType, data);
-    const seasons = PLACEHOLDER_SEASONS.map(number => ({
-      number,
-      episodes: PLACEHOLDER_EPISODES.map(ep => ({ ...ep, image: data?.image || '' })),
-    }));
+    const seasons = seasonItems.length
+      ? seasonItems.map(season => ({
+          number: season.seasonNumber,
+          episodes: season.seasonNumber === selectedSeason
+            ? seasonEpisodes.map(ep => ({
+                number: ep.number,
+                title: ep.title || `Episode ${ep.number}`,
+                synopsis: '',
+                image: ep.image || '',
+              }))
+            : [],
+        }))
+      : [];
     return {
       id,
       title,
@@ -86,7 +138,7 @@ export function Details() {
       trailerUrl: trailer?.trailer?.embedUrl || trailer?.trailer?.url || trailer?.url || undefined,
       seasons,
     };
-  }, [data, id, queryType, trailer]);
+  }, [data, id, queryType, trailer, seasonItems, seasonEpisodes, selectedSeason]);
 
   useEffect(() => {
     updateSEO({ title: model.title, description: model.synopsis.slice(0, 160), image: model.poster, type: 'video.tv_show' });
@@ -157,7 +209,7 @@ export function Details() {
 
       {model.kind === 'series' ? (
         <section className="kinoma-details-section">
-          <div className="kinoma-details-section__heading"><div><span>KEEP WATCHING</span><h2>Seasons & Episodes</h2></div><small>{model.seasons.length} seasons</small></div>
+          <div className="kinoma-details-section__heading"><div><span>KEEP WATCHING</span><h2>Seasons & Episodes</h2></div><small>{model.seasons.length || '—'} seasons</small></div>
           <div className="kinoma-season-tabs">
             {model.seasons.map(season => (
               <button key={season.number} className={selectedSeason === season.number ? 'is-selected' : ''} onClick={() => setSelectedSeason(season.number)}>
@@ -185,10 +237,10 @@ export function Details() {
         <section className="kinoma-details-section">
           <div className="kinoma-details-section__heading"><div><span>KEEP EXPLORING</span><h2>More like this</h2></div><small>Because one movie is never enough.</small></div>
           <div className="kinoma-more-grid">
-            {['After Midnight', 'Paper Kingdom', 'Little Moon', 'Neon Skies', 'Sunday Cinema'].map((title, i) => (
-              <button key={title} className="kinoma-more-card" onClick={() => setLocation(`/details/${encodeURIComponent(title)}?type=movie`)}>
-                <div className={`kinoma-more-card__art tone-${i % 5}`}><Film size={25} /></div>
-                <strong>{title}</strong><span>{model.genres[i % model.genres.length]} • Movie</span>
+            {recommendations.length ? recommendations.map((item, i) => (
+              <button key={title} className="kinoma-more-card" onClick={() => setLocation(`/details/${encodeURIComponent(item.id)}?type=${item.contentType === 'movie' ? 'movie' : 'series'}`)}>
+                <div className={`kinoma-more-card__art tone-${i % 5}`}>{item.image ? <img src={item.image} alt="" /> : <Film size={25} />}</div>
+                <strong>{typeof item.title === 'string' ? item.title : item.title.english || item.title.romaji || 'Untitled'}</strong><span>{item.genres?.[0] || model.genres[i % model.genres.length] || 'Movie'} • {item.contentType === 'movie' ? 'Movie' : 'Series'}</span>
               </button>
             ))}
           </div>
