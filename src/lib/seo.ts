@@ -1,4 +1,4 @@
-// Kinoma Dynamic SEO & Metadata utility
+// Panda.fun Dynamic SEO & Metadata utility
 export interface SEOProps {
   title?: string;
   description?: string;
@@ -9,8 +9,8 @@ export interface SEOProps {
 }
 
 export function updateSEO({ title, description, image, type = 'website', canonicalUrl, schema }: SEOProps) {
-  const fullTitle = title ? (title.toLowerCase().includes('kinoma') ? title : `${title} — Kinoma`) : 'Kinoma — Anime, Movies & Series';
-  const defaultDesc = description || 'Discover anime, movies and series on Kinoma. Find something worth watching and keep your viewing experience simple.';
+  const fullTitle = title ? (title.toLowerCase().includes('panda') ? title : `${title} — Panda.fun`) : 'Panda.fun — Anime, Movies & Series';
+  const defaultDesc = description || 'Discover anime, movies and series on Panda.fun. Find something worth watching and keep your viewing experience simple.';
   const defaultImage = image || '/icon.svg';
   const url = canonicalUrl || (typeof window !== 'undefined' ? window.location.href : '/');
 
@@ -35,7 +35,7 @@ export function updateSEO({ title, description, image, type = 'website', canonic
   setMetaTag('property', 'og:image', defaultImage);
   setMetaTag('property', 'og:type', type);
   setMetaTag('property', 'og:url', url);
-  setMetaTag('property', 'og:site_name', 'Kinoma');
+  setMetaTag('property', 'og:site_name', 'Panda.fun');
 
   setMetaTag('name', 'twitter:card', 'summary_large_image');
   setMetaTag('name', 'twitter:title', fullTitle);
@@ -50,7 +50,7 @@ export function updateSEO({ title, description, image, type = 'website', canonic
   }
   canonicalEl.setAttribute('href', url);
 
-  const schemaId = 'kinoma-schema-structured-data';
+  const schemaId = 'panda-schema-structured-data';
   let scriptEl = document.getElementById(schemaId) as HTMLScriptElement | null;
   if (!scriptEl) {
     scriptEl = document.createElement('script');
@@ -63,7 +63,7 @@ export function updateSEO({ title, description, image, type = 'website', canonic
   const defaultSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'Kinoma',
+    name: 'Panda.fun',
     url: origin || '/',
     logo: origin ? `${origin}/icon.svg` : '/icon.svg',
     description: defaultDesc,
