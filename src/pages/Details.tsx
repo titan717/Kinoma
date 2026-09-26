@@ -237,8 +237,8 @@ export function Details() {
         <section className="kinoma-details-section">
           <div className="kinoma-details-section__heading"><div><span>KEEP EXPLORING</span><h2>More like this</h2></div><small>Because one movie is never enough.</small></div>
           <div className="kinoma-more-grid">
-            {recommendations.length ? recommendations.map((item, i) => (
-              <button key={title} className="kinoma-more-card" onClick={() => setLocation(`/details/${encodeURIComponent(item.id)}?type=${item.contentType === 'movie' ? 'movie' : 'series'}`)}>
+            {recommendations.map((item, i) => (
+              <button key={item.id} className="kinoma-more-card" onClick={() => setLocation(`/details/${encodeURIComponent(item.id)}?type=${item.contentType === 'movie' ? 'movie' : 'series'}`)}>
                 <div className={`kinoma-more-card__art tone-${i % 5}`}>{item.image ? <img src={item.image} alt="" /> : <Film size={25} />}</div>
                 <strong>{typeof item.title === 'string' ? item.title : item.title.english || item.title.romaji || 'Untitled'}</strong><span>{item.genres?.[0] || model.genres[i % model.genres.length] || 'Movie'} • {item.contentType === 'movie' ? 'Movie' : 'Series'}</span>
               </button>
