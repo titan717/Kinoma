@@ -9,23 +9,14 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 interface KinomaApiService {
-    @GET("popular/tv")
-    suspend fun getTrending(
-        @Query("q") q: String = "action",
-        @Query("limit") limit: Int = 20
-    ): AnimeListResponse
+    @GET("trending")
+    suspend fun getTrending(@Query("window") window: String = "day"): MovieApiResponse<AnimeListResponse>
 
     @GET("popular/tv")
-    suspend fun getPopular(
-        @Query("q") q: String = "adventure",
-        @Query("limit") limit: Int = 20
-    ): AnimeListResponse
+    suspend fun getPopular(@Query("page") page: Int = 1): MovieApiResponse<AnimeListResponse>
 
     @GET("search")
-    suspend fun searchAnime(
-        @Query("q") query: String,
-        @Query("limit") limit: Int = 20
-    ): AnimeListResponse
+    suspend fun searchAnime(@Query("q") query: String, @Query("limit") limit: Int = 20, @Query("page") page: Int = 1): MovieApiResponse<AnimeListResponse>
 
     companion object {
         private const val BASE_URL = "https://apikinoma.vercel.app/api/v1/"

@@ -41,6 +41,11 @@ data class AnimeListResponse(
     @SerializedName("results") val results: List<AnimeItem>?
 )
 
+data class MovieApiResponse<T>(
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("data") val data: T?
+)
+
 data class UpdateInfo(
     @SerializedName(value = "latestVersionCode", alternate = ["versionCode"]) val latestVersionCode: Int,
     @SerializedName(value = "latestVersionName", alternate = ["versionName"]) val latestVersionName: String,

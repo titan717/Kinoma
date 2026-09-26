@@ -3,6 +3,7 @@ import { Link } from 'wouter';
 import { KinomaLogo } from '../components/ui/KinomaLogo';
 import { ArrowRight, Clapperboard, Film, Github, Instagram, Play, Plus, Sparkles, Tv, Youtube } from 'lucide-react';
 import { api, MovieApiError, MovieApiMedia } from '../lib/api';
+import { ModernContinueWatching } from '../components/ui/modern/ModernContinueWatching';
 
 type RailKind = 'trending' | 'latest' | 'popular' | 'tv' | 'movie';
 
@@ -17,7 +18,7 @@ function RailCard({ item }: { item: MovieApiMedia }) {
   return (
     <Link href={`/details/${encodeURIComponent(item.id)}?type=${kind === 'movie' ? 'movie' : 'series'}`} className="kinoma-rail-card" aria-label={`Open ${item.title}`}>
       <div className="kinoma-rail-card__art" aria-hidden="true">
-        {item.poster ? <img src={item.poster} alt="" loading="lazy" /> : <span className="kinoma-rail-card__orb kinoma-rail-card__orb--one" />}
+        {item.poster ? <img src={item.poster} alt="" loading="lazy" decoding="async" /> : <span className="kinoma-rail-card__orb kinoma-rail-card__orb--one" />}
         <span className="kinoma-rail-card__shine" />
         <span className="kinoma-rail-card__icon"><KindIcon kind={kind} /></span>
         <span className="kinoma-rail-card__badge">KINOMA</span>
@@ -87,13 +88,14 @@ export function Home() {
             <div className="kinoma-home-hero__actions"><ThreeDButton><Play size={16} fill="currentColor" /> Explore</ThreeDButton><ThreeDButton secondary><Plus size={16} /> My List</ThreeDButton></div>
           </div>
           <div className="kinoma-home-hero__banner" role="img" aria-label="Kinoma featured artwork">
-            {featured?.backdrop ? <img src={featured.backdrop} alt="" className="kinoma-home-hero__banner-image" /> : <div className="kinoma-home-hero__banner-grid" />}
+            {featured?.backdrop ? <img src={featured.backdrop} alt="" className="kinoma-home-hero__banner-image" loading="eager" fetchPriority="high" decoding="async" /> : <div className="kinoma-home-hero__banner-grid" />}
             <div className="kinoma-home-hero__banner-glow" />
             <div className="kinoma-home-hero__banner-copy"><span>FEATURED</span><strong>{featured?.title || (error ? 'MovieApi unavailable' : 'Loading…')}</strong><small>{featured?.genres?.slice(0, 3).join(' • ') || 'MovieApi discovery'}</small></div>
             <div className="kinoma-home-hero__banner-film" aria-hidden="true"><Clapperboard size={28} strokeWidth={1.5} /></div>
           </div>
         </section>
 
+        <ModernContinueWatching />
         {trending.length > 0 && <ContentRail kind="trending" title="Trending now" items={trending} />}
         {latest.length > 0 && <ContentRail kind="latest" title="New on Kinoma" items={latest} />}
         {popular.length > 0 && <ContentRail kind="popular" title="Popular right now" items={popular} />}

@@ -51,7 +51,15 @@ function PosterCard({ item, action }: { item: LibraryItem; action?: React.ReactN
 
 function ContinueCard({ item, onRemove }: { item: HistoryItem; onRemove: () => void }) {
   const pct = Math.min(100, Math.max(3, Math.round(item.completionPercentage || 0)));
-  const watchUrl = `/watch/${encodeURIComponent(item.episodeId || item.slug)}?t=${Math.floor(item.playbackTimestamp || 0)}`;
+  const mediaId = item.animeId || item.slug;
+  const type = mediaId.startsWith('kinoma_tmdb_movie_') ? 'movie' : 'series';
+  const season = Math.max(1, Number(item.seasonNumber) || 1);
+  const episode = Math.max(1, Number(item.episodeNumber) || 1);
+  const watchId = type === 'movie'
+    ? mediaId
+    : `${mediaId}$season${season}$episode${episode}`;
+  const watchUrl = '/watch/' + encodeURIComponent(watchId) + '?type=' + type + (item.playbackTimestamp > 0 ? '&t=' + Math.floor(item.playbackTimestamp) : '');
+
   return (
     <article className="kinoma-library-continue">
       <Link href={watchUrl} className="kinoma-library-continue__art">
