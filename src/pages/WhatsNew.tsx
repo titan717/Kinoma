@@ -4,7 +4,7 @@ import { api } from '../lib/api';
 import { AnimeItem } from '../types';
 import { ModernCard } from '../components/ui/modern/ModernCard';
 import { AnimeGridSkeleton } from '../components/ui/Skeletons';
-import { Panda.funErrorState } from '../components/ui/Panda.funErrorState';
+import { KinomaErrorState } from '../components/ui/KinomaErrorState';
 import { updateSEO } from '../lib/seo';
 import { Sparkles, Film, Radio, Calendar, Filter, Flame } from 'lucide-react';
 
@@ -141,7 +141,7 @@ export function WhatsNew() {
 
         {/* Content Section */}
         {hasError ? (
-          <Panda.funErrorState onRetry={handleRetryAll} />
+          <KinomaErrorState onRetry={handleRetryAll} />
         ) : isLoading ? (
           <AnimeGridSkeleton />
         ) : filteredItems.length === 0 ? (
