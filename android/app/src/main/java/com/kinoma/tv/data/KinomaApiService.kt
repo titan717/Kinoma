@@ -9,13 +9,13 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 interface KinomaApiService {
-    @GET("search")
+    @GET("popular/tv")
     suspend fun getTrending(
         @Query("q") q: String = "action",
         @Query("limit") limit: Int = 20
     ): AnimeListResponse
 
-    @GET("search")
+    @GET("popular/tv")
     suspend fun getPopular(
         @Query("q") q: String = "adventure",
         @Query("limit") limit: Int = 20
@@ -28,7 +28,7 @@ interface KinomaApiService {
     ): AnimeListResponse
 
     companion object {
-        private const val BASE_URL = "https://kinomaapi.vercel.app/"
+        private const val BASE_URL = "https://apikinoma.vercel.app/api/v1/"
 
         val instance: KinomaApiService by lazy {
             val loggingInterceptor = HttpLoggingInterceptor { message ->
