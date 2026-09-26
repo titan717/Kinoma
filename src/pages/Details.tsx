@@ -11,7 +11,7 @@ import { updateSEO } from '../lib/seo';
 function cleanText(value: unknown) { return typeof value === 'string' ? value.replace(/<[^>]*>/g, '').trim() : ''; }
 function titleOf(data: any, fallback: string) { return typeof data?.title === 'string' ? data.title : data?.title?.english || data?.title?.romaji || data?.title?.native || fallback; }
 function kindOf(raw: string | null, data: any) { return raw === 'movie' || data?.contentType === 'movie' ? 'movie' : 'series'; }
-function formatDuration(value: unknown) { const n = Number(value); if (!Number.isFinite(n) || n <= 0) return 'Series'; const h = Math.floor(n / 60); const m = Math.round(n % 60); return h ? h + 'h ' + String(m).padStart(2, '0') + 'm' : m + 'm'; }
+function trailerSrc(url: unknown) {\n  if (typeof url !== 'string' || !url) return '';\n  try {\n    const parsed = new URL(url);\n    parsed.searchParams.set('autoplay', '1');\n    parsed.searchParams.set('mute', '0');\n    parsed.searchParams.set('playsinline', '1');\n    return parsed.toString();\n  } catch {\n    return url;\n  }\n}\nfunction formatDuration(value: unknown) { const n = Number(value); if (!Number.isFinite(n) || n <= 0) return 'Series'; const h = Math.floor(n / 60); const m = Math.round(n % 60); return h ? h + 'h ' + String(m).padStart(2, '0') + 'm' : m + 'm'; }
 
 export function Details() {
   const [, params] = useRoute<{ id: string }>('/details/:id');
@@ -102,7 +102,7 @@ export function Details() {
       {error && <div className="kinoma-details-bottom" role="alert">{error}</div>}
       <section className="kinoma-details-hero kinoma-details-hero--trailer">
         <div className="kinoma-details-hero__trailer-bg" aria-label={title + ' trailer preview'}>
-          {trailer?.trailer?.embedUrl ? <iframe src={trailer.trailer.embedUrl} title={title + ' trailer'} className="kinoma-details-hero__trailer-video" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen /> : (
+          {trailer?.trailer?.embedUrl ? <iframe src={trailerSrc(trailer.trailer.embedUrl)} title={title + ' trailer'} className="kinoma-details-hero__trailer-video" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen /> : (
             <div className="kinoma-details-hero__trailer-placeholder"><div><Film size={42} /></div><span>TRAILER PREVIEW</span><strong>Trailer preview unavailable</strong><small>MovieApi did not return a trailer for this title.</small></div>
           )}
           <div className="kinoma-details-hero__trailer-shade" />
