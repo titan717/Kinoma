@@ -14,9 +14,9 @@ export default defineConfig(() => {
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icon.svg'],
         manifest: {
           id: '/',
-          name: 'Kinoma - Anime & Movie Streaming',
-          short_name: 'Kinoma',
-          description: 'Anime, movies and series on Kinoma with a modern, cinematic streaming experience.',
+          name: 'Panda.fun - Anime & Movie Streaming',
+          short_name: 'Panda.fun',
+          description: 'Anime, movies and series on Panda.fun with a modern, cinematic streaming experience.',
           theme_color: '#0b0c10',
           background_color: '#0b0c10',
           display: 'standalone',
@@ -52,7 +52,7 @@ export default defineConfig(() => {
               urlPattern: ({ request }) => ['image', 'font'].includes(request.destination),
               handler: 'CacheFirst',
               options: {
-                cacheName: 'kinoma-static-media-v1',
+                cacheName: 'panda-static-media-v1',
                 expiration: {
                   maxEntries: 120,
                   maxAgeSeconds: 60 * 60 * 24 * 30,
@@ -64,7 +64,7 @@ export default defineConfig(() => {
               urlPattern: ({ url }) => url.origin === self.location.origin && url.pathname.startsWith('/api/'),
               handler: 'StaleWhileRevalidate',
               options: {
-                cacheName: 'kinoma-api-v1',
+                cacheName: 'panda-api-v1',
                 expiration: {
                   maxEntries: 80,
                   maxAgeSeconds: 60 * 60 * 24,
