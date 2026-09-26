@@ -1,9 +1,9 @@
 {
-  "latestVersionCode": 329,
+  "latestVersionCode": 335,
   "latestVersionName": "0.0.3",
   "releaseTag": "v0.0.3",
   "releaseNotes": "Kinoma Android TV 0.0.3",
   "apkUrl": "https://github.com/titan717/Kinoma/releases/download/v0.0.3/Kinoma-Android-TV.apk",
-  "sha256": "2f0962a4412c0a058bd411e7841566d537df1a0fcd9391e5eb11a113ad9dc739",
+  "sha256": "251f896a94c3bdb77e359f7590b3b04a10bd78bcb7f979a71762c99cb004aad0",
   "mandatory": false
 }
