@@ -54,7 +54,133 @@ export function ContinueWatching() {
                 transition={{ duration: 0.25, ease: "easeOut" }}
                 className="transform-gpu"
               >
-                <Link href={`/watch/${encodeURIComponent(item.episodeId)}?t=${Math.floor(curTime)}`}>
+                <Link href={`/watch/${encodeURIComponent((item.animeId || item.slug) + '$season}>
+                  <div className="relative w-full group cursor-pointer bg-[#121217] border border-[#1f1f27] hover:border-[#9c27b0]/60 hover:shadow-[0_8px_24px_rgba(156,39,176,0.2)] rounded-xl overflow-hidden transition-all duration-300">
+                    
+                    <div className="relative aspect-video w-full overflow-hidden bg-black">
+                      <img 
+                        src={item.image || DEFAULT_POSTER} 
+                        alt={item.title}
+                        className="w-full h-full object-cover opacity-70 group-hover:opacity-90 group-hover:scale-105 transition-all duration-300"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/30">
+                        <div className="w-11 h-11 rounded-full bg-[#7b1fa2]/90 backdrop-blur-md flex items-center justify-center shadow-[0_0_16px_rgba(123,31,162,0.8)] transform scale-75 group-hover:scale-100 transition-transform duration-300">
+                          <Play className="w-5 h-5 fill-white text-white ml-0.5" />
+                        </div>
+                      </div>
+                      
+                      <button 
+                        onClick={(e) => handleRemove(e, item.slug)}
+                        className="absolute top-2 right-2 p-1.5 bg-black/70 hover:bg-red-600/90 text-gray-300 hover:text-white rounded-full opacity-0 group-hover:opacity-100 transition-all z-10"
+                        aria-label="Remove from continue watching"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+
+                      <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-black/85 backdrop-blur-sm rounded text-[10px] font-bold text-white shadow flex items-center gap-1">
+                        <span>S{seasonNum} E{item.episodeNumber}</span>
+                        <span className="text-gray-400">•</span>
+                        <span className="text-[#c084fc]">{timeStr}</span>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full h-1.5 bg-[#23232c] overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-[#7b1fa2] to-[#ba68c8] shadow-[0_0_8px_rgba(186,104,200,0.8)] transition-all duration-300"
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                    </div>
+                    
+                    <div className="p-3">
+                      <h3 className="text-sm font-semibold text-gray-200 line-clamp-1 group-hover:text-[#c084fc] transition-colors duration-200">
+                        {item.title}
+                      </h3>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-xs text-gray-400 font-medium">
+                          {timeStr} / {formatPlaybackTimestamp(dur)}
+                        </span>
+                        <span className="text-[11px] font-bold text-[#c084fc]">
+                          {Math.round(progressPercent)}%
+                        </span>
+                      </div>
+                    </div>
+
+                  </div>
+                </Link>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+ + seasonNum + '$episode}>
+                  <div className="relative w-full group cursor-pointer bg-[#121217] border border-[#1f1f27] hover:border-[#9c27b0]/60 hover:shadow-[0_8px_24px_rgba(156,39,176,0.2)] rounded-xl overflow-hidden transition-all duration-300">
+                    
+                    <div className="relative aspect-video w-full overflow-hidden bg-black">
+                      <img 
+                        src={item.image || DEFAULT_POSTER} 
+                        alt={item.title}
+                        className="w-full h-full object-cover opacity-70 group-hover:opacity-90 group-hover:scale-105 transition-all duration-300"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/30">
+                        <div className="w-11 h-11 rounded-full bg-[#7b1fa2]/90 backdrop-blur-md flex items-center justify-center shadow-[0_0_16px_rgba(123,31,162,0.8)] transform scale-75 group-hover:scale-100 transition-transform duration-300">
+                          <Play className="w-5 h-5 fill-white text-white ml-0.5" />
+                        </div>
+                      </div>
+                      
+                      <button 
+                        onClick={(e) => handleRemove(e, item.slug)}
+                        className="absolute top-2 right-2 p-1.5 bg-black/70 hover:bg-red-600/90 text-gray-300 hover:text-white rounded-full opacity-0 group-hover:opacity-100 transition-all z-10"
+                        aria-label="Remove from continue watching"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+
+                      <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-black/85 backdrop-blur-sm rounded text-[10px] font-bold text-white shadow flex items-center gap-1">
+                        <span>S{seasonNum} E{item.episodeNumber}</span>
+                        <span className="text-gray-400">•</span>
+                        <span className="text-[#c084fc]">{timeStr}</span>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full h-1.5 bg-[#23232c] overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-[#7b1fa2] to-[#ba68c8] shadow-[0_0_8px_rgba(186,104,200,0.8)] transition-all duration-300"
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                    </div>
+                    
+                    <div className="p-3">
+                      <h3 className="text-sm font-semibold text-gray-200 line-clamp-1 group-hover:text-[#c084fc] transition-colors duration-200">
+                        {item.title}
+                      </h3>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-xs text-gray-400 font-medium">
+                          {timeStr} / {formatPlaybackTimestamp(dur)}
+                        </span>
+                        <span className="text-[11px] font-bold text-[#c084fc]">
+                          {Math.round(progressPercent)}%
+                        </span>
+                      </div>
+                    </div>
+
+                  </div>
+                </Link>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+ + Math.max(1, Number(item.episodeNumber) || 1))}?type=series&t=${Math.floor(curTime)}`}>
                   <div className="relative w-full group cursor-pointer bg-[#121217] border border-[#1f1f27] hover:border-[#9c27b0]/60 hover:shadow-[0_8px_24px_rgba(156,39,176,0.2)] rounded-xl overflow-hidden transition-all duration-300">
                     
                     <div className="relative aspect-video w-full overflow-hidden bg-black">

@@ -73,7 +73,7 @@ function ContinueCard({ item, onRemove }: { item: HistoryItem; onRemove: () => v
         <div>
           <span>{formatPlaybackTimestamp(item.playbackTimestamp || 0)}</span>
           <h3>{item.title}</h3>
-          <p>S{item.seasonNumber || 1} · E{item.episodeNumber || 1}</p>
+          <p>{type === 'movie' ? 'Movie' : 'S' + (item.seasonNumber || 1) + ' · E' + (item.episodeNumber || 1)}</p>
         </div>
         <div className="kinoma-library-continue__actions">
           <Link href={watchUrl}>Resume <Play size={12} fill="currentColor" /></Link>
