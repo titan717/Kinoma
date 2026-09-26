@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 
-const KINOMA_API = "https://kinomaapi.vercel.app";
+const MOVIE_API = "https://apikinoma.vercel.app";
 
 async function startServer() {
   const app = express();
@@ -13,7 +13,7 @@ async function startServer() {
   async function proxyHandler(targetPath: string, req: express.Request, res: express.Response) {
     try {
       const queryString = new URLSearchParams(req.query as any).toString();
-      const url = `${KINOMA_API}${targetPath}${queryString ? '?' + queryString : ''}`;
+      const url = `${MOVIE_API}${targetPath}${queryString ? '?' + queryString : ''}`;
       const r = await fetch(url);
       const data = await r.json();
       res.status(r.status).json(data);
@@ -23,19 +23,19 @@ async function startServer() {
   }
 
   // Health
-  app.get(['/api/health', '/health'], (req, res) => proxyHandler('/health', req, res));
+  app.get(['/api/health', '/health'], (req, res) => proxyHandler('/api/v1/health', req, res));
 
   // Search
-  app.get(['/api/search', '/api/anime/search', '/search'], (req, res) => proxyHandler('/search', req, res));
+  app.get(['/api/search', '/api/anime/search', '/search'], (req, res) => proxyHandler('/api/v1/search', req, res));
   app.get(['/api/search/:query', '/api/anime/search/:query'], (req, res) => {
     req.query.q = req.params.query;
-    proxyHandler('/search', req, res);
+    proxyHandler('/api/v1/search', req, res);
   });
 
   // Trending & Popular (aliased to search)
   app.get(['/api/trending', '/api/anime/trending', '/trending'], async (req, res) => {
     try {
-      const r = await fetch(`${KINOMA_API}/search?q=action&limit=20&offset=0`);
+      const r = await fetch(`${MOVIE_API}/search?q=action&limit=20&offset=0`);
       const data = await r.json();
       res.json(data);
     } catch (e: any) {
@@ -45,7 +45,7 @@ async function startServer() {
 
   app.get(['/api/popular', '/api/anime/popular', '/popular'], async (req, res) => {
     try {
-      const r = await fetch(`${KINOMA_API}/search?q=adventure&limit=20&offset=0`);
+      const r = await fetch(`${MOVIE_API}/search?q=adventure&limit=20&offset=0`);
       const data = await r.json();
       res.json(data);
     } catch (e: any) {
@@ -54,19 +54,19 @@ async function startServer() {
   });
 
   // Info
-  app.get(['/api/info/:id', '/info/:id'], (req, res) => proxyHandler(`/info/${req.params.id}`, req, res));
+  app.get(['/api/info/:id', '/info/:id'], (req, res) => proxyHandler(`/api/v1/tv/${req.params.id}`, req, res));
 
   // Episodes
-  app.get(['/api/episodes/:id', '/episodes/:id'], (req, res) => proxyHandler(`/episodes/${req.params.id}`, req, res));
+  app.get(['/api/episodes/:id', '/episodes/:id'], (req, res) => proxyHandler(`/api/v1/tv/${req.params.id}/episodes`, req, res));
 
   // Servers
-  app.get(['/api/servers/:id/:ep', '/servers/:id/:ep'], (req, res) => proxyHandler(`/servers/${req.params.id}/${req.params.ep}`, req, res));
+  app.get(['/api/servers/:id/:ep', '/servers/:id/:ep'], (req, res) => proxyHandler(`/api/v1/tv/${req.params.id}/season/1/episode/${req.params.ep}/sources`, req, res));
 
   // Stream
-  app.get(['/api/stream/:id/:ep', '/stream/:id/:ep'], (req, res) => proxyHandler(`/stream/${req.params.id}/${req.params.ep}`, req, res));
+  app.get(['/api/stream/:id/:ep', '/stream/:id/:ep'], (req, res) => proxyHandler(`/api/v1/tv/${req.params.id}/season/1/episode/${req.params.ep}/play`, req, res));
 
   // Schedule
-  app.get(['/api/schedule', '/schedule'], (req, res) => proxyHandler('/schedule', req, res));
+  app.get(['/api/schedule', '/schedule'], (req, res) => proxyHandler('/api/v1/airing/today', req, res));
 
   // Android TV Self-Update JSON endpoint (maps to latest.json)
   app.get(['/tv/update.json', '/update/latest.json'], (req, res) => {
