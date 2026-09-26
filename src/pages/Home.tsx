@@ -3,6 +3,7 @@ import { Link } from 'wouter';
 import { KinomaLogo } from '../components/ui/KinomaLogo';
 import { ArrowRight, Clapperboard, Film, Github, Instagram, Play, Plus, Sparkles, Tv, Youtube } from 'lucide-react';
 import { api, MovieApiError, MovieApiMedia } from '../lib/api';
+import { libraryManager } from '../lib/library';
 import { ModernContinueWatching } from '../components/ui/modern/ModernContinueWatching';
 
 type RailKind = 'trending' | 'latest' | 'popular' | 'tv' | 'movie';
@@ -12,6 +13,8 @@ function KindIcon({ kind }: { kind: RailKind }) {
   if (kind === 'trending') return <Sparkles size={15} strokeWidth={1.8} />;
   return <Tv size={15} strokeWidth={1.8} />;
 }
+
+function trailerSrc(url: unknown) { if (typeof url !== 'string' || !url) return ''; try { const parsed = new URL(url); parsed.searchParams.set('autoplay', '1'); parsed.searchParams.set('mute', '0'); parsed.searchParams.set('playsinline', '1'); return parsed.toString(); } catch { return url; } }
 
 function RailCard({ item }: { item: MovieApiMedia }) {
   const kind = item.type === 'movie' ? 'movie' : 'tv';
@@ -61,11 +64,13 @@ function ThreeDButton({ children, secondary = false }: { children: React.ReactNo
 export function Home() {
   const [home, setHome] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [trailer, setTrailer] = useState<any>(null);
+  const [isInList, setIsInList] = useState(false);
 
   useEffect(() => {
     let active = true;
     api.getHome()
-      .then(data => active && setHome(data))
+      .then(async data => { if (!active) return; setHome(data); if (data?.featured?.id) { const result = await api.getTrailer(data.featured.id).catch(() => ({ available: false, trailer: null })); if (active) setTrailer(result); } })
       .catch((err: unknown) => active && setError(err instanceof MovieApiError ? err.message : 'MovieApi is unavailable right now.'));
     return () => { active = false; };
   }, []);
@@ -75,23 +80,28 @@ export function Home() {
   const trending = sections?.trending || [];
   const latest = [...(sections?.latestMovies || []), ...(sections?.latestTv || [])];
   const popular = [...(sections?.popularMovies || []), ...(sections?.popularTv || [])];
+  const featuredType = featured?.type === 'movie' ? 'movie' : 'series';
+  const featuredWatchUrl = featured?.id ? '/watch/' + encodeURIComponent(featured.id) + '?type=' + featuredType : '/search';
+  const toggleFeaturedList = () => { if (featured) setIsInList(libraryManager.toggleWatchlist({ id: featured.id, title: featured.title, image: featured.poster || '' })); };
+  useEffect(() => { if (featured?.id) setIsInList(libraryManager.isInWatchlist(featured.id)); }, [featured?.id]);
 
   return (
     <main className="kinoma-home">
       <div className="kinoma-home__ambient" aria-hidden="true"><span className="kinoma-home__ambient-orb kinoma-home__ambient-orb--one" /><span className="kinoma-home__ambient-orb kinoma-home__ambient-orb--two" /></div>
       <div className="kinoma-home__inner">
-        <section className="kinoma-home-hero" aria-labelledby="kinoma-home-title">
+        <section className="kinoma-home-hero kinoma-home-hero--trailer" aria-labelledby="kinoma-home-title">
+          <div className="kinoma-home-hero__trailer-bg" aria-label={featured?.title ? featured.title + ' trailer' : 'Featured trailer'}>
+            {trailer?.trailer?.embedUrl ? <iframe src={trailerSrc(trailer.trailer.embedUrl)} title={featured?.title ? featured.title + ' trailer' : 'Featured trailer'} className="kinoma-home-hero__trailer-video" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen /> : featured?.backdrop ? <img src={featured.backdrop} alt="" className="kinoma-home-hero__banner-image" loading="eager" fetchPriority="high" decoding="async" /> : <div className="kinoma-home-hero__banner-grid" />}
+            <div className="kinoma-home-hero__trailer-shade" />
+          </div>
           <div className="kinoma-home-hero__copy">
             <div className="kinoma-home-hero__eyebrow"><Sparkles size={14} /> YOUR NEXT WATCH</div>
-            <h1 id="kinoma-home-title">{featured?.title ? <>Something good<br /><span>{featured.title}</span></> : <>Something good<br /><span>is waiting.</span></>}</h1>
+            <h1 id="kinoma-home-title">{featured?.title || 'Something good is waiting.'}</h1>
             <p>{featured?.overview || error || 'Movies, series and stories worth pressing play for. Discover something, save it, and come back whenever you like.'}</p>
-            <div className="kinoma-home-hero__actions"><ThreeDButton><Play size={16} fill="currentColor" /> Explore</ThreeDButton><ThreeDButton secondary><Plus size={16} /> My List</ThreeDButton></div>
-          </div>
-          <div className="kinoma-home-hero__banner" role="img" aria-label="Panda.fun featured artwork">
-            {featured?.backdrop ? <img src={featured.backdrop} alt="" className="kinoma-home-hero__banner-image" loading="eager" fetchPriority="high" decoding="async" /> : <div className="kinoma-home-hero__banner-grid" />}
-            <div className="kinoma-home-hero__banner-glow" />
-            <div className="kinoma-home-hero__banner-copy"><span>FEATURED</span><strong>{featured?.title || (error ? 'MovieApi unavailable' : 'Loading…')}</strong><small>{featured?.genres?.slice(0, 3).join(' • ') || 'MovieApi discovery'}</small></div>
-            <div className="kinoma-home-hero__banner-film" aria-hidden="true"><Clapperboard size={28} strokeWidth={1.5} /></div>
+            <div className="kinoma-home-hero__actions">
+              <Link href={featuredWatchUrl} className="kinoma-3d-button"><span className="kinoma-3d-button__face"><Play size={16} fill="currentColor" /> Watch Now</span><span className="kinoma-3d-button__depth" aria-hidden="true" /></Link>
+              <button type="button" onClick={toggleFeaturedList} className={"kinoma-3d-button kinoma-3d-button--secondary" + (isInList ? " is-added" : "")}><span className="kinoma-3d-button__face">{isInList ? <><span>✓</span> In My List</> : <><Plus size={16} /> Add to My List</>}</span><span className="kinoma-3d-button__depth" aria-hidden="true" /></button>
+            </div>
           </div>
         </section>
 
