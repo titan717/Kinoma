@@ -486,9 +486,7 @@ class MainActivity : ComponentActivity() {
     private fun showUpdatePrompt(update: UpdateInfo) {
         val builder = AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
         builder.setTitle("Kinoma TV Update")
-        builder.setMessage("A new version (${update.latestVersionName}) is available.
-
-${update.releaseNotes}")
+        builder.setMessage("A new version (${update.latestVersionName}) is available.\n\n${update.releaseNotes}")
 
         builder.setPositiveButton("Update Now") { dialog, _ ->
             dialog.dismiss()
