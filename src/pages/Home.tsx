@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'wouter';
-import { Panda.funLogo } from '../components/ui/Panda.funLogo';
+import { KinomaLogo } from '../components/ui/KinomaLogo';
 import { ArrowRight, Clapperboard, Film, Github, Instagram, Play, Plus, Sparkles, Tv, Youtube } from 'lucide-react';
 import { api, MovieApiError, MovieApiMedia } from '../lib/api';
 import { ModernContinueWatching } from '../components/ui/modern/ModernContinueWatching';
@@ -106,8 +106,8 @@ export function Home() {
         </section>
 
         <footer className="kinoma-home-footer">
-          <div className="kinoma-home-footer__art" aria-hidden="true"><div className="kinoma-home-footer__halo" /><div className="kinoma-home-footer__orbit kinoma-home-footer__orbit--one" /><div className="kinoma-home-footer__orbit kinoma-home-footer__orbit--two" /><div className="kinoma-home-footer__orbit kinoma-home-footer__orbit--three" /><div className="kinoma-home-footer__core"><span className="kinoma-home-footer__core-glow" /><Panda.funLogo size="md" variant="mark" className="kinoma-home-footer__mark" /></div></div>
-          <div className="kinoma-home-footer__content"><div className="kinoma-home-footer__brand"><div className="kinoma-home-footer__logo" aria-label="Panda.fun"><Panda.funLogo size="lg" variant="full" /></div><p>Stories, shelves and little moments worth pressing play for.</p></div><div className="kinoma-home-footer__links"><div><span>Explore</span><Link href="/home">Home</Link><Link href="/search">Search</Link><Link href="/library">My List</Link></div><div><span>Panda.fun</span><Link href="/about">About</Link><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link></div><div><span>Follow</span><a href="https://github.com/titan717/Panda.fun" target="_blank" rel="noreferrer"><Github size={15} /> GitHub</a><a href="#" aria-label="Panda.fun Instagram"><Instagram size={15} /> Instagram</a><a href="#" aria-label="Panda.fun YouTube"><Youtube size={15} /> YouTube</a></div></div></div>
+          <div className="kinoma-home-footer__art" aria-hidden="true"><div className="kinoma-home-footer__halo" /><div className="kinoma-home-footer__orbit kinoma-home-footer__orbit--one" /><div className="kinoma-home-footer__orbit kinoma-home-footer__orbit--two" /><div className="kinoma-home-footer__orbit kinoma-home-footer__orbit--three" /><div className="kinoma-home-footer__core"><span className="kinoma-home-footer__core-glow" /><KinomaLogo size="md" variant="mark" className="kinoma-home-footer__mark" /></div></div>
+          <div className="kinoma-home-footer__content"><div className="kinoma-home-footer__brand"><div className="kinoma-home-footer__logo" aria-label="Panda.fun"><KinomaLogo size="lg" variant="full" /></div><p>Stories, shelves and little moments worth pressing play for.</p></div><div className="kinoma-home-footer__links"><div><span>Explore</span><Link href="/home">Home</Link><Link href="/search">Search</Link><Link href="/library">My List</Link></div><div><span>Panda.fun</span><Link href="/about">About</Link><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link></div><div><span>Follow</span><a href="https://github.com/titan717/Panda.fun" target="_blank" rel="noreferrer"><Github size={15} /> GitHub</a><a href="#" aria-label="Panda.fun Instagram"><Instagram size={15} /> Instagram</a><a href="#" aria-label="Panda.fun YouTube"><Youtube size={15} /> YouTube</a></div></div></div>
           <div className="kinoma-home-footer__bottom"><span>© 2026 Panda.fun</span><span>Built for the next watch.</span><Link href="/contact">Contact / Support</Link></div>
         </footer>
       </div>
