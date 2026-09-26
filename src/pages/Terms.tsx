@@ -97,7 +97,7 @@ export function Terms() {
     <div className="kinoma-terms">
       <header className="kinoma-terms__header">
         <Link href="/home" aria-label="Back to Panda.fun home" className="kinoma-terms__brand">
-          <Panda.funLogo size="md" variant="full" />
+          <KinomaLogo size="md" variant="full" />
         </Link>
         <Link href="/home" className="kinoma-terms__back">
           <ArrowLeft className="h-4 w-4" />
@@ -129,7 +129,7 @@ export function Terms() {
       </main>
 
       <footer className="kinoma-terms__footer">
-        <Panda.funLogo size="sm" variant="full" />
+        <KinomaLogo size="sm" variant="full" />
         <span>Panda.fun Terms of Service</span>
         <Link href="/home">Home</Link>
       </footer>
