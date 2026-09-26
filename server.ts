@@ -8,7 +8,7 @@ const MOVIE_API_FALLBACK = "https://movieapi-3d0v.onrender.com";
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   // Helper proxy handler
   async function proxyHandler(targetPath: string, req: express.Request, res: express.Response) {
