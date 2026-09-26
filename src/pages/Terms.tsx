@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link } from 'wouter';
 import { ArrowLeft, FileText } from 'lucide-react';
-import { Panda.funLogo } from '../components/ui/Panda.funLogo';
+import { KinomaLogo } from '../components/ui/KinomaLogo';
 import { updateSEO } from '../lib/seo';
 
 const SECTIONS = [
