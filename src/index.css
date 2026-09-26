@@ -3037,7 +3037,7 @@ p {
   box-shadow: 0 14px 36px rgba(0,0,0,.16);
   contain: layout paint;
   content-visibility: auto;
-  contain-intrinsic-size: 230px 190px;
+  contain-intrinsic-size: 230px 345px;
   transition: transform 180ms var(--ease-kinoma), border-color 180ms ease, box-shadow 180ms ease;
 }
 
@@ -3049,7 +3049,7 @@ p {
 
 .kinoma-search-card__art {
   position: relative;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 2 / 3;
   overflow: hidden;
   isolation: isolate;
   background: #1b1716;
@@ -3109,6 +3109,19 @@ p {
 .kinoma-search-card__copy h3 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
 .kinoma-search-card__copy p { margin-top: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: rgba(246,242,238,.38); font-size: 9px; }
 
+.kinoma-search-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px}
+.kinoma-search-filters{display:flex;align-items:center;gap:7px;overflow-x:auto;scrollbar-width:none}
+.kinoma-search-filters::-webkit-scrollbar{display:none}
+.kinoma-search-filters button{display:inline-flex;align-items:center;gap:7px;flex:0 0 auto;padding:9px 12px;border:1px solid rgba(246,242,238,.07);border-radius:10px;color:rgba(246,242,238,.42);background:rgba(255,255,255,.025);font:inherit;font-size:9px;font-weight:850;cursor:pointer;transition:background 150ms ease,color 150ms ease,border-color 150ms ease}
+.kinoma-search-filters button:hover{color:rgba(246,242,238,.8);border-color:rgba(246,242,238,.13);background:rgba(255,255,255,.05)}
+.kinoma-search-filters button.is-active{color:#fff;background:rgba(255,255,255,.085);border-color:rgba(246,242,238,.16)}
+.kinoma-search-filters button span{padding:2px 5px;border-radius:999px;background:rgba(255,255,255,.07);font-size:7px;color:rgba(246,242,238,.45)}
+.kinoma-search-toolbar__count{flex:0 0 auto;color:rgba(246,242,238,.25);font-size:9px}
+.kinoma-search-recent__clear{color:rgba(246,242,238,.27)!important;background:transparent!important}
+.kinoma-search-card__art img{position:relative;z-index:1;width:100%;height:100%;display:block;object-fit:cover;transition:transform 220ms ease}
+.kinoma-search-card:hover .kinoma-search-card__art img{transform:scale(1.025)}
+.kinoma-search-card__type{z-index:3}
+
 .kinoma-search-empty {
   display: grid;
   place-items: center;
@@ -3143,12 +3156,14 @@ p {
 }
 
 @media (max-width: 800px) {
+  .kinoma-search-toolbar{align-items:flex-start}
   .kinoma-search-head { grid-template-columns: 1fr; gap: 24px; }
   .kinoma-search-control { justify-self: stretch; width: 100%; }
   .kinoma-search-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 560px) {
+  .kinoma-search-toolbar__count{display:none}
   .kinoma-search-page__inner { padding-top: 28px; }
   .kinoma-search-head h1 { font-size: clamp(2.5rem, 14vw, 4rem); }
   .kinoma-search-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
