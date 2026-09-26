@@ -75,8 +75,11 @@ export class MovieApiError extends Error {
 }
 
 const DEFAULT_BASE_URL = 'https://apikinoma.vercel.app';
+const DEFAULT_FALLBACK_URL = 'https://movieapi-3d0v.onrender.com';
 const rawBase = String(import.meta.env.VITE_MOVIE_API_URL || DEFAULT_BASE_URL).trim();
 export const MOVIE_API_BASE_URL = rawBase.replace(/\/+$/, '');
+const rawFallback = String(import.meta.env.VITE_MOVIE_API_FALLBACK_URL || DEFAULT_FALLBACK_URL).trim();
+export const MOVIE_API_FALLBACK_URL = rawFallback.replace(/\/+$/, '');
 
 const cache = new Map<string, { expires: number; value: unknown }>();
 const inflight = new Map<string, Promise<unknown>>();
@@ -120,60 +123,47 @@ async function request<T>(
     const active = inflight.get(cacheKey);
     if (active) return active as Promise<T>;
   }
-
-  const controller = new AbortController();
-  const timer = window.setTimeout(() => controller.abort(), 12_000);
-
   const promise = (async () => {
-    try {
-      const response = await fetch(url, {
-        ...options,
-        signal: options.signal || controller.signal,
-        headers: { Accept: 'application/json', ...(options.headers || {}) },
-      });
-
-      let payload: unknown = null;
-      try { payload = await response.json(); } catch { /* handled below */ }
-
-      if (!response.ok) {
-        const data: any = payload;
-        const error = data?.error || {};
-        throw new MovieApiError(
-          error.message || `MovieApi request failed (${response.status}).`,
-          response.status,
-          error.code,
-          error.requestId || response.headers.get('X-Request-ID') || undefined
-        );
-      }
-
-      const value = unwrap<T>(payload);
-      if (!options.method || options.method === 'GET') {
-        cache.set(cacheKey, { expires: Date.now() + ttl, value });
-      }
-      return value;
-    } catch (error) {
-      if (error instanceof MovieApiError) throw error;
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        throw new MovieApiError('MovieApi request timed out.', 504, 'PROVIDER_TIMEOUT');
-      }
-      throw new MovieApiError(
-        `Unable to connect to MovieApi: ${error instanceof Error ? error.message : String(error)}`,
-        503,
-        'API_UNAVAILABLE'
-      );
-    } finally {
-      window.clearTimeout(timer);
+    const bases = [MOVIE_API_BASE_URL];
+    if (MOVIE_API_FALLBACK_URL && MOVIE_API_FALLBACK_URL !== MOVIE_API_BASE_URL) bases.push(MOVIE_API_FALLBACK_URL);
+    let lastError: unknown = null;
+    for (let index = 0; index < bases.length; index += 1) {
+      const base = bases[index];
+      const targetUrl = path.startsWith('http') ? path : `${base}${path.startsWith('/') ? path : `/${path}`}`;
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), 12_000);
+      try {
+        const response = await fetch(targetUrl, { ...options, signal: options.signal || controller.signal, headers: { Accept: 'application/json', ...(options.headers || {}) } });
+        let payload: unknown = null;
+        try { payload = await response.json(); } catch { /* handled below */ }
+        if (!response.ok) {
+          const data: any = payload;
+          const error = data?.error || {};
+          const apiError = new MovieApiError(error.message || `MovieApi request failed (${response.status}).`, response.status, error.code, error.requestId || response.headers.get('X-Request-ID') || undefined);
+          lastError = apiError;
+          if (index < bases.length - 1 && (response.status >= 500 || response.status === 429)) continue;
+          throw apiError;
+        }
+        const value = unwrap<T>(payload);
+        if (!options.method || options.method === 'GET') cache.set(cacheKey, { expires: Date.now() + ttl, value });
+        return value;
+      } catch (error) {
+        lastError = error;
+        const transient = (error instanceof DOMException && error.name === 'AbortError') || !(error instanceof MovieApiError);
+        if (index < bases.length - 1 && transient) continue;
+        if (error instanceof MovieApiError) throw error;
+        if (error instanceof DOMException && error.name === 'AbortError') throw new MovieApiError('MovieApi request timed out.', 504, 'PROVIDER_TIMEOUT');
+        throw new MovieApiError(`Unable to connect to MovieApi: ${error instanceof Error ? error.message : String(error)}`, 503, 'API_UNAVAILABLE');
+      } finally { window.clearTimeout(timer); }
     }
+    throw lastError instanceof Error ? lastError : new MovieApiError('MovieApi unavailable.', 503, 'API_UNAVAILABLE');
   })();
-
   if (!options.method || options.method === 'GET') {
     inflight.set(cacheKey, promise);
     promise.finally(() => inflight.delete(cacheKey)).catch(() => undefined);
   }
-
   return promise;
 }
-
 type MovieApiMediaRef =
   | { provider: 'tmdb'; type: 'movie' | 'tv'; id: number }
   | { provider: 'tvmaze'; type: 'tv'; id: number };

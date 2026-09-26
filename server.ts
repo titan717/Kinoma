@@ -4,6 +4,7 @@ import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 
 const MOVIE_API = "https://apikinoma.vercel.app";
+const MOVIE_API_FALLBACK = "https://movieapi-3d0v.onrender.com";
 
 async function startServer() {
   const app = express();
@@ -13,12 +14,22 @@ async function startServer() {
   async function proxyHandler(targetPath: string, req: express.Request, res: express.Response) {
     try {
       const queryString = new URLSearchParams(req.query as any).toString();
-      const url = `${MOVIE_API}${targetPath}${queryString ? '?' + queryString : ''}`;
-      const r = await fetch(url);
-      const data = await r.json();
-      res.status(r.status).json(data);
+      const targets = [MOVIE_API, MOVIE_API_FALLBACK].filter((value, index, all) => all.indexOf(value) === index);
+      let lastError: unknown = null;
+      for (let index = 0; index < targets.length; index += 1) {
+        try {
+          const url = `${targets[index]}${targetPath}${queryString ? '?' + queryString : ''}`;
+          const r = await fetch(url);
+          const data = await r.json();
+          if (r.ok || (r.status < 500 && r.status !== 429) || index === targets.length - 1) return res.status(r.status).json(data);
+        } catch (error) {
+          lastError = error;
+          if (index === targets.length - 1) throw error;
+        }
+      }
+      throw lastError || new Error('MovieApi unavailable.');
     } catch (e: any) {
-      res.status(500).json({ error: e.message });
+      res.status(503).json({ error: e.message });
     }
   }
 
@@ -32,27 +43,9 @@ async function startServer() {
     proxyHandler('/api/v1/search', req, res);
   });
 
-  // Trending & Popular (aliased to search)
-  app.get(['/api/trending', '/api/anime/trending', '/trending'], async (req, res) => {
-    try {
-      const r = await fetch(`${MOVIE_API}/api/v1/trending?window=day`);
-      const data = await r.json();
-      res.json(data);
-    } catch (e: any) {
-      res.status(500).json({ error: e.message });
-    }
-  });
-
-  app.get(['/api/popular', '/api/anime/popular', '/popular'], async (req, res) => {
-    try {
-      const r = await fetch(`${MOVIE_API}/api/v1/popular/tv?page=1`);
-      const data = await r.json();
-      res.json(data);
-    } catch (e: any) {
-      res.status(500).json({ error: e.message });
-    }
-  });
-
+  // Trending & Popular
+  app.get(['/api/trending', '/api/anime/trending', '/trending'], (req, res) => proxyHandler('/api/v1/trending', req, res));
+  app.get(['/api/popular', '/api/anime/popular', '/popular'], (req, res) => proxyHandler('/api/v1/popular/tv', req, res));
   // Info
   app.get(['/api/info/:id', '/info/:id'], (req, res) => proxyHandler(`/api/v1/tv/${req.params.id}`, req, res));
 

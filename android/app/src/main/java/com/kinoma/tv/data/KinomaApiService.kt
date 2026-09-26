@@ -1,6 +1,7 @@
 package com.kinoma.tv.data
 
 import android.util.Log
+import java.io.IOException
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -20,6 +21,7 @@ interface KinomaApiService {
 
     companion object {
         private const val BASE_URL = "https://apikinoma.vercel.app/api/v1/"
+        private const val FALLBACK_HOST = "movieapi-3d0v.onrender.com"
 
         val instance: KinomaApiService by lazy {
             val loggingInterceptor = HttpLoggingInterceptor { message ->
@@ -32,13 +34,27 @@ interface KinomaApiService {
                 .addInterceptor(loggingInterceptor)
                 .addInterceptor { chain ->
                     val request = chain.request()
-                    val response = chain.proceed(request)
-                    val url = request.url
-                    val status = response.code
-                    val contentType = response.body?.contentType()?.toString() ?: "unknown"
-                    val bodyString = response.peekBody(512).string()
-                    Log.i("KinomaApiDiagnostics", "REQUEST URL: $url | HTTP STATUS: $status | CONTENT TYPE: $contentType | RESPONSE PREVIEW: $bodyString")
-                    response
+                    try {
+                        val response = chain.proceed(request)
+                        if ((response.code >= 500 || response.code == 429) && request.url.host != FALLBACK_HOST) {
+                            val status = response.code
+                            response.close()
+                            val fallbackRequest = request.newBuilder().url(request.url.newBuilder().host(FALLBACK_HOST).build()).build()
+                            Log.w("KinomaApiDiagnostics", "Primary MovieApi returned $status; retrying fallback.")
+                            return@addInterceptor chain.proceed(fallbackRequest)
+                        }
+                        val url = request.url
+                        val status = response.code
+                        val contentType = response.body?.contentType()?.toString() ?: "unknown"
+                        val bodyString = response.peekBody(512).string()
+                        Log.i("KinomaApiDiagnostics", "REQUEST URL: $url | HTTP STATUS: $status | CONTENT TYPE: $contentType | RESPONSE PREVIEW: $bodyString")
+                        response
+                    } catch (error: IOException) {
+                        if (request.url.host == FALLBACK_HOST) throw error
+                        val fallbackRequest = request.newBuilder().url(request.url.newBuilder().host(FALLBACK_HOST).build()).build()
+                        Log.w("KinomaApiDiagnostics", "Primary MovieApi connection failed; retrying fallback.", error)
+                        chain.proceed(fallbackRequest)
+                    }
                 }
                 .build()
 
