@@ -6,10 +6,6 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    define: {
-      'import.meta.env.VITE_ANIME_API_URL': JSON.stringify('https://kinomaapi.vercel.app'),
-      'process.env.REANIME_API_URL': JSON.stringify('https://kinomaapi.vercel.app')
-    },
     plugins: [
       react(), 
       tailwindcss(),
