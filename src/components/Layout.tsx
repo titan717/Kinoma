@@ -22,7 +22,8 @@ const ITEMS = [
 ];
 
 const ABOUT_ITEMS = [
-  { href: '/about', label: 'About Kinoma' },
+  { href: '/about', label: 'About Panda.fun' },
+  { href: '/docs', label: 'API Docs' },
   { href: '/terms', label: 'Terms of Service' },
   { href: '/privacy', label: 'Privacy Policy' },
   { href: '/contact', label: 'Contact / Support' },
