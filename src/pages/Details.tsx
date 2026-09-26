@@ -51,9 +51,6 @@ export function Details() {
   const queryType = new URLSearchParams(location.split('?')[1] || '').get('type');
   const [data, setData] = useState<any>(null);
   const [trailer, setTrailer] = useState<any>(null);
-  const [trailerBlocked, setTrailerBlocked] = useState(false);
-  const [muted, setMuted] = useState(false);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [isInList, setIsInList] = useState(false);
   const [loading, setLoading] = useState(true);
