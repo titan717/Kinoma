@@ -3,7 +3,7 @@ export interface SEOProps {
   title?: string;
   description?: string;
   image?: string;
-  type?: 'website' | 'video.other' | 'video.episode' | 'video.tv_show';
+  type?: 'website' | 'video.other' | 'video.movie' | 'video.episode' | 'video.tv_show';
   canonicalUrl?: string;
   schema?: Record<string, any>;
 }
