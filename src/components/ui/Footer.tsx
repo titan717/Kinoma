@@ -8,7 +8,7 @@ export function Footer() {
       {/* Aesthetic Anime Artwork Background Banner with Gradient Mask */}
       <div className="absolute inset-0 z-0 opacity-15 pointer-events-none">
         <img
-          src="https://s4.anilist.co/file/anilistcdn/media/anime/banner/101922-YngmKvAsuCy9.jpg"
+          src="https://images.unsplash.com/photo-1578632767115-351597cf2477?w=1600&auto=format&fit=crop&q=80"
           alt="Anime Artwork Banner"
           className="w-full h-full object-cover object-center filter blur-[1px]"
           referrerPolicy="no-referrer"
@@ -21,14 +21,14 @@ export function Footer() {
         {/* Artistic Anime Thumbnail Strip */}
         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2.5 opacity-80 hover:opacity-100 transition-opacity">
           {[
-            "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx16498-C6Wx3hYSwH1d.jpg",
-            "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx153518-edW9m241v70g.jpg",
-            "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx11061-s3Kt32mNStjs.jpg",
-            "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx21507-X140uGrcP23T.jpg",
-            "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx131518-kS23Kq4cW2n6.jpg",
-            "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx101922-pZZ8Z74w8o63.jpg",
-            "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx21.jpg",
-            "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx1-suu58D3jZ6YL.jpg"
+            "https://images.unsplash.com/photo-1541562232579-512a21360020?w=500&auto=format&fit=crop&q=80",
+            "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&auto=format&fit=crop&q=80",
+            "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=500&auto=format&fit=crop&q=80",
+            "https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=500&auto=format&fit=crop&q=80",
+            "https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=500&auto=format&fit=crop&q=80",
+            "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500&auto=format&fit=crop&q=80",
+            "https://images.unsplash.com/photo-1500534623283-312aade485b7?w=500&auto=format&fit=crop&q=80",
+            "https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=500&auto=format&fit=crop&q=80"
           ].map((img, i) => (
             <div key={i} className="aspect-[2/3] rounded-lg overflow-hidden border border-white/10 shadow-md">
               <img src={img} alt="Anime Thumb" className="w-full h-full object-cover transform hover:scale-110 transition-transform duration-500" referrerPolicy="no-referrer" />
