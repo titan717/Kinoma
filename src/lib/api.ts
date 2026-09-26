@@ -74,7 +74,7 @@ export class MovieApiError extends Error {
   }
 }
 
-const DEFAULT_BASE_URL = '/api/movieapi';
+const DEFAULT_BASE_URL = 'https://apikinoma.vercel.app';
 const rawBase = String(import.meta.env.VITE_MOVIE_API_URL || DEFAULT_BASE_URL).trim();
 export const MOVIE_API_BASE_URL = rawBase.replace(/\/+$/, '');
 
@@ -271,8 +271,8 @@ export const api = {
     return { results: data.results.map(toAnimeItem) };
   },
 
-  async getGenreAnime(genre = '') {
-    const data = await request<MovieApiPage>('/api/v1/genres/' + encodeURIComponent(genre), { type: 'tv' });
+  async getGenreAnime(genre = '', limit?: number) {
+    const data = await request<MovieApiPage>('/api/v1/genres/' + encodeURIComponent(genre), { type: 'tv', limit });
     return { results: data.results.map(toAnimeItem) };
   },
 
