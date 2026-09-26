@@ -38,7 +38,7 @@ export function WhatsNew() {
   // Movie catalog
   const { data: moviesData, isLoading: loadingMovies, error: moviesError, mutate: retryMovies } = useSWR(
     'whats_new_movies',
-    () => api.getGenreAnime('movie', 24),
+    () => api.getMovies(),
     { dedupingInterval: 60000 }
   );
 
