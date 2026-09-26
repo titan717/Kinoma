@@ -3395,3 +3395,46 @@ p {
 @media(prefers-reduced-motion:reduce){
  .kinoma-player-back,.kinoma-player-seasons button,.kinoma-player-episode,.kinoma-player-more-card{transition:none!important}
 }
+
+/* Full-bleed trailer hero + desktop player episode rail. */
+.kinoma-details-hero--trailer{position:relative;isolation:isolate;min-height:clamp(680px,88dvh,900px);overflow:hidden;display:flex;align-items:flex-end}
+.kinoma-details-hero--trailer .kinoma-details-hero__trailer-bg{position:absolute;inset:0;z-index:-2;overflow:hidden;background:#080707}
+.kinoma-details-hero__trailer-video{position:absolute;inset:0;width:100%;height:100%;border:0;object-fit:cover;transform:scale(1.04);pointer-events:auto}
+.kinoma-details-hero__trailer-placeholder{width:100%;height:100%;display:grid;place-items:center;align-content:center;gap:10px;text-align:center;color:rgba(246,242,238,.55);background:radial-gradient(circle at 65% 35%,rgba(184,77,65,.18),transparent 34%),#100e0e}
+.kinoma-details-hero__trailer-placeholder>div{display:grid;place-items:center;width:72px;height:72px;border:1px solid rgba(232,208,192,.14);border-radius:22px;background:rgba(255,255,255,.04);color:rgba(232,208,192,.7)}
+.kinoma-details-hero__trailer-placeholder span{font-size:8px;letter-spacing:.2em;font-weight:900;color:rgba(232,208,192,.55)}
+.kinoma-details-hero__trailer-placeholder strong{font-size:clamp(1.2rem,2.5vw,2rem);color:#fff}
+.kinoma-details-hero__trailer-placeholder small{font-size:9px;color:rgba(246,242,238,.3)}
+.kinoma-details-hero__trailer-shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(7,6,6,.98) 0%,rgba(7,6,6,.78) 27%,rgba(7,6,6,.28) 62%,rgba(7,6,6,.5) 100%),linear-gradient(0deg,rgba(7,6,6,.98) 0%,rgba(7,6,6,.2) 48%,rgba(7,6,6,.42) 100%);pointer-events:none}
+.kinoma-details-hero--trailer .kinoma-details-hero__content{position:relative;z-index:1;width:min(100%,1500px);min-height:inherit;margin:0 auto;display:flex;align-items:flex-end;padding:clamp(90px,12vw,150px) var(--spacing-page) clamp(64px,9vw,110px)}
+.kinoma-details-hero--trailer .kinoma-details-copy{max-width:680px}
+.kinoma-details-hero--trailer .kinoma-details-copy h1{font-size:clamp(3.6rem,7.2vw,8rem);text-shadow:0 12px 40px rgba(0,0,0,.4)}
+.kinoma-details-hero--trailer .kinoma-details-synopsis{max-width:620px}
+.kinoma-details-hero--trailer .kinoma-details-hero__backdrop{display:none}
+.kinoma-player-layout{width:min(100%,1500px);margin:0 auto;padding:clamp(38px,5vw,62px) var(--spacing-page) 0;display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,320px);gap:clamp(20px,3vw,42px);align-items:start}
+.kinoma-player-main-column{min-width:0}
+.kinoma-player-layout .kinoma-player-section{width:auto;margin:0;padding:0}
+.kinoma-player-episode-sidebar{position:sticky;top:18px;min-width:0;padding:17px;border:1px solid rgba(246,242,238,.08);border-radius:18px;background:rgba(255,255,255,.025);box-shadow:0 18px 50px rgba(0,0,0,.2);max-height:calc(100dvh - 36px);overflow:auto;scrollbar-width:thin}
+.kinoma-player-episode-sidebar__header{display:flex;flex-direction:column;gap:5px;padding-bottom:14px;border-bottom:1px solid rgba(246,242,238,.06)}
+.kinoma-player-episode-sidebar__header span{font-size:7px;letter-spacing:.18em;font-weight:900;color:rgba(232,208,192,.48)}
+.kinoma-player-episode-sidebar__header strong{font-size:17px;letter-spacing:-.03em}
+.kinoma-player-episode-sidebar .kinoma-player-seasons{display:grid;grid-template-columns:1fr;gap:7px;padding:14px 0 6px}
+.kinoma-player-episode-sidebar .kinoma-player-seasons button{width:100%;text-align:left;padding:11px 12px}
+.kinoma-player-episode-sidebar__hint{padding-top:12px;color:rgba(246,242,238,.25);font-size:8px;line-height:1.6}
+.kinoma-player-section--episodes .kinoma-player-section__heading{margin-bottom:15px}
+@media(max-width:1050px){.kinoma-player-layout{grid-template-columns:minmax(0,1fr) 235px;gap:20px}.kinoma-details-hero--trailer{min-height:720px}}
+@media(max-width:800px){
+ .kinoma-details-hero--trailer{min-height:auto;display:block}
+ .kinoma-details-hero--trailer .kinoma-details-hero__trailer-bg{position:relative;height:58vw;min-height:230px;max-height:480px}
+ .kinoma-details-hero__trailer-video{transform:none}
+ .kinoma-details-hero__trailer-shade{background:linear-gradient(0deg,rgba(7,6,6,.98) 0%,rgba(7,6,6,.12) 80%),linear-gradient(90deg,rgba(7,6,6,.5),transparent)}
+ .kinoma-details-hero--trailer .kinoma-details-hero__content{min-height:auto;padding:0 20px 52px;display:block}
+ .kinoma-details-hero--trailer .kinoma-details-copy{max-width:none;margin-top:-1px}
+ .kinoma-details-hero--trailer .kinoma-details-copy h1{font-size:clamp(2.8rem,12vw,5rem)}
+ .kinoma-player-layout{display:block;padding-top:40px}
+ .kinoma-player-episode-sidebar{position:static;max-height:none;margin-top:26px}
+ .kinoma-player-episode-sidebar .kinoma-player-seasons{display:flex;overflow-x:auto}
+ .kinoma-player-episode-sidebar .kinoma-player-seasons button{width:auto;text-align:center}
+}
+@media(max-width:520px){.kinoma-details-hero--trailer .kinoma-details-hero__trailer-bg{height:62vw;min-height:205px}.kinoma-details-hero--trailer .kinoma-details-hero__content{padding-inline:14px}.kinoma-player-layout{padding-inline:var(--spacing-page)}}
+@media(prefers-reduced-motion:reduce){.kinoma-details-hero__trailer-video{transform:none}}
