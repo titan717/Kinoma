@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRoute, Link } from 'wouter';
 import { ArrowLeft, ChevronRight, Film, Pause, Play, Plus, Tv, Volume2, VolumeX } from 'lucide-react';
-import { api, MovieApiError } from '../lib/api';
+import { api } from '../lib/api';
 import { libraryManager } from '../lib/library';
 import { updateSEO } from '../lib/seo';
 
@@ -111,7 +111,8 @@ export function Watch() {
 
   return (
     <main className="kinoma-player-page">
-      {playbackError && <div className="kinoma-details-bottom" role="alert">{playbackError}</div>}\n      <header className="kinoma-player-topbar">
+      {playbackError && <div className="kinoma-details-bottom" role="alert">{playbackError}</div>}
+      <header className="kinoma-player-topbar">
         <Link href="/home" className="kinoma-player-back"><ArrowLeft size={17} /><span>Back to Kinoma</span></Link>
         <div className="kinoma-player-titlebar">
           {model.kind === 'movie' ? <Film size={14} /> : <Tv size={14} />}
