@@ -328,23 +328,30 @@ export const api = {
   },
 
   async getSeasons(id: string) {
-    const tvmazeId = id.match(/^kinoma_tvmaze_(\d+)$/)?.[1];
-    if (tvmazeId) {
-      const data = await request<{ seasons: any[] }>(`/api/v1/tv/${tvmazeId}/seasons`);
-      return { seasons: data.seasons.map((season: any): AnimeSeasonItem => ({
-        seasonNumber: Number(season.number || 1),
+    const media = mediaFromId(id);
+    if (!media || media.type !== 'tv') return { seasons: [] as AnimeSeasonItem[] };
+    const data = await request<MovieApiMedia & { numberOfSeasons?: number }>(
+      `/api/v1/tmdb/tv/${media.tmdbId}`
+    );
+    const count = Math.max(0, Number(data.numberOfSeasons || 0));
+    return {
+      seasons: Array.from({ length: count }, (_, index): AnimeSeasonItem => ({
+        seasonNumber: index + 1,
         animeId: id,
-        title: season.name || `Season ${season.number}`,
-        episodeCount: Number(season.episodeOrder || 0),
-      })) };
-    }
-    return { seasons: [] as AnimeSeasonItem[] };
+        title: `Season ${index + 1}`,
+        episodeCount: 0,
+      })),
+    };
   },
 
   async getSeasonEpisodes(id: string, seasonNumber: number) {
-    const tvmazeId = id.match(/^kinoma_tvmaze_(\d+)$/)?.[1];
-    if (!tvmazeId) return { anime_id: id, season_number: seasonNumber, season_anime_id: id, episodes: [] as Episode[] };
-    const data = await request<{ episodes: any[] }>(`/api/v1/tv/${tvmazeId}/season/${seasonNumber}`);
+    const media = mediaFromId(id);
+    if (!media || media.type !== 'tv') {
+      return { anime_id: id, season_number: seasonNumber, season_anime_id: id, episodes: [] as Episode[] };
+    }
+    const data = await request<{ episodes: any[] }>(
+      `/api/v1/tmdb/tv/${media.tmdbId}/season/${seasonNumber}`
+    );
     return {
       anime_id: id,
       season_number: seasonNumber,
