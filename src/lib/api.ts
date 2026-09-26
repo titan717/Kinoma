@@ -330,33 +330,23 @@ export const api = {
   async getSeasons(id: string) {
     const media = mediaFromId(id);
     if (!media || media.type !== 'tv') return { seasons: [] as AnimeSeasonItem[] };
-    const data = await request<MovieApiMedia & { numberOfSeasons?: number }>(
-      `/api/v1/tmdb/tv/${media.tmdbId}`
-    );
+    const data = await request<MovieApiMedia & { numberOfSeasons?: number }>(`/api/v1/tmdb/tv/${media.tmdbId}`);
     const count = Math.max(0, Number(data.numberOfSeasons || 0));
-    return {
-      seasons: Array.from({ length: count }, (_, index): AnimeSeasonItem => ({
-        seasonNumber: index + 1,
-        animeId: id,
-        title: `Season ${index + 1}`,
-        episodeCount: 0,
-      })),
-    };
+    return { seasons: Array.from({ length: count }, (_, index): AnimeSeasonItem => ({
+      seasonNumber: index + 1, animeId: id, title: `Season ${index + 1}`, episodeCount: 0
+    })) };
   },
 
   async getSeasonEpisodes(id: string, seasonNumber: number) {
     const media = mediaFromId(id);
-    if (!media || media.type !== 'tv') {
-      return { anime_id: id, season_number: seasonNumber, season_anime_id: id, episodes: [] as Episode[] };
-    }
-    const data = await request<{ episodes: any[] }>(
-      `/api/v1/tmdb/tv/${media.tmdbId}/season/${seasonNumber}`
-    );
+    if (!media || media.type !== 'tv') return { anime_id: id, season_number: seasonNumber, season_anime_id: id, episodes: [] as Episode[] };
+    const data = await request<{ episodes: any[] }>(`/api/v1/tmdb/tv/${media.tmdbId}/season/${seasonNumber}`);
     return {
-      anime_id: id,
-      season_number: seasonNumber,
-      season_anime_id: id,
-      episodes: (data.episodes || []).map(toEpisode),
+      anime_id: id, season_number: seasonNumber, season_anime_id: id,
+      episodes: (data.episodes || []).map((ep) => ({
+        id: String(ep.id), number: Number(ep.number || 1), title: ep.title || `Episode ${ep.number || 1}`,
+        synopsis: ep.synopsis || '', image: ep.image || ''
+      }))
     };
   },
 
