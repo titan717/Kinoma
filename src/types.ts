@@ -23,8 +23,6 @@ export type ContentType = 'anime' | 'movie' | 'series';
 
 export interface AnimeItem {
   id: string;
-  anilist_id?: number;
-  mal_id?: number;
   title: string | { english?: string; romaji?: string; native?: string };
   image: string;
   cover?: string;
@@ -44,8 +42,6 @@ export interface AnimeDetails extends AnimeItem {
   episodes: Episode[];
   seasons?: AnimeSeasonItem[];
   studio?: string;
-  _reanimeSlug?: string;
-  _reanimeConfigured?: boolean;
 }
 
 export const DEFAULT_POSTER = 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=600&auto=format&fit=crop&q=60';
