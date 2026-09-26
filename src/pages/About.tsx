@@ -7,7 +7,7 @@ export function About() {
   useEffect(() => {
     updateSEO({
       title: 'About',
-      description: 'Learn about Kinoma and its anime streaming experience.',
+      description: 'Learn about Panda.fun and its anime streaming experience.',
       type: 'website',
     });
   }, []);
@@ -18,13 +18,13 @@ export function About() {
         <div className="max-w-3xl">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-white/60">
             <Sparkles className="h-3.5 w-3.5" />
-            About Kinoma
+            About Panda.fun
           </div>
           <h1 className="text-4xl font-black tracking-tight sm:text-6xl">
             Anime discovery, built around your watch.
           </h1>
           <p className="mt-5 max-w-2xl text-sm leading-7 text-white/55 sm:text-base">
-            Kinoma brings anime discovery, watch history, personal lists, airing updates,
+            Panda.fun brings anime discovery, watch history, personal lists, airing updates,
             and playback together in one focused streaming experience.
           </p>
         </div>
