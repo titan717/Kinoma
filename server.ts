@@ -71,8 +71,8 @@ async function startServer() {
     res.json({
       versionCode: 1,
       versionName: '1.0.0',
-      apkUrl: 'https://github.com/titan717/Kinoma/releases/latest/download/Kinoma.apk',
-      releaseNotes: 'Initial release of Kinoma Native Android TV App.',
+      apkUrl: 'https://github.com/titan717/Panda.fun/releases/latest/download/Panda.fun.apk',
+      releaseNotes: 'Initial release of Panda.fun Native Android TV App.',
       mandatory: false,
       sha256: 'PENDING'
     });
@@ -82,10 +82,10 @@ async function startServer() {
   app.use('/downloads', express.static(path.join(process.cwd(), 'public', 'downloads')));
 
   // Explicit Android TV APK download endpoint (supports GitHub Releases proxy or local binary)
-  app.get('/downloads/Kinoma.apk', async (req, res) => {
-    const filePath = path.join(process.cwd(), 'public', 'downloads', 'Kinoma.apk');
+  app.get('/downloads/Panda.fun.apk', async (req, res) => {
+    const filePath = path.join(process.cwd(), 'public', 'downloads', 'Panda.fun.apk');
     if (fs.existsSync(filePath)) {
-      return res.download(filePath, 'Kinoma.apk', {
+      return res.download(filePath, 'Panda.fun.apk', {
         headers: {
           'Content-Type': 'application/vnd.android.package-archive',
           'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
@@ -96,7 +96,7 @@ async function startServer() {
         }
       });
     }
-    res.redirect('https://github.com/titan717/Kinoma/releases/latest/download/Kinoma.apk');
+    res.redirect('https://github.com/titan717/Panda.fun/releases/latest/download/Panda.fun.apk');
   });
 
   // Vite middleware for development
