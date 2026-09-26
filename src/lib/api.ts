@@ -272,8 +272,8 @@ export const api = {
   },
 
   async getGenreAnime(genre = '', limit?: number) {
-    const data = await request<MovieApiPage>('/api/v1/genres/' + encodeURIComponent(genre), { type: 'tv', limit });
-    return { results: data.results.map(toAnimeItem) };
+    const data = await request<{ type: 'tv' | 'movie'; genreId: number; page: number; totalPages: number; totalResults: number; results: MovieApiMedia[] }>('/api/v1/genres/' + encodeURIComponent(genre), { type: 'tv', page: 1 });
+    return { results: data.results.slice(0, limit ?? data.results.length).map(toAnimeItem) };
   },
 
   async search(query: string) {
