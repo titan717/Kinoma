@@ -22,7 +22,7 @@ export function KinomaLogo({ size = 'md', variant = 'full', className = '', onCl
   if (variant === 'mark') {
     return (
       <span className={`inline-flex shrink-0 items-center justify-center overflow-hidden select-none ${className}`} style={{ width: dimensions.height, height: dimensions.height }} onClick={onClick}>
-        <img src={LOGO_SRC} alt={onClick ? 'Kinoma' : ''} draggable={false} className="block max-w-none" style={{ width: dimensions.width, height: dimensions.height, objectFit: 'contain', objectPosition: 'left center' }} />
+        <img src={LOGO_SRC} alt={onClick ? 'Panda.fun' : ''} draggable={false} className="block max-w-none" style={{ width: dimensions.width, height: dimensions.height, objectFit: 'contain', objectPosition: 'left center' }} />
       </span>
     );
   }
