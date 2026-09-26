@@ -4,7 +4,7 @@ import { api } from '../lib/api';
 import { AnimeItem } from '../types';
 import { ModernCard } from '../components/ui/modern/ModernCard';
 import { AnimeGridSkeleton } from '../components/ui/Skeletons';
-import { KinomaErrorState } from '../components/ui/KinomaErrorState';
+import { Panda.funErrorState } from '../components/ui/Panda.funErrorState';
 import { updateSEO } from '../lib/seo';
 import { Sparkles, Film, Radio, Calendar, Filter, Flame } from 'lucide-react';
 
@@ -16,7 +16,7 @@ export function WhatsNew() {
   useEffect(() => {
     updateSEO({
       title: "What's New",
-      description: "Discover new anime releases, newly aired episodes, new dubs, movies, and current seasonal anime on Kinoma.",
+      description: "Discover new anime releases, newly aired episodes, new dubs, movies, and current seasonal anime on Panda.fun.",
       type: 'website'
     });
   }, []);
@@ -107,7 +107,7 @@ export function WhatsNew() {
               <span>Real-Time Catalog Updates</span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
-              What's New on Kinoma
+              What's New on Panda.fun
             </h1>
             <p className="text-sm sm:text-base text-gray-300 mt-2 leading-relaxed">
               Explore freshly released episodes, new seasonal debuts, updated dub tracks, and newly added cinematic movies.
@@ -141,7 +141,7 @@ export function WhatsNew() {
 
         {/* Content Section */}
         {hasError ? (
-          <KinomaErrorState onRetry={handleRetryAll} />
+          <Panda.funErrorState onRetry={handleRetryAll} />
         ) : isLoading ? (
           <AnimeGridSkeleton />
         ) : filteredItems.length === 0 ? (
