@@ -149,7 +149,7 @@ class MainActivity : ComponentActivity() {
                     // Fall back to asset loader
                     return assetLoader.shouldInterceptRequest(url)
                 }
-                // External requests (kinomaapi.vercel.app, anilist images, stream CDNs) pass through
+                // External HTTPS requests (MovieApi, artwork CDNs and playback providers) pass through
                 return super.shouldInterceptRequest(view, request)
             }
 
@@ -377,7 +377,7 @@ class MainActivity : ComponentActivity() {
             // Identify as Android TV Leanback environment for automatic TV layout
             val defaultUa = userAgentString
             userAgentString = "$defaultUa KinomaTV/1.0.0 (Android TV; Leanback; SmartTV)"
-            mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+            mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW\n            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {\n                safeBrowsingEnabled = true\n            }
         }
     }
 
