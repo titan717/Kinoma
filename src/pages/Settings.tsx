@@ -8,11 +8,11 @@ export function Settings() {
   const { openSettingsModal } = useAppearance();
 
   React.useEffect(() => {
-    updateSEO({ title: 'Settings', description: 'Manage your Kinoma preferences.', type: 'website' });
+    updateSEO({ title: 'Settings', description: 'Manage your Panda.fun preferences.', type: 'website' });
   }, []);
 
   const cards = [
-    { tab: 'appearance' as const, icon: Sparkles, title: 'Appearance & UI', description: 'Manage the Kinoma interface and replay the cinematic intro.' },
+    { tab: 'appearance' as const, icon: Sparkles, title: 'Appearance & UI', description: 'Manage the Panda.fun interface and replay the cinematic intro.' },
     { tab: 'player' as const, icon: Play, title: 'Player Preferences', description: 'Auto play, auto next, skip controls and preferred audio.' },
     { tab: 'library' as const, icon: Database, title: 'Storage & Data', description: 'Manage watch history, bookmarks and local catalog data.' },
   ];
