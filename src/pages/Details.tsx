@@ -115,34 +115,29 @@ export function Details() {
 
   return (
     <main className="kinoma-details-page">\n      {loading && <div className="kinoma-details-bottom">Loading metadata from MovieApi…</div>}\n      {error && <div className="kinoma-details-bottom">{error}</div>}
-      <section className="kinoma-details-hero">
-        <div className="kinoma-details-hero__backdrop" aria-hidden="true">
-          <img src={model.backdrop} alt="" />
-          <div className="kinoma-details-hero__scrim" />
-        </div>
-
-        <div className="kinoma-details-trailer" aria-label={`${model.title} trailer preview`}>
+      <section className="kinoma-details-hero kinoma-details-hero--trailer">
+        <div className="kinoma-details-hero__trailer-bg" aria-label={`${model.title} trailer preview`}>
           {model.trailerUrl ? (
             <iframe
               src={model.trailerUrl}
               title={`${model.title} trailer`}
-              className="kinoma-details-trailer__video"
+              className="kinoma-details-hero__trailer-video"
               allow="autoplay; encrypted-media; picture-in-picture"
               allowFullScreen
             />
           ) : (
-            <div className="kinoma-details-trailer__placeholder">
-              <div className="kinoma-details-trailer__placeholder-art">
-                <Film size={34} />
-              </div>
+            <div className="kinoma-details-hero__trailer-placeholder">
+              <div><Film size={42} /></div>
               <span>TRAILER PREVIEW</span>
-              <strong>Trailer will play here</strong>
-              <small>MovieApi trailer source placeholder • autoplay with sound when supplied</small>
+              <strong>Trailer will play across the hero</strong>
+              <small>MovieApi trailer source placeholder</small>
             </div>
           )}
+          <div className="kinoma-details-hero__trailer-shade" />
         </div>
 
         <div className="kinoma-details-hero__content">
+
           <div className="kinoma-details-copy">
             <div className="kinoma-details-eyebrow">{model.kind === 'movie' ? <Film size={13} /> : <Tv size={13} />} {model.kind === 'movie' ? 'Movie' : 'TV Series'}</div>
             <h1>{model.title}</h1>
