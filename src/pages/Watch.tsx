@@ -61,7 +61,7 @@ export function Watch() {
       setSource(playback.source);
       setSeasons(seasonResult.seasons);
       setIsInList(libraryManager.isInWatchlist(parsed.id));
-      updateSEO({ title: 'Watching ' + titleOf(details, parsed.id) + ' — Kinoma', description: cleanText(details.description), image: details.image, type: 'video.other' });
+      updateSEO({ title: 'Watching ' + titleOf(details, parsed.id) + ' — Panda.fun', description: cleanText(details.description), image: details.image, type: 'video.other' });
       setLoading(false);
     }).catch(err => {
       if (!active) return;
@@ -109,7 +109,7 @@ export function Watch() {
     <main className="kinoma-player-page">
       {error && <div className="kinoma-details-bottom" role="alert">{error}</div>}
       <header className="kinoma-player-topbar">
-        <Link href="/home" className="kinoma-player-back"><ArrowLeft size={17} /><span>Back to Kinoma</span></Link>
+        <Link href="/home" className="kinoma-player-back"><ArrowLeft size={17} /><span>Back to Panda.fun</span></Link>
         <div className="kinoma-player-titlebar">
           {kind === 'movie' ? <Film size={14} /> : <Tv size={14} />}<span>{title}</span>
           {kind === 'series' && <small>S{activeSeason} · E{parsed.episode}</small>}
