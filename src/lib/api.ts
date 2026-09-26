@@ -313,8 +313,21 @@ export const api = {
   async getTrailer(id: string) {
     const media = mediaFromId(id);
     if (!media) return { available: false, trailer: null };
+
+    // TVMaze IDs are accepted by the frontend, but MovieApi video routes use TMDB IDs.
+    // Resolve the TVMaze show first so trailers work for both ID formats.
+    let videoType: 'movie' | 'tv' = media.type;
+    let videoId = media.id;
+    if (media.provider === 'tvmaze') {
+      const details = await request<MovieApiMedia>(`/api/v1/tv/${media.id}`, undefined, undefined, 300_000);
+      const resolvedTmdbId = Number(details.ids?.tmdb || 0);
+      if (!resolvedTmdbId) return { available: false, trailer: null };
+      videoId = resolvedTmdbId;
+      videoType = 'tv';
+    }
+
     const data = await request<{ videos: MovieApiVideo[] }>(
-      `/api/v1/${media.type}/${media.id}/videos`,
+      `/api/v1/${videoType}/${videoId}/videos`,
       undefined,
       undefined,
       300_000
