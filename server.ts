@@ -35,7 +35,7 @@ async function startServer() {
   // Trending & Popular (aliased to search)
   app.get(['/api/trending', '/api/anime/trending', '/trending'], async (req, res) => {
     try {
-      const r = await fetch(`${MOVIE_API}/search?q=action&limit=20&offset=0`);
+      const r = await fetch(`${MOVIE_API}/api/v1/trending?window=day`);
       const data = await r.json();
       res.json(data);
     } catch (e: any) {
@@ -45,7 +45,7 @@ async function startServer() {
 
   app.get(['/api/popular', '/api/anime/popular', '/popular'], async (req, res) => {
     try {
-      const r = await fetch(`${MOVIE_API}/search?q=adventure&limit=20&offset=0`);
+      const r = await fetch(`${MOVIE_API}/api/v1/popular/tv?page=1`);
       const data = await r.json();
       res.json(data);
     } catch (e: any) {
