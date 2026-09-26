@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'wouter';
 import { ChevronDown, Play, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
-import { Panda.funLogo } from '../components/ui/Panda.funLogo';
+import { KinomaLogo } from '../components/ui/KinomaLogo';
 import { updateSEO } from '../lib/seo';
 
 const BACKDROP_URL = 'https://aniwaves.ru/assets/images/bg-index2.jpg';
@@ -49,7 +49,7 @@ export function Landing() {
       <div className="kinoma-welcome__grain" aria-hidden="true" />
 
       <header className="kinoma-welcome__header">
-        <Link href="/" aria-label="Panda.fun"><Panda.funLogo size="md" variant="full" /></Link>
+        <Link href="/" aria-label="Panda.fun"><KinomaLogo size="md" variant="full" /></Link>
       </header>
 
       <main>
@@ -98,7 +98,7 @@ export function Landing() {
       </main>
 
       <footer className="kinoma-welcome__footer">
-        <Panda.funLogo size="sm" variant="full" /><span>Stories, in motion.</span>
+        <KinomaLogo size="sm" variant="full" /><span>Stories, in motion.</span>
       </footer>
     </div>
   );
