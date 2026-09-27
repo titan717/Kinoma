@@ -5136,3 +5136,112 @@ body {
   .panda-search-companion.is-running .panda-search-panda,
   .panda-search-companion.is-running .panda-search-head { animation: none !important; }
 }
+
+
+/* Library panda refinement — visible eyes, expression, depth and a living TV scene. */
+.panda-library-panda {
+  filter: drop-shadow(0 18px 20px rgba(0,0,0,.16));
+  animation: panda-library-breathe 4s ease-in-out infinite;
+}
+.panda-library-panda::before,
+.panda-library-panda::after {
+  top: 4px;
+  width: 40px;
+  height: 40px;
+  z-index: 1;
+  box-shadow: inset -5px -6px 7px rgba(255,255,255,.05);
+}
+.panda-library-panda::before { left: 20px; }
+.panda-library-panda::after { right: 18px; }
+.panda-library-head {
+  z-index: 5;
+}
+.panda-library-head::before,
+.panda-library-head::after {
+  top: 31px;
+  width: 23px;
+  height: 31px;
+  background: #151515;
+  box-shadow: inset -3px -4px 6px rgba(255,255,255,.05);
+  z-index: 6;
+}
+.panda-library-head::before { left: 13px; transform: rotate(25deg); }
+.panda-library-head::after { right: 13px; transform: rotate(-25deg); }
+.panda-library-eye {
+  position: absolute;
+  top: 41px !important;
+  width: 8px !important;
+  height: 10px !important;
+  border-radius: 50% !important;
+  background: #fff !important;
+  z-index: 9 !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,.28);
+}
+.panda-library-eye::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 4px;
+  height: 5px;
+  border-radius: 50%;
+  background: #151515;
+}
+.panda-library-eye--left { left: 22px; }
+.panda-library-eye--right { right: 22px; }
+.panda-library-muzzle {
+  z-index: 10;
+  box-shadow: inset -3px -4px 7px rgba(0,0,0,.06);
+}
+.panda-library-muzzle::after {
+  content: '';
+  position: absolute;
+  left: 17px;
+  top: 12px;
+  width: 7px;
+  height: 7px;
+  border-bottom: 2px solid #111;
+  border-radius: 0 0 8px 8px;
+}
+.panda-library-panda::marker { display: none; }
+.panda-library-panda .panda-library-head::after {
+  /* keep the right eye patch independent from the face eyes */
+}
+.panda-library-panda .panda-library-paw {
+  box-shadow: inset -6px -7px 9px rgba(255,255,255,.05), 8px 14px 16px rgba(0,0,0,.15);
+}
+.panda-library-panda .panda-library-paw--left {
+  animation: panda-library-paw-left 3.2s ease-in-out infinite;
+}
+.panda-library-panda .panda-library-paw--right {
+  animation: panda-library-paw-right 3.2s ease-in-out infinite;
+}
+.panda-library-tv::before {
+  background:
+    radial-gradient(circle at 65% 42%,#a5d6a7 0 3%,transparent 4%),
+    radial-gradient(circle at 38% 58%,rgba(232,245,233,.32) 0 2%,transparent 3%),
+    linear-gradient(135deg,#19221b,#314a35 55%,#111);
+}
+.panda-library-tv::after {
+  box-shadow: 0 5px 4px rgba(0,0,0,.2), 0 0 28px rgba(165,214,167,.12);
+}
+.panda-library-caption {
+  animation: panda-library-caption-float 3.6s ease-in-out infinite;
+}
+@keyframes panda-library-paw-left {
+  0%,100% { transform: rotate(24deg) translateY(0); }
+  50% { transform: rotate(31deg) translateY(-5px); }
+}
+@keyframes panda-library-paw-right {
+  0%,100% { transform: rotate(-28deg) translateY(0); }
+  50% { transform: rotate(-36deg) translateY(-4px); }
+}
+@keyframes panda-library-caption-float {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .panda-library-panda .panda-library-paw--left,
+  .panda-library-panda .panda-library-paw--right,
+  .panda-library-caption { animation: none !important; }
+}
