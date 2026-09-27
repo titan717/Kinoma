@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRoute, Link } from 'wouter';
-import { ArrowLeft, ChevronRight, Film, Pause, Play, Plus, Tv, Volume2, VolumeX } from 'lucide-react';\nimport { KinomaLogo } from '../components/ui/KinomaLogo';
+import { ArrowLeft, ChevronRight, Film, Pause, Play, Plus, Tv, Volume2, VolumeX } from 'lucide-react';
+import { KinomaLogo } from '../components/ui/KinomaLogo';
 import { PandaStreamNotice } from '../components/ui/PandaStreamNotice';
 import { api } from '../lib/api';
 import type { AnimeDetails, Episode, AnimeSeasonItem } from '../types';
