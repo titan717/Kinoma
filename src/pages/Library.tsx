@@ -13,9 +13,9 @@ const FALLBACK = [
   { id: 'library-3', title: 'Keep your favourites close', meta: 'Personal collection', tone: 'blue' },
 ];
 
-function LibraryPandaScene() {
+function LibraryPandaScene({ savedMoments }: { savedMoments: number }) {
   return <div className="panda-library-scene" aria-hidden="true">
-    <div className="panda-library-tv" />
+    <div className="panda-library-tv"><span className="panda-library-tv__saved"><b>{savedMoments}</b><small>saved moments</small></span></div>
     <div className="panda-library-panda">
       <span className="panda-library-head"><i className="panda-library-eye panda-library-eye--left" /><i className="panda-library-eye panda-library-eye--right" /><span className="panda-library-muzzle" /></span>
       <span className="panda-library-body" />
@@ -162,11 +162,7 @@ export function Library() {
             <h1>Library</h1>
             <p>Everything you want to keep close — without the clutter.</p>
           </div>
-          <LibraryPandaScene />
-          <div className="kinoma-library-head__total">
-            <span>{history.length + watchlist.length + favorites.length + completed.length}</span>
-            <small>saved moments</small>
-          </div>
+          <LibraryPandaScene savedMoments={history.length + watchlist.length + favorites.length + completed.length} />
         </header>
 
         <nav className="kinoma-library-tabs" aria-label="Library sections">
@@ -220,8 +216,8 @@ export function Library() {
         <section className="kinoma-library-discovery">
           <div>
             <span className="kinoma-eyebrow">Built for what comes next</span>
-            <h2>Your library is ready for movies, series & anime.</h2>
-            <p>The UI is provider-independent. When MovieApi arrives, saved metadata can flow into these same cards without another redesign.</p>
+            <h2>Keep your little collection close.</h2>
+            <p>Save something you like. Panda will keep it here.</p>
           </div>
           <div className="kinoma-library-discovery__art" aria-hidden="true">
             <span /><span /><span />
