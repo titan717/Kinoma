@@ -221,9 +221,10 @@ export function Watch() {
                 title={title + ' player'}
                 className="kinoma-player-video"
                 allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                // No sandbox: VidSrc requires an unrestricted iframe to initialize its player.
-                // The parent-page navigation guard above protects Panda.fun's own document,
-                // but cross-origin iframe navigation cannot be inspected by page JavaScript.
+                // Keep the third-party player isolated. Intentionally omit
+                // allow-top-navigation and allow-top-navigation-by-user-activation.
+                // This prevents the embedded document from navigating Panda.fun's top-level page.
+                sandbox="allow-scripts allow-forms allow-same-origin allow-presentation"
                 allowFullScreen
                 onLoad={() => kind === 'series' && saveProgress(timestamp, currentEpisode?.duration || 0)}
               />
