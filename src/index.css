@@ -4968,6 +4968,7 @@ body {
 
 /* Search companion: a complete little panda with readable eyes, face, paws and feet. */
 .panda-search-companion {
+  display: block !important;
   position: relative !important;
   right: auto !important;
   top: auto !important;
