@@ -125,6 +125,9 @@ export function Watch() {
                 title={title + ' player'}
                 className="kinoma-player-video"
                 allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                // Keep third-party ad/navigation inside the player sandbox. Do not allow popups or top-level redirects.
+                sandbox="allow-scripts allow-forms allow-presentation"
+                referrerPolicy="no-referrer"
                 allowFullScreen
                 onLoad={() => kind === 'series' && saveProgress(timestamp, currentEpisode?.duration || 0)}
               />
