@@ -5,6 +5,7 @@ import { ArrowRight, Clapperboard, Film, Github, Instagram, Play, Plus, Sparkles
 import { api, MovieApiError, MovieApiMedia } from '../lib/api';
 import { libraryManager } from '../lib/library';
 import { ModernContinueWatching } from '../components/ui/modern/ModernContinueWatching';
+import { PandaStreamNotice } from '../components/ui/PandaStreamNotice';
 
 type RailKind = 'trending' | 'latest' | 'popular' | 'tv' | 'movie';
 
@@ -160,6 +161,8 @@ export function Home() {
             </div>
           </div>
         </section>
+
+        <PandaStreamNotice />
 
         <ModernContinueWatching />
         {trending.length > 0 && <ContentRail kind="trending" title="Trending today" items={trending} onHover={showHoverTrailer} onLeave={hideHoverTrailer} />}
