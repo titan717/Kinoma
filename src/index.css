@@ -1848,7 +1848,7 @@ p {
 }
 
 .kinoma-home-section {
-  margin-top: 58px;
+  margin-top: clamp(42px, 5vw, 64px);
 }
 
 .kinoma-home-section__heading {
@@ -2364,7 +2364,7 @@ p {
 .kinoma-rail {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(210px, 1fr);
+  grid-auto-columns: clamp(210px, 19vw, 292px);
   grid-template-rows: 1fr;
   gap: 13px;
   overflow-x: auto;
@@ -2383,8 +2383,8 @@ p {
   border-radius: 18px;
 }
 
-.kinoma-rail-card {
-  min-width: 250px;
+ .kinoma-rail-card {
+  min-width: 0;
   overflow: hidden;
   scroll-snap-align: start;
   border: 1px solid rgba(246,242,238,.07);
@@ -2393,7 +2393,7 @@ p {
   box-shadow: 0 14px 36px rgba(0,0,0,.17);
   contain: layout paint;
   content-visibility: auto;
-  contain-intrinsic-size: 250px 400px;
+  contain-intrinsic-size: 292px 210px;
   transition: transform 180ms var(--ease-kinoma), border-color 180ms ease, box-shadow 180ms ease;
 }
 
@@ -2405,10 +2405,25 @@ p {
 
 .kinoma-rail-card__art {
   position: relative;
-  aspect-ratio: 2 / 3;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   isolation: isolate;
   background: #1c1817;
+}
+
+.kinoma-rail-card__art img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 240ms ease;
+}
+
+.kinoma-rail-card:hover .kinoma-rail-card__art img {
+  transform: scale(1.025);
 }
 
 .kinoma-rail-card__art::before {
@@ -2479,7 +2494,9 @@ p {
   letter-spacing: .16em;
 }
 
-.kinoma-rail-card__copy { padding: 13px 14px 15px; }
+.kinoma-rail-card__copy { padding: 10px 12px 12px; }
+.kinoma-rail-card__copy h3 { font-size: 11px; }
+.kinoma-rail-card__copy p { margin-top: 4px; font-size: 8px; }
 .kinoma-rail-card__copy h3 { font-size: 12px; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kinoma-rail-card__copy p { margin-top: 5px; color: rgba(246,242,238,.38); font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -3414,7 +3431,7 @@ p {
 /* Full-bleed trailer hero + desktop player episode rail. */
 .kinoma-details-hero--trailer{position:relative;isolation:isolate;min-height:clamp(680px,88dvh,900px);overflow:hidden;display:flex;align-items:flex-end}
 .kinoma-details-hero--trailer .kinoma-details-hero__trailer-bg{position:absolute;inset:0;z-index:-2;overflow:hidden;background:#080707}
-.kinoma-details-hero__trailer-video{position:absolute;inset:0;width:100%;height:100%;border:0;object-fit:cover;transform:scale(1.04);pointer-events:auto}
+.kinoma-details-hero__trailer-video{position:absolute;inset:0;width:100%;height:100%;border:0;object-fit:cover;transform:scale(1.04);pointer-events:none}
 .kinoma-details-hero__trailer-placeholder{width:100%;height:100%;display:grid;place-items:center;align-content:center;gap:10px;text-align:center;color:rgba(246,242,238,.55);background:radial-gradient(circle at 65% 35%,rgba(184,77,65,.18),transparent 34%),#100e0e}
 .kinoma-details-hero__trailer-placeholder>div{display:grid;place-items:center;width:72px;height:72px;border:1px solid rgba(232,208,192,.14);border-radius:22px;background:rgba(255,255,255,.04);color:rgba(232,208,192,.7)}
 .kinoma-details-hero__trailer-placeholder span{font-size:8px;letter-spacing:.2em;font-weight:900;color:rgba(232,208,192,.55)}
@@ -3457,7 +3474,7 @@ p {
 /* Home hero trailer mirrors the cinematic detail hero. */
 .kinoma-home-hero--trailer{position:relative;isolation:isolate;min-height:clamp(620px,78dvh,820px);overflow:hidden;display:flex;align-items:flex-end}
 .kinoma-home-hero--trailer .kinoma-home-hero__trailer-bg{position:absolute;inset:0;z-index:-2;overflow:hidden;background:#080707}
-.kinoma-home-hero--trailer .kinoma-home-hero__trailer-video{position:absolute;inset:0;width:100%;height:100%;border:0;object-fit:cover;transform:scale(1.04);pointer-events:auto}
+.kinoma-home-hero--trailer .kinoma-home-hero__trailer-video{position:absolute;inset:0;width:100%;height:100%;border:0;object-fit:cover;transform:scale(1.04);pointer-events:none}
 .kinoma-home-hero--trailer .kinoma-home-hero__trailer-shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(7,6,6,.98) 0%,rgba(7,6,6,.72) 32%,rgba(7,6,6,.18) 68%,rgba(7,6,6,.48) 100%),linear-gradient(0deg,rgba(7,6,6,.96) 0%,rgba(7,6,6,.12) 55%,rgba(7,6,6,.4) 100%);pointer-events:none}
 .kinoma-home-hero--trailer .kinoma-home-hero__copy{position:relative;z-index:1;max-width:680px;padding:clamp(80px,10vw,140px) 0 clamp(55px,7vw,90px)}
 .kinoma-home-hero--trailer .kinoma-home-hero__copy h1{font-size:clamp(3.2rem,6.5vw,7rem);text-shadow:0 12px 40px rgba(0,0,0,.45)}
@@ -3467,3 +3484,18 @@ p {
 @media(max-width:520px){.kinoma-home-hero--trailer .kinoma-home-hero__trailer-bg{height:62vw;min-height:205px}.kinoma-home-hero--trailer .kinoma-home-hero__copy{padding-inline:14px}}
 
 .kinoma-sound-permission{position:absolute;z-index:8;right:clamp(18px,4vw,64px);bottom:clamp(28px,5vw,64px);pointer-events:none}.kinoma-sound-permission__panel{pointer-events:auto;width:min(310px,calc(100vw - 36px));padding:17px 18px;border:1px solid rgba(246,242,238,.12);border-radius:17px;background:rgba(12,11,11,.78);box-shadow:0 20px 60px rgba(0,0,0,.35);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}.kinoma-sound-permission__panel>span{font-size:7px;letter-spacing:.18em;font-weight:900;color:rgba(232,208,192,.5)}.kinoma-sound-permission__panel>strong{display:block;margin-top:6px;font-size:17px}.kinoma-sound-permission__panel>p{margin:5px 0 13px;font-size:9px;line-height:1.5;color:rgba(246,242,238,.46)}.kinoma-sound-permission__panel button{border:0;border-radius:10px;padding:9px 12px;background:rgba(246,242,238,.92);color:#121010;font:inherit;font-size:10px;font-weight:800;cursor:pointer}.kinoma-sound-permission__panel button span{display:flex;align-items:center;gap:7px}@media(max-width:800px){.kinoma-sound-permission{right:14px;bottom:20px}}
+
+/* Cinematic rails: compact on desktop, fluid on smaller screens. */
+@media(max-width:1050px){
+  .kinoma-rail{grid-auto-columns:clamp(200px,24vw,270px)}
+}
+@media(max-width:800px){
+  .kinoma-home-section{margin-top:38px}
+  .kinoma-home-section__heading{margin-bottom:15px}
+  .kinoma-rail{grid-auto-columns:clamp(190px,43vw,240px);gap:10px;padding-bottom:8px}
+  .kinoma-rail-card{border-radius:14px}
+}
+@media(max-width:520px){
+  .kinoma-rail{grid-auto-columns:clamp(172px,58vw,215px)}
+  .kinoma-home-section__heading h2{font-size:1.5rem}
+}
