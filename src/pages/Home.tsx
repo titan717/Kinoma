@@ -92,7 +92,10 @@ export function Home() {
   const pandaSecretBuffer = useRef('');
   const pandaSecretTimer = useRef<number | null>(null);
   const pandaTapCount = useRef(0);
-  const [pandaSecret, setPandaSecret] = useState<string | null>(null);\n  const [hoverTrailer, setHoverTrailer] = useState<MovieApiMedia | null>(null);\n  const [hoverTrailerUrl, setHoverTrailerUrl] = useState('');\n  const hoverTrailerTimer = useRef<number | null>(null);
+  const [pandaSecret, setPandaSecret] = useState<string | null>(null);
+  const [hoverTrailer, setHoverTrailer] = useState<MovieApiMedia | null>(null);
+  const [hoverTrailerUrl, setHoverTrailerUrl] = useState('');
+  const hoverTrailerTimer = useRef<number | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -131,7 +134,23 @@ export function Home() {
     };
   }, []);
 
-  const showHoverTrailer = (item: MovieApiMedia) => {\n    if (hoverTrailerTimer.current) window.clearTimeout(hoverTrailerTimer.current);\n    setHoverTrailer(item);\n    hoverTrailerTimer.current = window.setTimeout(async () => {\n      const result = await api.getTrailer(item.id).catch(() => ({ available: false, trailer: null }));\n      if (result?.trailer?.embedUrl) setHoverTrailerUrl(trailerSrc(result.trailer.embedUrl, false));\n    }, 280);\n  };\n\n  const hideHoverTrailer = () => {\n    if (hoverTrailerTimer.current) window.clearTimeout(hoverTrailerTimer.current);\n    hoverTrailerTimer.current = window.setTimeout(() => { setHoverTrailer(null); setHoverTrailerUrl(''); }, 180);\n  };\n\n  useEffect(() => () => { if (hoverTrailerTimer.current) window.clearTimeout(hoverTrailerTimer.current); }, []);\n\n  const wakePanda = () => {
+  const showHoverTrailer = (item: MovieApiMedia) => {
+    if (hoverTrailerTimer.current) window.clearTimeout(hoverTrailerTimer.current);
+    setHoverTrailer(item);
+    hoverTrailerTimer.current = window.setTimeout(async () => {
+      const result = await api.getTrailer(item.id).catch(() => ({ available: false, trailer: null }));
+      if (result?.trailer?.embedUrl) setHoverTrailerUrl(trailerSrc(result.trailer.embedUrl, false));
+    }, 280);
+  };
+
+  const hideHoverTrailer = () => {
+    if (hoverTrailerTimer.current) window.clearTimeout(hoverTrailerTimer.current);
+    hoverTrailerTimer.current = window.setTimeout(() => { setHoverTrailer(null); setHoverTrailerUrl(''); }, 180);
+  };
+
+  useEffect(() => () => { if (hoverTrailerTimer.current) window.clearTimeout(hoverTrailerTimer.current); }, []);
+
+  const wakePanda = () => {
     pandaTapCount.current += 1;
     if (pandaTapCount.current >= 3) {
       setPandaSecret('🌿 The panda noticed you. Keep browsing.');
@@ -169,7 +188,12 @@ export function Home() {
         {sections?.popularMovies?.length > 0 && <ContentRail kind="movie" title="Popular movies" items={sections.popularMovies} onHover={showHoverTrailer} onLeave={hideHoverTrailer} />}
         {sections?.popularTv?.length > 0 && <ContentRail kind="tv" title="Popular series" items={sections.popularTv} onHover={showHoverTrailer} onLeave={hideHoverTrailer} />}
 
-        {hoverTrailer && <div className="panda-home-hover-trailer" onMouseEnter={() => { if (hoverTrailerTimer.current) window.clearTimeout(hoverTrailerTimer.current); }} onMouseLeave={hideHoverTrailer} role="dialog" aria-label={hoverTrailer.title + " trailer preview"}>\n          <div className="panda-home-hover-trailer__media">{hoverTrailerUrl ? <iframe src={hoverTrailerUrl} title={hoverTrailer.title + " trailer preview"} allow="autoplay; encrypted-media; picture-in-picture" /> : <img src={(hoverTrailer.backdrop || hoverTrailer.poster || "") as string} alt="" />}</div>\n          <div className="panda-home-hover-trailer__copy"><span>🐼 QUICK LOOK</span><strong>{hoverTrailer.title}</strong><small>{[hoverTrailer.year, hoverTrailer.rating ? `★ ${hoverTrailer.rating}` : null, ...(hoverTrailer.genres || []).slice(0, 2)].filter(Boolean).join(" • ")}</small><em>Click to open details</em></div>\n        </div>}\n\n        <section className="kinoma-home-section kinoma-home-section--split" aria-label="Browse by format">
+        {hoverTrailer && <div className="panda-home-hover-trailer" onMouseEnter={() => { if (hoverTrailerTimer.current) window.clearTimeout(hoverTrailerTimer.current); }} onMouseLeave={hideHoverTrailer} role="dialog" aria-label={hoverTrailer.title + " trailer preview"}>
+          <div className="panda-home-hover-trailer__media">{hoverTrailerUrl ? <iframe src={hoverTrailerUrl} title={hoverTrailer.title + " trailer preview"} allow="autoplay; encrypted-media; picture-in-picture" /> : <img src={(hoverTrailer.backdrop || hoverTrailer.poster || "") as string} alt="" />}</div>
+          <div className="panda-home-hover-trailer__copy"><span>🐼 QUICK LOOK</span><strong>{hoverTrailer.title}</strong><small>{[hoverTrailer.year, hoverTrailer.rating ? `★ ${hoverTrailer.rating}` : null, ...(hoverTrailer.genres || []).slice(0, 2)].filter(Boolean).join(" • ")}</small><em>Click to open details</em></div>
+        </div>}
+
+        <section className="kinoma-home-section kinoma-home-section--split" aria-label="Browse by format">
           <div className="kinoma-home-section__heading"><div><div className="kinoma-home-section__eyebrow"><Tv size={15} /> Browse</div><h2>Pick your format</h2></div><Link href="/search" className="kinoma-home-section__link">Discover <ArrowRight size={14} /></Link></div>
           <div className="kinoma-home-format-grid"><Link href="/search?keyword=series" className="kinoma-home-format-card kinoma-home-format-card--series"><Tv size={22} /><span>TV Series</span><small>Stories made for a binge.</small></Link><Link href="/search?keyword=movie" className="kinoma-home-format-card kinoma-home-format-card--movie"><Film size={22} /><span>Movies</span><small>One story. One sitting.</small></Link></div>
         </section>
