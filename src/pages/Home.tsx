@@ -14,17 +14,21 @@ function KindIcon({ kind }: { kind: RailKind }) {
   return <Tv size={15} strokeWidth={1.8} />;
 }
 
-function trailerSrc(url: unknown) { if (typeof url !== 'string' || !url) return ''; try { const parsed = new URL(url); parsed.searchParams.set('autoplay', '1'); parsed.searchParams.set('mute', '0'); parsed.searchParams.set('playsinline', '1'); return parsed.toString(); } catch { return url; } }
+function trailerSrc(url: unknown) { if (typeof url !== 'string' || !url) return ''; try { const parsed = new URL(url); parsed.searchParams.set('autoplay', '1'); parsed.searchParams.set('mute', '0'); parsed.searchParams.set('playsinline', '1');
+    parsed.searchParams.set('controls', '0');
+    parsed.searchParams.set('disablekb', '1');
+    parsed.searchParams.set('fs', '0');
+    parsed.searchParams.set('iv_load_policy', '3');
+    parsed.searchParams.set('rel', '0');
+    return parsed.toString(); } catch { return url; } }
 
 function RailCard({ item }: { item: MovieApiMedia }) {
   const kind = item.type === 'movie' ? 'movie' : 'tv';
   return (
     <Link href={`/details/${encodeURIComponent(item.id)}?type=${kind === 'movie' ? 'movie' : 'series'}`} className="kinoma-rail-card" aria-label={`Open ${item.title}`}>
       <div className="kinoma-rail-card__art" aria-hidden="true">
-        {item.poster ? <img src={item.poster} alt="" loading="lazy" decoding="async" /> : <span className="kinoma-rail-card__orb kinoma-rail-card__orb--one" />}
+        {(item.backdrop || item.poster) ? <img src={(item.backdrop || item.poster) as string} alt="" loading="lazy" decoding="async" /> : <span className="kinoma-rail-card__orb kinoma-rail-card__orb--one" />}
         <span className="kinoma-rail-card__shine" />
-        <span className="kinoma-rail-card__icon"><KindIcon kind={kind} /></span>
-        <span className="kinoma-rail-card__badge">KINOMA</span>
       </div>
       <div className="kinoma-rail-card__copy">
         <h3>{item.title}</h3>
@@ -46,7 +50,7 @@ function ContentRail({ kind, title, items }: { kind: RailKind; title: string; it
         <Link href="/search" className="kinoma-home-section__link">See all <ArrowRight size={14} /></Link>
       </div>
       <div className="kinoma-rail" tabIndex={0} aria-label={title}>
-        {items.map((item, index) => <RailCard key={`${kind}-${item.id}-${index}`} item={item} />)}
+        {items.slice(0, 8).map((item, index) => <RailCard key={`${kind}-${item.id}-${index}`} item={item} />)}
       </div>
     </section>
   );
