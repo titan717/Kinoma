@@ -37,10 +37,10 @@ function trailerSrc(url: unknown, soundEnabled = true) {
   }
 }
 
-function RailCard({ item }: { item: MovieApiMedia }) {
+function RailCard({ item, onHover, onLeave }: { item: MovieApiMedia; onHover: (item: MovieApiMedia) => void; onLeave: () => void }) {
   const kind = item.type === 'movie' ? 'movie' : 'tv';
   return (
-    <Link href={`/details/${encodeURIComponent(item.id)}?type=${kind === 'movie' ? 'movie' : 'series'}`} className="kinoma-rail-card" aria-label={`Open ${item.title}`}>
+    <Link href={`/details/${encodeURIComponent(item.id)}?type=${kind === 'movie' ? 'movie' : 'series'}`} className="kinoma-rail-card" aria-label={`Open ${item.title}`} onMouseEnter={() => onHover(item)} onMouseLeave={onLeave} onFocus={() => onHover(item)} onBlur={onLeave}>
       <div className="kinoma-rail-card__art" aria-hidden="true">
         {(item.backdrop || item.poster) ? <img src={(item.backdrop || item.poster) as string} alt="" loading="lazy" decoding="async" /> : <span className="kinoma-rail-card__orb kinoma-rail-card__orb--one" />}
         <span className="kinoma-rail-card__shine" />
@@ -53,7 +53,7 @@ function RailCard({ item }: { item: MovieApiMedia }) {
   );
 }
 
-function ContentRail({ kind, title, items }: { kind: RailKind; title: string; items: MovieApiMedia[] }) {
+function ContentRail({ kind, title, items, onHover, onLeave }: { kind: RailKind; title: string; items: MovieApiMedia[]; onHover: (item: MovieApiMedia) => void; onLeave: () => void }) {
   if (!items.length) return null;
   return (
     <section className="kinoma-home-section" aria-labelledby={`kinoma-${kind}-heading`}>
@@ -65,7 +65,7 @@ function ContentRail({ kind, title, items }: { kind: RailKind; title: string; it
         <Link href="/search" className="kinoma-home-section__link">See all <ArrowRight size={14} /></Link>
       </div>
       <div className="kinoma-rail" tabIndex={0} aria-label={title}>
-        {items.slice(0, 4).map((item, index) => <RailCard key={`${kind}-${item.id}-${index}`} item={item} />)}
+        {items.slice(0, 4).map((item, index) => <RailCard key={`${kind}-${item.id}-${index}`} item={item} onHover={onHover} onLeave={onLeave} />)}
       </div>
     </section>
   );
@@ -91,7 +91,7 @@ export function Home() {
   const pandaSecretBuffer = useRef('');
   const pandaSecretTimer = useRef<number | null>(null);
   const pandaTapCount = useRef(0);
-  const [pandaSecret, setPandaSecret] = useState<string | null>(null);
+  const [pandaSecret, setPandaSecret] = useState<string | null>(null);\n  const [hoverTrailer, setHoverTrailer] = useState<MovieApiMedia | null>(null);\n  const [hoverTrailerUrl, setHoverTrailerUrl] = useState('');\n  const hoverTrailerTimer = useRef<number | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -130,7 +130,7 @@ export function Home() {
     };
   }, []);
 
-  const wakePanda = () => {
+  const showHoverTrailer = (item: MovieApiMedia) => {\n    if (hoverTrailerTimer.current) window.clearTimeout(hoverTrailerTimer.current);\n    setHoverTrailer(item);\n    hoverTrailerTimer.current = window.setTimeout(async () => {\n      const result = await api.getTrailer(item.id).catch(() => ({ available: false, trailer: null }));\n      if (result?.trailer?.embedUrl) setHoverTrailerUrl(trailerSrc(result.trailer.embedUrl, false));\n    }, 280);\n  };\n\n  const hideHoverTrailer = () => {\n    if (hoverTrailerTimer.current) window.clearTimeout(hoverTrailerTimer.current);\n    hoverTrailerTimer.current = window.setTimeout(() => { setHoverTrailer(null); setHoverTrailerUrl(''); }, 180);\n  };\n\n  useEffect(() => () => { if (hoverTrailerTimer.current) window.clearTimeout(hoverTrailerTimer.current); }, []);\n\n  const wakePanda = () => {
     pandaTapCount.current += 1;
     if (pandaTapCount.current >= 3) {
       setPandaSecret('🌿 The panda noticed you. Keep browsing.');
@@ -162,11 +162,11 @@ export function Home() {
         </section>
 
         <ModernContinueWatching />
-        {trending.length > 0 && <ContentRail kind="trending" title="Trending today" items={trending} />}
-        {sections?.popularMovies?.length > 0 && <ContentRail kind="movie" title="Popular movies" items={sections.popularMovies} />}
-        {sections?.popularTv?.length > 0 && <ContentRail kind="tv" title="Popular series" items={sections.popularTv} />}
+        {trending.length > 0 && <ContentRail kind="trending" title="Trending today" items={trending} onHover={showHoverTrailer} onLeave={hideHoverTrailer} />}
+        {sections?.popularMovies?.length > 0 && <ContentRail kind="movie" title="Popular movies" items={sections.popularMovies} onHover={showHoverTrailer} onLeave={hideHoverTrailer} />}
+        {sections?.popularTv?.length > 0 && <ContentRail kind="tv" title="Popular series" items={sections.popularTv} onHover={showHoverTrailer} onLeave={hideHoverTrailer} />}
 
-        <section className="kinoma-home-section kinoma-home-section--split" aria-label="Browse by format">
+        {hoverTrailer && <div className="panda-home-hover-trailer" onMouseEnter={() => { if (hoverTrailerTimer.current) window.clearTimeout(hoverTrailerTimer.current); }} onMouseLeave={hideHoverTrailer} role="dialog" aria-label={hoverTrailer.title + " trailer preview"}>\n          <div className="panda-home-hover-trailer__media">{hoverTrailerUrl ? <iframe src={hoverTrailerUrl} title={hoverTrailer.title + " trailer preview"} allow="autoplay; encrypted-media; picture-in-picture" /> : <img src={(hoverTrailer.backdrop || hoverTrailer.poster || "") as string} alt="" />}</div>\n          <div className="panda-home-hover-trailer__copy"><span>🐼 QUICK LOOK</span><strong>{hoverTrailer.title}</strong><small>{[hoverTrailer.year, hoverTrailer.rating ? `★ ${hoverTrailer.rating}` : null, ...(hoverTrailer.genres || []).slice(0, 2)].filter(Boolean).join(" • ")}</small><em>Click to open details</em></div>\n        </div>}\n\n        <section className="kinoma-home-section kinoma-home-section--split" aria-label="Browse by format">
           <div className="kinoma-home-section__heading"><div><div className="kinoma-home-section__eyebrow"><Tv size={15} /> Browse</div><h2>Pick your format</h2></div><Link href="/search" className="kinoma-home-section__link">Discover <ArrowRight size={14} /></Link></div>
           <div className="kinoma-home-format-grid"><Link href="/search?keyword=series" className="kinoma-home-format-card kinoma-home-format-card--series"><Tv size={22} /><span>TV Series</span><small>Stories made for a binge.</small></Link><Link href="/search?keyword=movie" className="kinoma-home-format-card kinoma-home-format-card--movie"><Film size={22} /><span>Movies</span><small>One story. One sitting.</small></Link></div>
         </section>
