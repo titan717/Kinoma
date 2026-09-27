@@ -126,7 +126,6 @@ export function Watch() {
                 className="kinoma-player-video"
                 allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
                 allowFullScreen
-                referrerPolicy="no-referrer"
                 onLoad={() => kind === 'series' && saveProgress(timestamp, currentEpisode?.duration || 0)}
               />
             ) : (
