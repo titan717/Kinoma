@@ -18,6 +18,11 @@ function trailerSrc(url: unknown) {
     parsed.searchParams.set('autoplay', '1');
     parsed.searchParams.set('mute', '0');
     parsed.searchParams.set('playsinline', '1');
+    parsed.searchParams.set('controls', '0');
+    parsed.searchParams.set('disablekb', '1');
+    parsed.searchParams.set('fs', '0');
+    parsed.searchParams.set('iv_load_policy', '3');
+    parsed.searchParams.set('rel', '0');
     return parsed.toString();
   } catch {
     return url;
