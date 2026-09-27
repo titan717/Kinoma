@@ -129,7 +129,9 @@ async function request<T>(
     let lastError: unknown = null;
     for (let index = 0; index < bases.length; index += 1) {
       const base = bases[index];
-      const targetUrl = path.startsWith('http') ? path : `${base}${path.startsWith('/') ? path : `/${path}`}`;
+      const targetUrl = path.startsWith('http')
+        ? url
+        : `${base}${path.startsWith('/') ? path : `/${path}`}${new URL(url).search}`;
       const controller = new AbortController();
       const timer = window.setTimeout(() => controller.abort(), 8_000);
       try {
