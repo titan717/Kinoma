@@ -15,14 +15,19 @@ function trailerSrc(url: unknown) {
   if (typeof url !== 'string' || !url) return '';
   try {
     const parsed = new URL(url);
+    const isYouTube = /(^|\.)youtube(?:-nocookie)?\.com$/.test(parsed.hostname) || parsed.hostname === 'youtu.be';
     parsed.searchParams.set('autoplay', '1');
-    parsed.searchParams.set('mute', '0');
+    parsed.searchParams.set('mute', '1');
     parsed.searchParams.set('playsinline', '1');
     parsed.searchParams.set('controls', '0');
     parsed.searchParams.set('disablekb', '1');
     parsed.searchParams.set('fs', '0');
     parsed.searchParams.set('iv_load_policy', '3');
     parsed.searchParams.set('rel', '0');
+    if (isYouTube) {
+      parsed.searchParams.set('enablejsapi', '1');
+      parsed.searchParams.set('origin', window.location.origin);
+    }
     return parsed.toString();
   } catch {
     return url;
