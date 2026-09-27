@@ -83,7 +83,7 @@ export const MOVIE_API_FALLBACK_URL = rawFallback.replace(/\/+$/, '');
 
 const cache = new Map<string, { expires: number; value: unknown }>();
 const inflight = new Map<string, Promise<unknown>>();
-const CACHE_TTL = 60_000;
+const CACHE_TTL = 120_000;
 
 function unwrap<T>(payload: any): T {
   if (payload?.success === false) {
@@ -131,7 +131,7 @@ async function request<T>(
       const base = bases[index];
       const targetUrl = path.startsWith('http') ? path : `${base}${path.startsWith('/') ? path : `/${path}`}`;
       const controller = new AbortController();
-      const timer = window.setTimeout(() => controller.abort(), 12_000);
+      const timer = window.setTimeout(() => controller.abort(), 8_000);
       try {
         const response = await fetch(targetUrl, { ...options, signal: options.signal || controller.signal, headers: { Accept: 'application/json', ...(options.headers || {}) } });
         let payload: unknown = null;
@@ -288,7 +288,7 @@ export const api = {
         latestTv: MovieApiMedia[];
       };
       generatedAt: string;
-    }>('/api/v1/home', undefined, undefined, 30_000);
+    >('/api/v1/home', undefined, undefined, 120_000);
   },
 
   async getTrending() {
