@@ -14,7 +14,7 @@ function KindIcon({ kind }: { kind: RailKind }) {
   return <Tv size={15} strokeWidth={1.8} />;
 }
 
-function trailerSrc(url: unknown, soundEnabled = false) {
+function trailerSrc(url: unknown, soundEnabled = true) {
   if (typeof url !== 'string' || !url) return '';
   try {
     const parsed = new URL(url);
@@ -85,7 +85,7 @@ export function Home() {
   const [error, setError] = useState<string | null>(null);
   const [trailer, setTrailer] = useState<any>(null);
   const [isInList, setIsInList] = useState(false);
-  const [soundEnabled] = useState(false);
+  const soundEnabled = true;
   const [trailerReady, setTrailerReady] = useState(false);
   const trailerFrameRef = useRef<HTMLIFrameElement | null>(null);
   const pandaSecretBuffer = useRef('');
@@ -165,8 +165,6 @@ export function Home() {
         {trending.length > 0 && <ContentRail kind="trending" title="Trending today" items={trending} />}
         {sections?.popularMovies?.length > 0 && <ContentRail kind="movie" title="Popular movies" items={sections.popularMovies} />}
         {sections?.popularTv?.length > 0 && <ContentRail kind="tv" title="Popular series" items={sections.popularTv} />}
-        {sections?.latestMovies?.length > 0 && <ContentRail kind="movie" title="Fresh movies" items={sections.latestMovies} />}
-        {sections?.latestTv?.length > 0 && <ContentRail kind="tv" title="Fresh series" items={sections.latestTv} />}
 
         <section className="kinoma-home-section kinoma-home-section--split" aria-label="Browse by format">
           <div className="kinoma-home-section__heading"><div><div className="kinoma-home-section__eyebrow"><Tv size={15} /> Browse</div><h2>Pick your format</h2></div><Link href="/search" className="kinoma-home-section__link">Discover <ArrowRight size={14} /></Link></div>
