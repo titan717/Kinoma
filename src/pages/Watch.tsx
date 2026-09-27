@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRoute, Link } from 'wouter';
-import { ArrowLeft, ChevronRight, Film, Pause, Play, Plus, Tv, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Film, Pause, Play, Plus, Tv, Volume2, VolumeX } from 'lucide-react';\nimport { KinomaLogo } from '../components/ui/KinomaLogo';
 import { api } from '../lib/api';
 import type { AnimeDetails, Episode, AnimeSeasonItem } from '../types';
 import { libraryManager } from '../lib/library';
@@ -206,7 +206,7 @@ export function Watch() {
       {error && <div className="kinoma-details-bottom" role="alert">{error}</div>}
       <header className="kinoma-player-topbar">
         <Link href="/home" className="kinoma-player-back"><ArrowLeft size={17} /><span>Back to Panda.fun</span></Link>
-        <div className="kinoma-player-titlebar">
+        <div className="panda-player-brand"><KinomaLogo variant="mark" size="sm" /><span>panda.fun</span></div>\n        <div className="kinoma-player-titlebar">
           {kind === 'movie' ? <Film size={14} /> : <Tv size={14} />}<span>{title}</span>
           {kind === 'series' && <small>S{activeSeason} · E{parsed.episode}</small>}
         </div>
