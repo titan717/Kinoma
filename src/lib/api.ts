@@ -74,8 +74,8 @@ export class MovieApiError extends Error {
   }
 }
 
-const DEFAULT_BASE_URL = 'https://apikinoma.vercel.app';
-const DEFAULT_FALLBACK_URL = 'https://movieapi-3d0v.onrender.com';
+const DEFAULT_BASE_URL = 'https://movieapi-3d0v.onrender.com';
+const DEFAULT_FALLBACK_URL = '';
 const rawBase = String(import.meta.env.VITE_MOVIE_API_URL || DEFAULT_BASE_URL).trim();
 export const MOVIE_API_BASE_URL = rawBase.replace(/\/+$/, '');
 const rawFallback = String(import.meta.env.VITE_MOVIE_API_FALLBACK_URL || DEFAULT_FALLBACK_URL).trim();
@@ -219,30 +219,61 @@ function toEpisode(item: any): Episode {
 
 async function searchAll(query: string, page = 1) {
   const [movies, tv] = await Promise.allSettled([
-    request<MovieApiPage>('/api/v1/tmdb/search/movie', { q: query, page }),
-    request<MovieApiPage>('/api/v1/tmdb/search/tv', { q: query, page }),
+    request<any>('/api/v1/tmdb/search/movie', { q: query, page }),
+    request<any>('/api/v1/tmdb/search/tv', { q: query, page }),
   ]);
-  let results = [
-    ...(movies.status === 'fulfilled' ? movies.value.results : []),
-    ...(tv.status === 'fulfilled' ? tv.value.results : []),
-  ];
 
-  // MovieApi v0.7.0 exposes a working TVMaze search even when TMDB is not configured.
-  // Keep search useful instead of returning an empty screen in that state.
-  if (!results.length) {
-    try {
-      const fallback = await request<{ query: string; results: MovieApiMedia[] }>(
-        '/api/v1/tv/search',
-        { q: query }
-      );
-      results = fallback.results || [];
-    } catch {
-      // Preserve the original empty-result behavior if both providers are unavailable.
-    }
-  }
+  const movieResults = movies.status === 'fulfilled'
+    ? (movies.value.results || []).map((item: any): MovieApiMedia => ({
+        id: `kinoma_tmdb_movie_${item.id}`,
+        type: 'movie',
+        title: item.title || item.original_title || 'Untitled',
+        originalTitle: item.original_title || item.title || null,
+        year: item.release_date ? Number(String(item.release_date).slice(0, 4)) || null : null,
+        rating: Number.isFinite(Number(item.vote_average)) ? Number(item.vote_average) : null,
+        poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : null,
+        backdrop: item.backdrop_path ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` : null,
+        overview: item.overview || null,
+        genres: [],
+        runtime: null,
+        releaseDate: item.release_date || null,
+        status: null,
+        language: item.original_language || null,
+        ids: { tmdb: Number(item.id) },
+        source: 'tmdb'
+      }))
+    : [];
 
-  results = results.sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0));
-  return { results, total: results.length };
+  const tvResults = tv.status === 'fulfilled'
+    ? (tv.value.results || []).map((item: any): MovieApiMedia => ({
+        id: `kinoma_tmdb_tv_${item.id}`,
+        type: 'tv',
+        title: item.name || item.original_name || 'Untitled',
+        originalTitle: item.original_name || item.name || null,
+        year: item.first_air_date ? Number(String(item.first_air_date).slice(0, 4)) || null : null,
+        rating: Number.isFinite(Number(item.vote_average)) ? Number(item.vote_average) : null,
+        poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : null,
+        backdrop: item.backdrop_path ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` : null,
+        overview: item.overview || null,
+        genres: [],
+        runtime: null,
+        releaseDate: item.first_air_date || null,
+        status: null,
+        language: item.original_language || null,
+        ids: { tmdb: Number(item.id) },
+        source: 'tmdb'
+      }))
+    : [];
+
+  const results = [...movieResults, ...tvResults];
+  return {
+    results,
+    total: Math.max(
+      Number(movies.status === 'fulfilled' ? movies.value.total_results : 0),
+      Number(tv.status === 'fulfilled' ? tv.value.total_results : 0),
+      results.length
+    )
+  };
 }
 
 export const api = {
@@ -366,10 +397,18 @@ export const api = {
       };
     }
 
-    const data = await request<MovieApiMedia & { numberOfSeasons?: number }>(`/api/v1/tmdb/tv/${media.id}`);
-    const count = Math.max(0, Number(data.numberOfSeasons || 0));
-    return { seasons: Array.from({ length: count }, (_, index): AnimeSeasonItem => ({
-      seasonNumber: index + 1, animeId: id, title: `Season ${index + 1}`, episodeCount: 0
+    const tmdb = await request<MovieApiMedia & { numberOfSeasons?: number }>(`/api/v1/tmdb/tv/${media.id}`, undefined, undefined, 300_000);
+    const tvmazeId = Number(tmdb.ids?.tvmaze || 0);
+    if (!tvmazeId) {
+      const count = Math.max(0, Number(tmdb.numberOfSeasons || 0));
+      return { seasons: Array.from({ length: count }, (_, index): AnimeSeasonItem => ({
+        seasonNumber: index + 1, animeId: id, title: `Season ${index + 1}`, episodeCount: 0
+      })) };
+    }
+    const data = await request<{ seasons: any[] }>(`/api/v1/tv/${tvmazeId}/seasons`, undefined, undefined, 300_000);
+    return { seasons: (data.seasons || []).map((season: any): AnimeSeasonItem => ({
+      seasonNumber: Number(season.number || 1), animeId: id, title: season.name || `Season ${season.number || 1}`,
+      episodeCount: Number(season.episodeOrder || 0)
     })) };
   },
 
@@ -377,9 +416,18 @@ export const api = {
     const media = mediaFromId(id);
     if (!media || media.type !== 'tv') return { anime_id: id, season_number: seasonNumber, season_anime_id: id, episodes: [] as Episode[] };
 
-    const data = media.provider === 'tvmaze'
-      ? await request<{ episodes: any[] }>(`/api/v1/tv/${media.id}/season/${seasonNumber}`)
-      : await request<{ episodes: any[] }>(`/api/v1/tmdb/tv/${media.id}/season/${seasonNumber}`);
+    let data: { episodes: any[] };
+    if (media.provider === 'tvmaze') {
+      data = await request<{ episodes: any[] }>(`/api/v1/tv/${media.id}/season/${seasonNumber}`, undefined, undefined, 300_000);
+    } else {
+      const tmdb = await request<MovieApiMedia>(`/api/v1/tmdb/tv/${media.id}`, undefined, undefined, 300_000);
+      const tvmazeId = Number(tmdb.ids?.tvmaze || 0);
+      if (tvmazeId) {
+        data = await request<{ episodes: any[] }>(`/api/v1/tv/${tvmazeId}/season/${seasonNumber}`, undefined, undefined, 300_000);
+      } else {
+        data = await request<{ episodes: any[] }>(`/api/v1/tmdb/tv/${media.id}/season/${seasonNumber}`, undefined, undefined, 300_000);
+      }
+    }
 
     return {
       anime_id: id, season_number: seasonNumber, season_anime_id: id,
@@ -397,7 +445,8 @@ export const api = {
     const path = media.type === 'movie'
       ? `/api/v1/movie/${media.id}/play`
       : `/api/v1/tv/${media.id}/season/${season}/episode/${episode}/play`;
-    const data = await request<{ source: MovieApiPlaybackSource | null }>(path, undefined, undefined, 0);
+    const params = media.type === 'tv' && media.provider === 'tmdb' ? { tmdbId: media.id } : undefined;
+    const data = await request<{ source: MovieApiPlaybackSource | null }>(path, params, undefined, 0);
     if (!data.source?.url) throw new MovieApiError('No playback source is currently available.', 503, 'NO_PLAYBACK_SOURCE');
     return { url: data.source.url, source: data.source };
   },
