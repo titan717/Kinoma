@@ -14,7 +14,7 @@ function KindIcon({ kind }: { kind: RailKind }) {
   return <Tv size={15} strokeWidth={1.8} />;
 }
 
-function trailerSrc(url: unknown, soundEnabled = false) {
+function trailerSrc(url: unknown, soundEnabled = true) {
   if (typeof url !== 'string' || !url) return '';
   try {
     const parsed = new URL(url);
@@ -85,7 +85,8 @@ export function Home() {
   const [error, setError] = useState<string | null>(null);
   const [trailer, setTrailer] = useState<any>(null);
   const [isInList, setIsInList] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundPermissionNeeded, setSoundPermissionNeeded] = useState(false);
   const [trailerReady, setTrailerReady] = useState(false);
   const trailerFrameRef = useRef<HTMLIFrameElement | null>(null);
   const pandaSecretBuffer = useRef('');
@@ -108,6 +109,7 @@ export function Home() {
   const featuredWatchUrl = featured?.id ? '/watch/' + encodeURIComponent(featured.id) + '?type=' + featuredType : '/search';
   const enableTrailerSound = () => {
     setSoundEnabled(true);
+    setSoundPermissionNeeded(false);
     window.setTimeout(() => {
       const frame = trailerFrameRef.current;
       if (!frame?.contentWindow) return;
@@ -124,9 +126,16 @@ export function Home() {
   const toggleFeaturedList = () => { if (featured) setIsInList(libraryManager.toggleWatchlist({ id: featured.id, title: featured.title, image: featured.poster || '' })); };
   useEffect(() => {
     setTrailerReady(false);
-    setSoundEnabled(false);
+    setSoundEnabled(true);
+    setSoundPermissionNeeded(false);
     if (featured?.id) setIsInList(libraryManager.isInWatchlist(featured.id));
   }, [featured?.id]);
+
+  useEffect(() => {
+    if (!trailerReady || !trailer?.trailer?.embedUrl) return;
+    const timer = window.setTimeout(() => setSoundPermissionNeeded(true), 1800);
+    return () => window.clearTimeout(timer);
+  }, [trailerReady, trailer?.trailer?.embedUrl]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -177,12 +186,12 @@ export function Home() {
           </div>
         </section>
 
-        {trailer?.trailer?.embedUrl && !soundEnabled && (
+        {trailer?.trailer?.embedUrl && soundPermissionNeeded && (
           <div className="kinoma-sound-permission" role="dialog" aria-modal="false" aria-label="Enable trailer sound">
             <div className="kinoma-sound-permission__panel">
               <span>TRAILER SOUND</span>
               <strong>Turn sound on?</strong>
-              <p>Allow Kinoma to play the featured trailer with sound.</p>
+              <p>Panda tried to start it with sound. Your browser may need one tap to allow autoplay.</p>
               <button type="button" onClick={enableTrailerSound}><span><Play size={15} fill="currentColor" /> Enable sound</span></button>
             </div>
           </div>
