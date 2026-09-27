@@ -49,7 +49,7 @@ function AnimatedRoutes() {
         <Suspense
           fallback={
             <div className="min-h-[55vh] w-full flex items-center justify-center bg-[var(--kinoma-bg)]">
-              <div className="h-8 w-8 rounded-full border-2 border-white/15 border-t-white/80 animate-spin" aria-label="Loading Kinoma" />
+              <div className="h-8 w-8 rounded-full border-2 border-white/15 border-t-white/80 animate-spin" aria-label="Loading Panda.fun" />
             </div>
           }
         >
