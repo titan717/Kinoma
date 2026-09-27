@@ -46,6 +46,45 @@ export function Watch() {
 
   useEffect(() => setActiveSeason(parsed.season), [parsed.id, parsed.season]);
 
+  // Protect Panda.fun's own document from accidental external navigation.
+  // This cannot inspect or cancel navigation performed inside a cross-origin iframe.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const originalOpen = window.open;
+    const isExternalUrl = (value: string) => {
+      try {
+        const url = new URL(value, window.location.href);
+        return url.origin !== window.location.origin;
+      } catch {
+        return false;
+      }
+    };
+
+    window.open = ((url?: string | URL, target?: string, features?: string) => {
+      if (typeof url === 'string' && isExternalUrl(url)) return null;
+      if (url instanceof URL && isExternalUrl(url.href)) return null;
+      return originalOpen.call(window, url, target, features);
+    }) as typeof window.open;
+
+    const handleDocumentClick = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const anchor = target.closest('a[href]');
+      if (!(anchor instanceof HTMLAnchorElement)) return;
+      if (anchor.target === '_blank' && isExternalUrl(anchor.href)) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+
+    document.addEventListener('click', handleDocumentClick, true);
+    return () => {
+      window.open = originalOpen;
+      document.removeEventListener('click', handleDocumentClick, true);
+    };
+  }, []);
+
   useEffect(() => {
     let active = true;
     if (!parsed.id) return;
@@ -125,9 +164,9 @@ export function Watch() {
                 title={title + ' player'}
                 className="kinoma-player-video"
                 allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                // Required by VidSrc while still preventing popups and top-level navigation.
-                sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
-                referrerPolicy="no-referrer"
+                // No sandbox: VidSrc requires an unrestricted iframe to initialize its player.
+                // The parent-page navigation guard above protects Panda.fun's own document,
+                // but cross-origin iframe navigation cannot be inspected by page JavaScript.
                 allowFullScreen
                 onLoad={() => kind === 'series' && saveProgress(timestamp, currentEpisode?.duration || 0)}
               />
