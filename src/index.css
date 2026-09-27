@@ -3780,3 +3780,101 @@ a:active {
     animation: none !important;
   }
 }
+
+
+/* Panda.fun refinement pass */
+html, body, #root {
+  background: #1A1A1A;
+}
+
+body {
+  transition: background-color 180ms ease;
+}
+
+.kinoma-sidebar {
+  background: rgba(17, 18, 17, 0.985) !important;
+  box-shadow: 14px 0 42px rgba(0, 0, 0, 0.22);
+}
+
+.kinoma-sidebar__brand {
+  flex: 1 1 auto;
+  width: auto;
+  overflow: visible;
+  justify-content: flex-start;
+  padding-inline: 3px;
+}
+
+.kinoma-sidebar.is-collapsed .kinoma-sidebar__brand {
+  flex: 0 0 auto;
+  justify-content: center;
+}
+
+.kinoma-sidebar__logo {
+  width: auto !important;
+  max-width: none !important;
+  overflow: visible;
+}
+
+.panda-wordmark-wrap {
+  width: max-content;
+  max-width: none;
+  overflow: visible;
+  white-space: nowrap;
+  transform-origin: left center;
+}
+
+.panda-wordmark {
+  white-space: nowrap;
+}
+
+.panda-logo-mark {
+  animation: panda-idle 5.5s ease-in-out infinite;
+  transform-origin: 50% 70%;
+}
+
+.panda-wordmark-wrap:hover .panda-logo-mark {
+  animation: panda-greeting 720ms cubic-bezier(.16,1,.3,1);
+}
+
+.panda-wordmark-wrap:active .panda-logo-mark {
+  animation: panda-squish 360ms cubic-bezier(.16,1,.3,1);
+}
+
+@keyframes panda-idle {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  12% { transform: translate3d(0, -1px, 0) rotate(-1deg); }
+  24% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  56% { transform: translate3d(0, -2px, 0) rotate(1deg); }
+  68% { transform: translate3d(0, 0, 0) rotate(0deg); }
+}
+
+@keyframes panda-greeting {
+  0% { transform: rotate(0deg) translateY(0); }
+  22% { transform: rotate(-7deg) translateY(-2px); }
+  48% { transform: rotate(5deg) translateY(-1px); }
+  72% { transform: rotate(-3deg) translateY(0); }
+  100% { transform: rotate(0deg) translateY(0); }
+}
+
+@keyframes panda-squish {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.12, .92); }
+  100% { transform: scale(1); }
+}
+
+/* Avoid a white first paint while React/route chunks are loading. */
+.kinoma-app-shell {
+  min-height: 100svh;
+  animation: panda-shell-in 240ms ease-out both;
+}
+
+@keyframes panda-shell-in {
+  from { opacity: .96; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panda-logo-mark {
+    animation: none !important;
+  }
+}
