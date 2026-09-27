@@ -104,8 +104,6 @@ export function Home() {
   const featured = home?.featured as MovieApiMedia | null | undefined;
   const sections = home?.sections;
   const trending = sections?.trending || [];
-  const latest = [...(sections?.latestMovies || []), ...(sections?.latestTv || [])];
-  const popular = [...(sections?.popularMovies || []), ...(sections?.popularTv || [])];
   const featuredType = featured?.type === 'movie' ? 'movie' : 'series';
   const featuredWatchUrl = featured?.id ? '/watch/' + encodeURIComponent(featured.id) + '?type=' + featuredType : '/search';
   const enableTrailerSound = () => {
