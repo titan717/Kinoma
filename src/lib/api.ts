@@ -482,4 +482,16 @@ export const api = {
   },
 };
 
+export type MovieApiHome = {
+  featured: MovieApiMedia | null;
+  sections: {
+    trending: MovieApiMedia[];
+    popularMovies: MovieApiMedia[];
+    popularTv: MovieApiMedia[];
+    latestMovies: MovieApiMedia[];
+    latestTv: MovieApiMedia[];
+  };
+  generatedAt: string;
+};
+
 export type KinomaContentApi = typeof api;
