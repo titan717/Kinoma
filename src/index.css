@@ -5326,3 +5326,271 @@ body {
 .panda-player-brand svg { width:28px; height:28px; }
 .kinoma-player-topbar { gap:18px; }
 @media (max-width:700px) { .panda-player-brand span:last-child { display:none; } .kinoma-player-topbar { gap:10px; } }
+
+
+/* Panda stream notice — a playful, readable caution + share moment. */
+.panda-stream-notice {
+  position: relative;
+  width: min(980px, calc(100% - 32px));
+  margin: 22px auto 8px;
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  overflow: visible;
+  border-radius: 26px;
+  background: linear-gradient(135deg, rgba(232,245,233,.98), rgba(255,255,255,.98) 58%, rgba(255,235,238,.92));
+  color: #1A1A1A;
+  box-shadow: 0 22px 60px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.95);
+  isolation: isolate;
+}
+
+.panda-stream-notice::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 25px;
+  border: 1px solid rgba(26,26,26,.06);
+  pointer-events: none;
+}
+
+.panda-stream-notice__content {
+  position: relative;
+  z-index: 5;
+  flex: 1;
+  padding: 22px 30px 22px 190px;
+}
+
+.panda-stream-notice__caution,
+.panda-stream-notice__share {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.panda-stream-notice__caution {
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(26,26,26,.08);
+}
+
+.panda-stream-notice__share {
+  padding-top: 12px;
+  align-items: center;
+}
+
+.panda-stream-notice p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  font-weight: 650;
+}
+
+.panda-stream-notice strong {
+  font-weight: 900;
+}
+
+.panda-stream-notice__caution strong {
+  color: #7a4b00;
+}
+
+.panda-stream-notice__share p {
+  font-size: 13px;
+}
+
+.panda-stream-notice__share b {
+  color: #356d3b;
+}
+
+.panda-stream-notice__icon,
+.panda-stream-notice__bamboo {
+  flex: 0 0 auto;
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.panda-stream-notice__bamboo {
+  font-size: 20px;
+  transform: rotate(-8deg);
+  animation: panda-notice-bamboo 3s ease-in-out infinite;
+}
+
+.panda-stream-notice__panda {
+  position: absolute;
+  left: 24px;
+  bottom: 8px;
+  width: 165px;
+  height: 128px;
+  z-index: 4;
+  transform-style: preserve-3d;
+  transform: rotate(-7deg) perspective(700px) rotateY(10deg);
+  filter: drop-shadow(0 18px 13px rgba(0,0,0,.18));
+  animation: panda-notice-lounge 4.2s ease-in-out infinite;
+}
+
+.panda-stream-notice__ear {
+  position: absolute;
+  top: 4px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #111;
+  z-index: 1;
+  box-shadow: inset -5px -6px 8px rgba(255,255,255,.05);
+}
+.panda-stream-notice__ear--left { left: 18px; }
+.panda-stream-notice__ear--right { right: 18px; }
+
+.panda-stream-notice__face {
+  position: absolute;
+  left: 25px;
+  top: 16px;
+  width: 112px;
+  height: 92px;
+  border-radius: 52% 48% 50% 50%;
+  background: linear-gradient(145deg,#fff,#e9e9e4);
+  box-shadow: 12px 14px 22px rgba(0,0,0,.18), inset -8px -9px 14px rgba(0,0,0,.07);
+  z-index: 3;
+}
+
+.panda-stream-notice__face::before,
+.panda-stream-notice__face::after {
+  content: "";
+  position: absolute;
+  top: 35px;
+  width: 27px;
+  height: 36px;
+  border-radius: 60%;
+  background: #151515;
+  box-shadow: inset -3px -4px 6px rgba(255,255,255,.05);
+}
+.panda-stream-notice__face::before { left: 14px; transform: rotate(25deg); }
+.panda-stream-notice__face::after { right: 14px; transform: rotate(-25deg); }
+
+.panda-stream-notice__eye {
+  position: absolute;
+  top: 45px;
+  width: 9px;
+  height: 11px;
+  border-radius: 50%;
+  background: #fff;
+  z-index: 5;
+}
+.panda-stream-notice__eye::after {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 4px;
+  height: 5px;
+  border-radius: 50%;
+  background: #151515;
+}
+.panda-stream-notice__eye--left { left: 24px; }
+.panda-stream-notice__eye--right { right: 24px; }
+
+.panda-stream-notice__face b {
+  position: absolute;
+  left: 38px;
+  bottom: 10px;
+  width: 36px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: inset -3px -4px 7px rgba(0,0,0,.06);
+}
+.panda-stream-notice__face b::before {
+  content: "";
+  position: absolute;
+  left: 13px;
+  top: 3px;
+  width: 10px;
+  height: 7px;
+  border-radius: 50%;
+  background: #111;
+}
+.panda-stream-notice__face b::after {
+  content: "";
+  position: absolute;
+  left: 16px;
+  top: 11px;
+  width: 7px;
+  height: 7px;
+  border-bottom: 2px solid #111;
+  border-radius: 0 0 8px 8px;
+}
+
+.panda-stream-notice__body {
+  position: absolute;
+  left: 53px;
+  bottom: 0;
+  width: 92px;
+  height: 55px;
+  border-radius: 50% 55% 38% 42%;
+  background: linear-gradient(145deg,#292929,#101010);
+  box-shadow: 14px 17px 23px rgba(0,0,0,.22);
+  transform: rotate(-4deg);
+}
+
+.panda-stream-notice__paw {
+  position: absolute;
+  top: 66px;
+  width: 53px;
+  height: 29px;
+  border-radius: 50%;
+  background: #151515;
+  z-index: 6;
+  box-shadow: inset -5px -5px 7px rgba(255,255,255,.04);
+}
+.panda-stream-notice__paw--left { left: 42px; transform: rotate(-18deg); }
+.panda-stream-notice__paw--right { right: 2px; transform: rotate(12deg); }
+
+@keyframes panda-notice-lounge {
+  0%,100% { transform: rotate(-7deg) perspective(700px) rotateY(10deg) translateY(0); }
+  50% { transform: rotate(-4deg) perspective(700px) rotateY(13deg) translateY(-6px); }
+}
+@keyframes panda-notice-bamboo {
+  0%,100% { transform: rotate(-8deg) translateY(0); }
+  50% { transform: rotate(5deg) translateY(-2px); }
+}
+
+@media (max-width: 760px) {
+  .panda-stream-notice {
+    width: calc(100% - 24px);
+    min-height: 170px;
+  }
+  .panda-stream-notice__content {
+    padding: 20px 18px 20px 132px;
+  }
+  .panda-stream-notice__panda {
+    left: -12px;
+    bottom: 4px;
+    transform: scale(.72) rotate(-7deg);
+    transform-origin: left bottom;
+  }
+}
+@media (max-width: 520px) {
+  .panda-stream-notice {
+    min-height: 0;
+  }
+  .panda-stream-notice__content {
+    padding: 18px;
+  }
+  .panda-stream-notice__panda {
+    width: 100px;
+    opacity: .18;
+    left: -14px;
+    transform: scale(.72) rotate(-7deg);
+    transform-origin: left bottom;
+  }
+  .panda-stream-notice p {
+    font-size: 11px;
+  }
+  .panda-stream-notice__share p {
+    font-size: 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .panda-stream-notice__panda,
+  .panda-stream-notice__bamboo {
+    animation: none !important;
+  }
+}
