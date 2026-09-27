@@ -5301,3 +5301,28 @@ body {
 @media (max-width:640px) {
   .panda-home-hover-trailer { display:none; }
 }
+
+/* Library TV counter — saved moments live on the screen, not beside it. */
+.panda-library-tv { display:flex; align-items:center; justify-content:center; }
+.panda-library-tv__saved {
+  position:relative;
+  z-index:2;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  width:92px;
+  height:62px;
+  border-radius:10px;
+  color:#e8f5e9;
+  background:rgba(8,14,9,.58);
+  box-shadow:inset 0 0 18px rgba(165,214,167,.08);
+  text-shadow:0 2px 10px rgba(0,0,0,.5);
+}
+.panda-library-tv__saved b { font-size:24px; line-height:1; letter-spacing:-.06em; }
+.panda-library-tv__saved small { margin-top:5px; color:rgba(232,245,233,.68); font-size:7px; font-weight:900; letter-spacing:.13em; text-transform:uppercase; }
+.panda-player-brand { display:flex; align-items:center; gap:7px; color:rgba(255,255,255,.72); font-size:11px; font-weight:900; letter-spacing:-.02em; white-space:nowrap; }
+.panda-player-brand > span:first-child { width:28px!important; height:28px!important; }
+.panda-player-brand svg { width:28px; height:28px; }
+.kinoma-player-topbar { gap:18px; }
+@media (max-width:700px) { .panda-player-brand span:last-child { display:none; } .kinoma-player-topbar { gap:10px; } }
