@@ -3499,3 +3499,284 @@ p {
   .kinoma-rail{grid-auto-columns:clamp(172px,58vw,215px)}
   .kinoma-home-section__heading h2{font-size:1.5rem}
 }
+
+
+/* ============================================================
+   Panda.fun visual layer
+   Presentation-only overrides: routes, data, playback and state
+   remain unchanged.
+   ============================================================ */
+:root {
+  --panda-black: #1A1A1A;
+  --panda-green: #E8F5E9;
+  --panda-green-strong: #A5D6A7;
+  --panda-pink: #FFEBEE;
+  --panda-white: #FFFFFF;
+  --panda-text-soft: #626262;
+  --panda-border: rgba(26, 26, 26, 0.08);
+  --panda-shadow: 0 14px 40px rgba(26, 26, 26, 0.08);
+  --panda-shadow-hover: 0 20px 54px rgba(26, 26, 26, 0.13);
+}
+
+body {
+  background: var(--panda-white);
+  color: var(--panda-black);
+}
+
+.kinoma-app-shell {
+  background:
+    radial-gradient(circle at 8% 0%, rgba(232,245,233,.92), transparent 24rem),
+    linear-gradient(180deg, #fff 0%, #fbfdfb 100%);
+}
+
+.kinoma-app-main {
+  min-width: 0;
+  background: transparent;
+}
+
+/* Panda sidebar */
+.kinoma-sidebar {
+  background: rgba(26,26,26,.97) !important;
+  border-right: 1px solid rgba(255,255,255,.07) !important;
+  box-shadow: 12px 0 40px rgba(26,26,26,.08);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.kinoma-sidebar__top {
+  padding-top: 18px !important;
+}
+
+.kinoma-sidebar__brand {
+  border-radius: 18px;
+  transition: transform 180ms cubic-bezier(.16,1,.3,1), background 180ms ease;
+}
+
+.kinoma-sidebar__brand:hover {
+  transform: translateY(-1px) scale(1.015);
+  background: rgba(232,245,233,.08);
+}
+
+.kinoma-sidebar__item {
+  border-radius: 16px !important;
+  transition: transform 180ms cubic-bezier(.16,1,.3,1), background 180ms ease, color 180ms ease;
+}
+
+.kinoma-sidebar__item:hover {
+  transform: translateX(3px);
+  background: rgba(232,245,233,.10) !important;
+}
+
+.kinoma-sidebar__item.is-active {
+  color: var(--panda-black) !important;
+  background: var(--panda-green) !important;
+  box-shadow: 0 8px 22px rgba(165,214,167,.16);
+}
+
+.kinoma-sidebar__item.is-active svg {
+  animation: panda-icon-pop 420ms cubic-bezier(.16,1,.3,1);
+}
+
+.kinoma-sidebar__profile {
+  border-radius: 16px !important;
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.kinoma-sidebar__profile:hover {
+  transform: translateY(-2px);
+  background: rgba(255,255,255,.07);
+}
+
+.kinoma-sidebar__avatar {
+  background: var(--panda-green) !important;
+  color: var(--panda-black) !important;
+  border-radius: 14px !important;
+}
+
+.kinoma-sidebar__submenu {
+  border-left-color: rgba(232,245,233,.16) !important;
+}
+
+.kinoma-sidebar__submenu-item:hover,
+.kinoma-sidebar__submenu-item.is-active {
+  color: var(--panda-green) !important;
+}
+
+/* Panda wordmark */
+.panda-wordmark-wrap {
+  gap: 7px;
+  color: #fff;
+}
+
+.panda-wordmark {
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -.055em;
+}
+
+.panda-wordmark span {
+  color: var(--panda-green-strong);
+}
+
+.panda-logo-mark {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 5px 10px rgba(0,0,0,.16));
+  transition: transform 220ms cubic-bezier(.16,1,.3,1);
+}
+
+.panda-wordmark-wrap:hover .panda-logo-mark {
+  transform: rotate(-4deg) translateY(-1px);
+}
+
+/* Soft, chubby card language */
+.kinoma-card,
+.kinoma-surface {
+  border-radius: 24px !important;
+  border-color: var(--panda-border) !important;
+  box-shadow: var(--panda-shadow);
+  background: rgba(255,255,255,.94);
+}
+
+.kinoma-card:hover {
+  box-shadow: var(--panda-shadow-hover);
+}
+
+button,
+a {
+  transition-timing-function: cubic-bezier(.16,1,.3,1);
+}
+
+/* Cute interaction language for common content cards */
+[class*="card"]:not(.kinoma-sidebar__avatar) {
+  border-radius: 20px;
+}
+
+button:hover {
+  transform-origin: center;
+}
+
+button:active,
+a:active {
+  transform: scale(.985);
+}
+
+/* Bamboo-style progress indicator.
+   Existing progress elements can opt into this class without changing logic. */
+.panda-bamboo-progress {
+  display: flex;
+  gap: 3px;
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--panda-green);
+}
+
+.panda-bamboo-progress > span {
+  min-width: 8px;
+  flex: 1;
+  border-radius: 999px;
+  background: rgba(165,214,167,.34);
+}
+
+.panda-bamboo-progress > span.is-filled {
+  background: #66BB6A;
+  box-shadow: inset 0 -1px rgba(26,26,26,.08);
+}
+
+/* Minimal paw-print accent */
+.panda-paw {
+  position: relative;
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+}
+
+.panda-paw::before {
+  content: "•";
+  position: absolute;
+  inset: 3px 0 0;
+  text-align: center;
+  font-size: 17px;
+  line-height: 1;
+  color: var(--panda-black);
+  text-shadow:
+    -5px -5px 0 var(--panda-black),
+    5px -5px 0 var(--panda-black);
+  opacity: .78;
+}
+
+.panda-paw-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  height: 24px;
+  padding-inline: 6px;
+  border-radius: 999px;
+  background: var(--panda-pink);
+  color: var(--panda-black);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+/* Living UI: gentle panda bounce used by loading states/mascots. */
+@keyframes panda-bounce {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  18% { transform: translateY(-5px) rotate(-2deg); }
+  36% { transform: translateY(0) rotate(2deg); }
+  52% { transform: translateY(-2px) rotate(0); }
+}
+
+@keyframes panda-blink {
+  0%, 43%, 48%, 100% { transform: scaleY(1); }
+  45%, 46% { transform: scaleY(.08); }
+}
+
+@keyframes panda-icon-pop {
+  0% { transform: scale(.86); }
+  70% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+.panda-bounce {
+  animation: panda-bounce 2.8s ease-in-out infinite;
+}
+
+.panda-blink {
+  transform-origin: center;
+  animation: panda-blink 4.6s ease-in-out infinite;
+}
+
+/* Friendly loading treatment when an existing loader opts in. */
+.panda-loader {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  animation: panda-bounce 1.25s ease-in-out infinite;
+}
+
+.panda-loader::before {
+  content: "🐼";
+  font-size: 38px;
+  line-height: 1;
+  filter: drop-shadow(0 8px 12px rgba(26,26,26,.14));
+}
+
+/* Keep cinematic/watch surfaces comfortable inside the lighter brand system. */
+.kinoma-player-page,
+.kinoma-watch-page {
+  color-scheme: dark;
+}
+
+/* Reduced-motion remains respected by the brand layer. */
+@media (prefers-reduced-motion: reduce) {
+  .panda-bounce,
+  .panda-blink,
+  .kinoma-sidebar__item.is-active svg {
+    animation: none !important;
+  }
+}
