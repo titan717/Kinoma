@@ -45,9 +45,12 @@ export function ModernContinueWatching() {
         const remainingSeconds = Math.max(0, dur - curTime);
         const remainingMinutes = Math.ceil(remainingSeconds / 60);
 
-        const watchUrl = item.episodeId 
-          ? `/watch/${encodeURIComponent(item.episodeId)}?t=${Math.floor(curTime)}`
-          : `/watch/${encodeURIComponent(item.slug)}?t=${Math.floor(curTime)}`;
+        const mediaId = item.animeId || item.slug;
+        const isMovie = item.episodeNumber === '1' && item.seasonNumber === 1 && item.episodeId === mediaId;
+        const watchPath = isMovie
+          ? mediaId
+          : `${mediaId}$season${Math.max(1, item.seasonNumber || 1)}$episode${Math.max(1, Number(item.episodeNumber) || 1)}`;
+        const watchUrl = `/watch/${encodeURIComponent(watchPath)}?type=${isMovie ? 'movie' : 'series'}&t=${Math.floor(curTime)}`;
 
         return (
           <ModernCarouselSlot key={`cw-${item.animeId || item.slug}-${item.episodeNumber}`}>
