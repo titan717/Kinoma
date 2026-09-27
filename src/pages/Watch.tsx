@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRoute, Link } from 'wouter';
 import { ArrowLeft, ChevronRight, Film, Pause, Play, Plus, Tv, Volume2, VolumeX } from 'lucide-react';\nimport { KinomaLogo } from '../components/ui/KinomaLogo';
+import { PandaStreamNotice } from '../components/ui/PandaStreamNotice';
 import { api } from '../lib/api';
 import type { AnimeDetails, Episode, AnimeSeasonItem } from '../types';
 import { libraryManager } from '../lib/library';
@@ -258,6 +259,8 @@ export function Watch() {
           <span>{kind === 'movie' ? 'Movie' : 'S' + activeSeason + ' · E' + parsed.episode}</span>
         </div>
       </section>
+
+      <PandaStreamNotice />
 
       <section className="kinoma-player-info">
         <div className="kinoma-player-info__main">
