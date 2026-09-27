@@ -5,6 +5,24 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import './index.css';
 
+function initializeGoogleAnalytics() {
+  if (typeof window === 'undefined') return;
+  const measurementId = 'G-9CEEHSHNHJ';
+  const dataLayer = (window as Window & { dataLayer?: unknown[] }).dataLayer ||= [];
+  const gtag = (...args: unknown[]) => dataLayer.push(args);
+  gtag('js', new Date());
+  gtag('config', measurementId);
+
+  if (document.querySelector('script[data-panda-google-analytics]')) return;
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(measurementId);
+  script.dataset.pandaGoogleAnalytics = 'true';
+  document.head.appendChild(script);
+}
+
+initializeGoogleAnalytics();
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
