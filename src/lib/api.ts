@@ -279,7 +279,7 @@ async function searchAll(query: string, page = 1) {
 export const api = {
   async getHome() {
     return request<{
-      featured: MovieApiMedia | null;
+      featured?: MovieApiMedia;
       sections: {
         trending: MovieApiMedia[];
         popularMovies: MovieApiMedia[];
