@@ -4265,12 +4265,12 @@ body {
 }
 
 .kinoma-rail-card__art {
-  aspect-ratio: 4 / 5 !important;
+  aspect-ratio: 5 / 6 !important;
 }
 
 .kinoma-rail-card__copy {
-  min-height: 74px;
-  padding: 13px 15px 15px;
+  min-height: 64px;
+  padding: 11px 15px 13px;
 }
 
 .kinoma-rail-card__copy h3 {
