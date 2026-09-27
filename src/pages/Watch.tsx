@@ -126,16 +126,73 @@ export function Watch() {
   const watchUrl = (season: number, episode: number) =>
     '/watch/' + encodeURIComponent(parsed.id + '$season$' + season + '$episode$' + episode) + '?type=series';
 
-  const saveProgress = (currentTime: number, duration: number) => {
+  const saveProgress = (
+    currentTime: number,
+    duration: number,
+    progressSeason = activeSeason,
+    progressEpisode = parsed.episode
+  ) => {
     historyUtil.saveProgress(
       parsed.id,
-      kind === 'movie' ? parsed.id : (currentEpisode?.id || parsed.id + '-episode-' + parsed.episode),
-      kind === 'movie' ? 1 : parsed.episode,
+      kind === 'movie'
+        ? parsed.id
+        : (currentEpisode?.id || parsed.id + '-episode-' + progressEpisode),
+      kind === 'movie' ? 1 : progressEpisode,
       currentTime,
       duration,
-      { title, image: poster, animeId: parsed.id, seasonNumber: activeSeason }
+      { title, image: poster, animeId: parsed.id, seasonNumber: progressSeason }
     );
   };
+
+  // VidRock exposes documented playback events through postMessage.
+  // Only accept messages from the exact VidRock origin and validate the payload
+  // before writing anything to Panda.fun's Continue Watching history.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handlePlayerMessage = (event: MessageEvent) => {
+      if (event.origin !== 'https://vidrock.net') return;
+
+      const message = event.data;
+      if (message?.type !== 'PLAYER_EVENT') return;
+
+      const player = message.data;
+      if (
+        !player ||
+        !['play', 'pause', 'seeked', 'ended', 'timeupdate'].includes(player.event) ||
+        typeof player.currentTime !== 'number' ||
+        !Number.isFinite(player.currentTime) ||
+        typeof player.duration !== 'number' ||
+        !Number.isFinite(player.duration) ||
+        typeof player.tmdbId !== 'number'
+      ) {
+        return;
+      }
+
+      if (kind === 'movie' && player.mediaType !== 'movie') return;
+      if (kind === 'series' && player.mediaType !== 'tv') return;
+      if (Number(player.tmdbId) !== Number(parsed.id)) return;
+
+      const progressSeason =
+        kind === 'series' && typeof player.season === 'number' && player.season > 0
+          ? Math.floor(player.season)
+          : activeSeason;
+      const progressEpisode =
+        kind === 'series' && typeof player.episode === 'number' && player.episode > 0
+          ? Math.floor(player.episode)
+          : parsed.episode;
+
+      saveProgress(
+        Math.max(0, player.currentTime),
+        Math.max(0, player.duration),
+        progressSeason,
+        progressEpisode
+      );
+    };
+
+    window.addEventListener('message', handlePlayerMessage);
+    return () => window.removeEventListener('message', handlePlayerMessage);
+  }, [kind, parsed.id, parsed.episode, activeSeason, title, poster]);
 
   const handleVideoProgress = (event: React.SyntheticEvent<HTMLVideoElement>) => {
     const video = event.currentTarget;
