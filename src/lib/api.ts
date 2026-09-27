@@ -278,17 +278,7 @@ async function searchAll(query: string, page = 1) {
 
 export const api = {
   async getHome() {
-    return request<{
-      featured?: MovieApiMedia;
-      sections: {
-        trending: MovieApiMedia[];
-        popularMovies: MovieApiMedia[];
-        popularTv: MovieApiMedia[];
-        latestMovies: MovieApiMedia[];
-        latestTv: MovieApiMedia[];
-      };
-      generatedAt: string;
-    >('/api/v1/home', undefined, undefined, 120_000);
+    return request<MovieApiHome>('/api/v1/home', undefined, undefined, 120_000);
   },
 
   async getTrending() {
