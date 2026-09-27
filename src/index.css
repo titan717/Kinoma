@@ -3878,3 +3878,24 @@ body {
     animation: none !important;
   }
 }
+
+
+/* Panda.fun borderless surface pass.
+   The visual hierarchy uses spacing, elevation and contrast instead of hard outlines. */
+.kinoma-sidebar {
+  border-right: 0 !important;
+}
+
+.kinoma-sidebar__submenu {
+  border-left-color: transparent !important;
+}
+
+.kinoma-card,
+.kinoma-surface {
+  border-color: transparent !important;
+}
+
+.kinoma-player-episode-sidebar {
+  border-color: transparent !important;
+}
+
