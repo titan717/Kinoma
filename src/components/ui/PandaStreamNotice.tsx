@@ -1,6 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export function PandaStreamNotice() {
+  const [shared, setShared] = useState(false);
+
+  const sharePanda = async () => {
+    const shareData = { title: 'panda.fun', text: '🐼 Enjoying the stream? Check out panda.fun!', url: window.location.href };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(window.location.href);
+      }
+      setShared(true);
+      window.setTimeout(() => setShared(false), 2200);
+    } catch {
+      // Ignore cancelled native share dialogs.
+    }
+  };
   return (
     <section className="panda-stream-notice" aria-label="Stream notice and sharing">
       <div className="panda-stream-notice__panda" aria-hidden="true">
@@ -23,7 +39,7 @@ export function PandaStreamNotice() {
         </div>
         <div className="panda-stream-notice__share">
           <span className="panda-stream-notice__bamboo" aria-hidden="true">🎋</span>
-          <p><strong>🐼 Enjoying the stream?</strong> Share <b>panda.fun</b> with your friends and spread the vibe!</p>
+          <div className="panda-stream-notice__share-copy"><p><strong>🐼 Enjoying the stream?</strong> Share <b>panda.fun</b> with your friends and spread the vibe!</p><button type="button" className="panda-stream-notice__share-button" onClick={sharePanda} aria-label="Share panda.fun">{shared ? '✓ Shared!' : '↗ Share'}</button></div>
         </div>
       </div>
     </section>
