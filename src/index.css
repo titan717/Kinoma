@@ -4866,3 +4866,273 @@ body {
   .panda-library-tv,
   .kinoma-library-watch-pop { animation: none !important; }
 }
+
+
+/* Panda.fun Search — centered search desk + running panda search state. */
+.kinoma-search-head {
+  min-height: 430px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+  padding-top: clamp(28px, 5vw, 58px);
+}
+.kinoma-search-head__copy {
+  width: min(760px, 100%);
+  max-width: 760px;
+}
+.kinoma-search-head__copy h1 {
+  max-width: 760px;
+  margin-inline: auto;
+}
+.kinoma-search-head__copy p {
+  max-width: 620px;
+  margin-inline: auto;
+}
+.kinoma-search-control {
+  position: relative;
+  z-index: 5;
+  width: min(720px, calc(100vw - 40px));
+  min-height: 66px;
+  margin: 34px auto 0;
+  padding: 8px 9px 8px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 2px solid rgba(165,214,167,.48) !important;
+  border-radius: 24px !important;
+  background: linear-gradient(135deg,rgba(255,255,255,.98),rgba(232,245,233,.96)) !important;
+  color: #1A1A1A !important;
+  box-shadow: 0 22px 60px rgba(0,0,0,.17), 0 0 0 7px rgba(232,245,233,.18), inset 0 1px 0 rgba(255,255,255,.9);
+  transform: translateZ(0);
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+.kinoma-search-control:focus-within {
+  border-color: #81b883 !important;
+  box-shadow: 0 26px 70px rgba(0,0,0,.2), 0 0 0 8px rgba(165,214,167,.2), inset 0 1px 0 rgba(255,255,255,.95);
+  transform: translateY(-2px);
+}
+.kinoma-search-control > svg {
+  flex: 0 0 auto;
+  color: #3f7445;
+}
+.kinoma-search-control input {
+  min-width: 0;
+  flex: 1;
+  height: 48px;
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  color: #1A1A1A !important;
+  font-size: 16px;
+  font-weight: 650;
+}
+.kinoma-search-control input::placeholder {
+  color: rgba(26,26,26,.48);
+}
+.kinoma-search-control__clear {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(26,26,26,.07);
+  color: #1A1A1A;
+  cursor: pointer;
+}
+.kinoma-search-control__submit {
+  flex: 0 0 auto;
+  min-height: 48px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 17px;
+  background: #1A1A1A;
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: .01em;
+  cursor: pointer;
+  box-shadow: 0 7px 0 #4d8052, 0 12px 22px rgba(26,26,26,.18);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+.kinoma-search-control__submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 9px 0 #4d8052, 0 16px 26px rgba(26,26,26,.2);
+}
+.kinoma-search-control__submit:active {
+  transform: translateY(3px);
+  box-shadow: 0 4px 0 #4d8052, 0 7px 14px rgba(26,26,26,.15);
+}
+
+/* Search companion: a complete little panda with readable eyes, face, paws and feet. */
+.panda-search-companion {
+  position: relative !important;
+  right: auto !important;
+  top: auto !important;
+  width: min(430px, 100%);
+  height: 170px;
+  margin-top: 12px;
+  transform: none !important;
+  perspective: 1000px;
+  z-index: 3;
+  opacity: 1 !important;
+}
+.panda-search-panda {
+  left: 50% !important;
+  bottom: 5px !important;
+  width: 150px !important;
+  height: 155px !important;
+  transform: translateX(-50%) !important;
+  animation: panda-search-breathe 4.8s ease-in-out infinite;
+}
+.panda-search-head {
+  left: 28px !important;
+  top: 12px !important;
+  width: 96px !important;
+  height: 88px !important;
+  z-index: 5;
+}
+.panda-search-ear {
+  z-index: 4 !important;
+}
+.panda-search-eye {
+  z-index: 8 !important;
+  width: 7px !important;
+  height: 9px !important;
+  top: 39px !important;
+  border-radius: 50% !important;
+  background: #fff !important;
+  box-shadow: 0 1px 0 rgba(0,0,0,.18);
+  transform: none !important;
+}
+.panda-search-eye--left { left: 24px !important; }
+.panda-search-eye--right { right: 24px !important; }
+.panda-search-eye::after {
+  width: 3px !important;
+  height: 4px !important;
+  top: 1px !important;
+  left: 2px !important;
+  background: #1A1A1A !important;
+}
+.panda-search-muzzle {
+  left: 29px !important;
+  bottom: 8px !important;
+  width: 40px !important;
+  height: 28px !important;
+  z-index: 9;
+}
+.panda-search-nose {
+  left: 15px !important;
+  top: 4px !important;
+}
+.panda-search-muzzle::after {
+  content: '';
+  position: absolute;
+  left: 18px;
+  top: 12px;
+  width: 6px;
+  height: 8px;
+  border-bottom: 2px solid #111;
+  border-radius: 0 0 8px 8px;
+}
+.panda-search-panda::after {
+  content: '';
+  position: absolute;
+  left: 53px;
+  bottom: 0;
+  width: 16px;
+  height: 22px;
+  border-radius: 50%;
+  background: #151515;
+  box-shadow: 34px 0 0 #151515;
+  z-index: 1;
+}
+.panda-search-panda::before {
+  content: '';
+  position: absolute;
+  left: 65px;
+  bottom: -2px;
+  width: 20px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 34px 0 0 #fff;
+  z-index: 2;
+}
+.panda-search-panda .panda-search-paw--left,
+.panda-search-panda .panda-search-paw--right {
+  transform-origin: 50% 10%;
+}
+.panda-search-panda .panda-search-paw--left {
+  animation: panda-search-arm-left 1.8s ease-in-out infinite;
+}
+.panda-search-panda .panda-search-paw--right {
+  animation: panda-search-arm-right 1.8s ease-in-out infinite;
+}
+.panda-search-panda .panda-search-head {
+  animation: panda-search-chew 2.1s ease-in-out infinite;
+}
+.panda-search-companion.is-running .panda-search-panda {
+  animation: panda-search-run 520ms cubic-bezier(.22,.8,.3,1) infinite alternate;
+}
+.panda-search-companion.is-running .panda-search-head {
+  animation: panda-search-run-head 520ms ease-in-out infinite alternate;
+}
+.panda-search-companion.is-running .panda-search-bamboo {
+  animation: panda-search-run-bamboo 520ms ease-in-out infinite alternate;
+}
+.panda-search-companion.is-searching .panda-search-caption::after {
+  content: '  •  searching…';
+  opacity: .7;
+}
+@keyframes panda-search-run {
+  from { transform: translateX(-50%) translateY(2px) rotate(-4deg); }
+  to { transform: translateX(-50%) translateY(-7px) rotate(4deg); }
+}
+@keyframes panda-search-run-head {
+  from { transform: translateZ(24px) rotateY(-8deg) rotate(-3deg); }
+  to { transform: translateZ(24px) rotateY(-8deg) rotate(4deg); }
+}
+@keyframes panda-search-run-bamboo {
+  from { transform: rotate(-18deg) translateX(-5px); }
+  to { transform: rotate(-7deg) translateX(7px); }
+}
+@keyframes panda-search-arm-left {
+  0%,100% { transform: rotate(25deg) translateZ(20px); }
+  50% { transform: rotate(42deg) translateZ(20px) translateY(4px); }
+}
+@keyframes panda-search-arm-right {
+  0%,100% { transform: rotate(-24deg) translateZ(20px); }
+  50% { transform: rotate(-43deg) translateZ(20px) translateY(4px); }
+}
+@media (max-width: 640px) {
+  .kinoma-search-head {
+    min-height: 390px;
+    padding-top: 20px;
+  }
+  .kinoma-search-control {
+    width: calc(100vw - 28px);
+    min-height: 60px;
+    padding-left: 15px;
+  }
+  .kinoma-search-control__submit {
+    padding-inline: 14px;
+  }
+  .panda-search-companion {
+    width: 100%;
+    height: 145px;
+    transform: scale(.82) !important;
+    transform-origin: center bottom;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .panda-search-panda,
+  .panda-search-panda .panda-search-head,
+  .panda-search-panda .panda-search-paw--left,
+  .panda-search-panda .panda-search-paw--right,
+  .panda-search-bamboo,
+  .panda-search-companion.is-running .panda-search-panda,
+  .panda-search-companion.is-running .panda-search-head { animation: none !important; }
+}
