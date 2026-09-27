@@ -3,8 +3,8 @@ import path from 'path';
 import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 
-const MOVIE_API = "https://apikinoma.vercel.app";
-const MOVIE_API_FALLBACK = "https://movieapi-3d0v.onrender.com";
+const MOVIE_API = "https://movieapi-3d0v.onrender.com";
+const MOVIE_API_FALLBACK = "";
 
 async function startServer() {
   const app = express();
@@ -14,7 +14,7 @@ async function startServer() {
   async function proxyHandler(targetPath: string, req: express.Request, res: express.Response) {
     try {
       const queryString = new URLSearchParams(req.query as any).toString();
-      const targets = [MOVIE_API, MOVIE_API_FALLBACK].filter((value, index, all) => all.indexOf(value) === index);
+      const targets = [MOVIE_API, MOVIE_API_FALLBACK].filter(Boolean).filter((value, index, all) => all.indexOf(value) === index);
       let lastError: unknown = null;
       for (let index = 0; index < targets.length; index += 1) {
         try {
