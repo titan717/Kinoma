@@ -13,6 +13,20 @@ const FALLBACK = [
   { id: 'library-3', title: 'Keep your favourites close', meta: 'Personal collection', tone: 'blue' },
 ];
 
+function LibraryPandaScene() {
+  return <div className="panda-library-scene" aria-hidden="true">
+    <div className="panda-library-tv" />
+    <div className="panda-library-panda">
+      <span className="panda-library-head"><i className="panda-library-eye panda-library-eye--left" /><i className="panda-library-eye panda-library-eye--right" /><span className="panda-library-muzzle" /></span>
+      <span className="panda-library-body" />
+      <span className="panda-library-paw panda-library-paw--left" />
+      <span className="panda-library-paw panda-library-paw--right" />
+      <span className="panda-library-remote" />
+    </div>
+    <span className="panda-library-caption">Panda is watching too 🍿</span>
+  </div>;
+}
+
 function EmptyState({ tab, onBrowse }: { tab: Tab; onBrowse: () => void }) {
   const copy = {
     continue: ['Nothing to continue', 'Start watching something and your progress will appear here.'],
@@ -49,7 +63,7 @@ function PosterCard({ item, action }: { item: LibraryItem; action?: React.ReactN
   );
 }
 
-function ContinueCard({ item, onRemove }: { item: HistoryItem; onRemove: () => void }) {
+function ContinueCard({ item, onRemove, onWatch }: { item: HistoryItem; onRemove: () => void; onWatch: (title: string) => void }) {
   const pct = Math.min(100, Math.max(3, Math.round(item.completionPercentage || 0)));
   const mediaId = item.animeId || item.slug;
   const type = mediaId.startsWith('kinoma_tmdb_movie_') ? 'movie' : 'series';
@@ -62,7 +76,7 @@ function ContinueCard({ item, onRemove }: { item: HistoryItem; onRemove: () => v
 
   return (
     <article className="kinoma-library-continue">
-      <Link href={watchUrl} className="kinoma-library-continue__art">
+      <Link href={watchUrl} onClick={() => onWatch(item.title)} className="kinoma-library-continue__art">
         {item.image ? <img src={item.image} alt="" loading="lazy" /> : <div className="kinoma-library-card__placeholder"><Play size={22} /></div>}
         <div className="kinoma-library-card__veil" />
         <span className="kinoma-library-continue__progress">{pct}%</span>
@@ -91,6 +105,7 @@ export function Library() {
   const [watchlist, setWatchlist] = useState<LibraryItem[]>(() => libraryManager.getWatchlist());
   const [favorites, setFavorites] = useState<LibraryItem[]>(() => libraryManager.getFavorites());
   const [completed, setCompleted] = useState<LibraryItem[]>(() => libraryManager.getCompleted());
+  const [watchPanda, setWatchPanda] = useState<string | null>(null);
 
   const refresh = () => {
     setHistory(historyUtil.getHistory());
@@ -131,6 +146,10 @@ export function Library() {
   };
 
   const browse = () => { window.location.href = '/home'; };
+  const celebrateWatch = (title: string) => {
+    setWatchPanda(title);
+    window.setTimeout(() => setWatchPanda(current => current === title ? null : current), 2200);
+  };
 
   return (
     <main className="kinoma-library-page">
@@ -142,6 +161,7 @@ export function Library() {
             <h1>Library</h1>
             <p>Everything you want to keep close — without the clutter.</p>
           </div>
+          <LibraryPandaScene />
           <div className="kinoma-library-head__total">
             <span>{history.length + watchlist.length + favorites.length + completed.length}</span>
             <small>saved moments</small>
@@ -177,7 +197,7 @@ export function Library() {
         {active === 'continue' ? (
           filtered.length ? (
             <section className="kinoma-library-continue-grid">
-              {(filtered as HistoryItem[]).map(item => <ContinueCard key={item.episodeId || item.slug} item={item} onRemove={() => removeHistory(item.slug)} />)}
+              {(filtered as HistoryItem[]).map(item => <ContinueCard key={item.episodeId || item.slug} item={item} onRemove={() => removeHistory(item.slug)} onWatch={celebrateWatch} />)}
             </section>
           ) : <EmptyState tab="continue" onBrowse={browse} />
         ) : filtered.length ? (
@@ -207,8 +227,13 @@ export function Library() {
           </div>
         </section>
 
+        {watchPanda && <div className="kinoma-library-watch-pop" role="status" aria-live="polite">
+          <div className="kinoma-library-watch-pop__panda"><span /></div>
+          <div className="kinoma-library-watch-pop__copy"><strong>🐼 Enjoying the watch!</strong><span>{watchPanda}</span></div>
+        </div>}
+
         <footer className="kinoma-library-foot">
-          <span>Kinoma</span>
+          <span>Panda.fun</span>
           <span>Keep it. Find it. Watch it.</span>
         </footer>
       </div>
