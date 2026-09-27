@@ -4388,3 +4388,218 @@ body {
     animation: none !important;
   }
 }
+
+
+/* Panda.fun Search — a tiny 3D bamboo-eating companion.
+   Built entirely in CSS so it needs no image/3D asset or external request. */
+.kinoma-search-head {
+  position: relative;
+  isolation: isolate;
+}
+.kinoma-search-head__copy {
+  position: relative;
+  z-index: 2;
+}
+.panda-search-companion {
+  position: absolute;
+  right: clamp(10px, 5vw, 76px);
+  top: 50%;
+  width: 260px;
+  height: 190px;
+  transform: translateY(-50%);
+  perspective: 900px;
+  pointer-events: none;
+  z-index: 1;
+}
+.panda-search-panda {
+  position: absolute;
+  left: 18px;
+  bottom: 4px;
+  width: 138px;
+  height: 150px;
+  transform-style: preserve-3d;
+  animation: panda-search-breathe 4.8s ease-in-out infinite;
+}
+.panda-search-head {
+  position: absolute;
+  left: 24px;
+  top: 12px;
+  width: 92px;
+  height: 84px;
+  border-radius: 48% 48% 44% 44%;
+  background: linear-gradient(145deg,#fff 0%,#f4f4f1 68%,#deded9 100%);
+  box-shadow: 12px 15px 24px rgba(0,0,0,.25), inset -7px -8px 12px rgba(0,0,0,.08);
+  transform: translateZ(24px) rotateY(-8deg);
+}
+.panda-search-ear {
+  position: absolute;
+  top: 2px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #151515;
+  box-shadow: inset -5px -6px 7px rgba(255,255,255,.08);
+  transform: translateZ(8px);
+}
+.panda-search-ear--left { left: 15px; }
+.panda-search-ear--right { right: 12px; }
+.panda-search-eye {
+  position: absolute;
+  top: 31px;
+  width: 20px;
+  height: 28px;
+  border-radius: 60% 45% 60% 45%;
+  background: #171717;
+  transform: rotate(24deg);
+}
+.panda-search-eye::after {
+  content: "";
+  position: absolute;
+  width: 5px;
+  height: 7px;
+  top: 5px;
+  left: 5px;
+  border-radius: 50%;
+  background: #fff;
+}
+.panda-search-eye--left { left: 17px; }
+.panda-search-eye--right { right: 17px; transform: rotate(-24deg); }
+.panda-search-muzzle {
+  position: absolute;
+  left: 27px;
+  bottom: 9px;
+  width: 39px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: inset -3px -4px 7px rgba(0,0,0,.08);
+}
+.panda-search-nose {
+  position: absolute;
+  left: 15px;
+  top: 4px;
+  width: 10px;
+  height: 7px;
+  border-radius: 50% 50% 45% 45%;
+  background: #101010;
+}
+.panda-search-nose::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 5px;
+  width: 2px;
+  height: 10px;
+  background: #111;
+  transform: rotate(9deg);
+  transform-origin: top;
+}
+.panda-search-body {
+  position: absolute;
+  left: 35px;
+  bottom: 0;
+  width: 80px;
+  height: 85px;
+  border-radius: 44% 44% 35% 35%;
+  background: linear-gradient(145deg,#242424,#111);
+  box-shadow: 15px 18px 26px rgba(0,0,0,.28);
+  transform: translateZ(8px);
+}
+.panda-search-paw {
+  position: absolute;
+  width: 39px;
+  height: 52px;
+  border-radius: 50%;
+  background: #171717;
+  box-shadow: inset -5px -6px 8px rgba(255,255,255,.06);
+  z-index: 3;
+}
+.panda-search-paw--left { left: 8px; top: 70px; transform: rotate(28deg) translateZ(20px); }
+.panda-search-paw--right { right: 7px; top: 75px; transform: rotate(-22deg) translateZ(20px); }
+.panda-search-bamboo {
+  position: absolute;
+  right: 20px;
+  bottom: 24px;
+  width: 105px;
+  height: 155px;
+  transform: rotate(-13deg);
+  transform-origin: bottom center;
+  animation: panda-search-bamboo-sway 4s ease-in-out infinite;
+}
+.panda-search-stem {
+  position: absolute;
+  right: 40px;
+  bottom: 0;
+  width: 13px;
+  height: 142px;
+  border-radius: 10px;
+  background: repeating-linear-gradient(to bottom,#6b9d52 0 25px,#47753a 25px 29px);
+  box-shadow: 8px 10px 18px rgba(0,0,0,.22);
+}
+.panda-search-leaf {
+  position: absolute;
+  font-size: 30px;
+  line-height: 1;
+  filter: drop-shadow(5px 8px 8px rgba(0,0,0,.2));
+  transform-origin: 80% 80%;
+  animation: panda-search-leaf-float 3.2s ease-in-out infinite;
+}
+.panda-search-leaf--one { right: 43px; top: 2px; transform: rotate(-25deg); }
+.panda-search-leaf--two { right: 3px; top: 42px; transform: rotate(25deg); animation-delay: .4s; }
+.panda-search-leaf--three { right: 48px; top: 68px; transform: rotate(-10deg); animation-delay: .8s; }
+.panda-search-panda .panda-search-head {
+  animation: panda-search-chew 2.1s ease-in-out infinite;
+  transform-origin: 48% 76%;
+}
+.panda-search-caption {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: rgba(232,245,233,.9);
+  color: #1A1A1A;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .02em;
+  box-shadow: 0 10px 28px rgba(0,0,0,.18);
+  animation: panda-search-caption 5s ease-in-out infinite;
+}
+@keyframes panda-search-breathe {
+  0%,100% { transform: translateY(0) rotateY(-2deg); }
+  50% { transform: translateY(-4px) rotateY(2deg); }
+}
+@keyframes panda-search-chew {
+  0%,34%,100% { transform: translateZ(24px) rotateY(-8deg) rotate(0); }
+  42% { transform: translateZ(24px) rotateY(-8deg) rotate(4deg) translateY(2px); }
+  49% { transform: translateZ(24px) rotateY(-8deg) rotate(-3deg) translateY(0); }
+  56% { transform: translateZ(24px) rotateY(-8deg) rotate(3deg); }
+  63% { transform: translateZ(24px) rotateY(-8deg) rotate(0); }
+}
+@keyframes panda-search-bamboo-sway {
+  0%,100% { transform: rotate(-13deg); }
+  50% { transform: rotate(-8deg) translateY(-2px); }
+}
+@keyframes panda-search-leaf-float {
+  0%,100% { translate: 0 0; }
+  50% { translate: -2px -4px; }
+}
+@keyframes panda-search-caption {
+  0%,72%,100% { opacity: .72; transform: translateY(0); }
+  78% { opacity: 1; transform: translateY(-3px); }
+}
+@media (max-width: 900px) {
+  .panda-search-companion { opacity: .42; right: -18px; transform: translateY(-50%) scale(.82); transform-origin: right center; }
+  .kinoma-search-head__copy { max-width: 68%; }
+}
+@media (max-width: 640px) {
+  .panda-search-companion { display: none; }
+  .kinoma-search-head__copy { max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .panda-search-panda,
+  .panda-search-panda .panda-search-head,
+  .panda-search-bamboo,
+  .panda-search-leaf,
+  .panda-search-caption { animation: none !important; }
+}
