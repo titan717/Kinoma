@@ -13,7 +13,7 @@ import { Contact } from './pages/Contact';
 import { Docs } from './pages/Docs';
 
 // Route-level code splitting keeps the initial bundle focused on the landing/home experience.
-const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
+import { Home } from './pages/Home';
 const Search = lazy(() => import('./pages/Search').then(m => ({ default: m.Search })));
 const Details = lazy(() => import('./pages/Details').then(m => ({ default: m.Details })));
 const Watch = lazy(() => import('./pages/Watch').then(m => ({ default: m.Watch })));
