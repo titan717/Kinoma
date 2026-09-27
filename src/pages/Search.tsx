@@ -61,7 +61,7 @@ export function Search() {
 
   useEffect(() => {
     setRecentSearches(preferencesUtil.getRecentSearches());
-    updateSEO({ title: isSearching ? 'Search "' + submittedQuery + '"' : 'Search', description: 'Find movies, TV series and anime on Kinoma.', type: 'website' });
+    updateSEO({ title: isSearching ? 'Search "' + submittedQuery + '"' : 'Search', description: 'Find movies, TV series and anime on Panda.fun.', type: 'website' });
   }, [isSearching, submittedQuery]);
 
   useEffect(() => {
@@ -102,7 +102,34 @@ export function Search() {
     <div className="kinoma-search-page__ambient" aria-hidden="true" />
     <div className="kinoma-search-page__inner">
       <header className="kinoma-search-head">
-        <div><span className="kinoma-eyebrow">{isSearching ? 'Search results' : 'Discover'}</span><h1>{isSearching ? 'Results for “' + submittedQuery + '”' : 'Find your next watch.'}</h1><p>{isSearching ? 'Movies, series and anime matching your search.' : 'Start with what is trending, or search whenever you have something specific in mind.'}</p></div>
+        <div className="kinoma-search-head__copy">
+          <span className="kinoma-eyebrow">{isSearching ? 'Search results' : 'Discover'}</span>
+          <h1>{isSearching ? 'Results for “' + submittedQuery + '”' : 'What are we watching?'}</h1>
+          <p>{isSearching ? 'Movies, series and anime matching your search.' : 'Tell Panda what you feel like watching. We’ll bring the leaves... and the good stuff.'}</p>
+        </div>
+        {!isSearching && (
+          <div className="panda-search-companion" aria-label="A panda happily eating bamboo leaves">
+            <div className="panda-search-bamboo" aria-hidden="true">
+              <span className="panda-search-stem" />
+              <span className="panda-search-leaf panda-search-leaf--one">🍃</span>
+              <span className="panda-search-leaf panda-search-leaf--two">🍃</span>
+              <span className="panda-search-leaf panda-search-leaf--three">🍃</span>
+            </div>
+            <div className="panda-search-panda" aria-hidden="true">
+              <span className="panda-search-ear panda-search-ear--left" />
+              <span className="panda-search-ear panda-search-ear--right" />
+              <span className="panda-search-head">
+                <span className="panda-search-eye panda-search-eye--left" />
+                <span className="panda-search-eye panda-search-eye--right" />
+                <span className="panda-search-muzzle"><span className="panda-search-nose" /></span>
+              </span>
+              <span className="panda-search-body" />
+              <span className="panda-search-paw panda-search-paw--left" />
+              <span className="panda-search-paw panda-search-paw--right" />
+            </div>
+            <span className="panda-search-caption">Panda is already looking.</span>
+          </div>
+        )}
         <form className="kinoma-search-control is-open" onSubmit={submitSearch}>
           <SearchIcon size={18} /><input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)} onKeyDown={handleInputKeyDown} placeholder="Search movies, series or anime" aria-label="Search movies, series or anime" autoComplete="off" />
           {query && <button type="button" className="kinoma-search-control__clear" onClick={() => setQuery('')} aria-label="Clear search"><X size={16} /></button>}
@@ -118,7 +145,7 @@ export function Search() {
         : visibleResults.length ? <div className="kinoma-search-grid">{visibleResults.map(item => <ContentCard key={item.id} item={item} />)}</div>
         : <div className="kinoma-search-empty"><SearchIcon size={28} /><h3>{results.length ? 'No titles in this filter' : 'Nothing found yet'}</h3><p>{results.length ? 'Try another filter to see more matches.' : 'Try a different title, spelling, or a broader search.'}</p><button type="button" onClick={results.length ? () => setFilter('all') : clearSearch}>{results.length ? 'Show all results' : 'Back to trending'}</button></div>}
       </section>
-      <footer className="kinoma-search-foot"><span>Kinoma</span><span>One simple search. Everything you want to watch.</span></footer>
+      <footer className="kinoma-search-foot"><span>Panda.fun</span><span>One simple search. Everything you want to watch.</span></footer>
     </div>
   </main>;
 }
