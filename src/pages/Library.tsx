@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Bookmark, CheckCircle2, Clock3, Heart, Play, Search, Trash2, X, Sparkles } from 'lucide-react';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { historyUtil, HistoryItem, formatPlaybackTimestamp } from '../lib/history';
 import { libraryManager, LibraryItem } from '../lib/library';
 import { preferencesUtil } from '../lib/preferences';
@@ -64,6 +64,7 @@ function PosterCard({ item, action }: { item: LibraryItem; action?: React.ReactN
 }
 
 function ContinueCard({ item, onRemove, onWatch }: { item: HistoryItem; onRemove: () => void; onWatch: (title: string) => void }) {
+  const [, setLocation] = useLocation();
   const pct = Math.min(100, Math.max(3, Math.round(item.completionPercentage || 0)));
   const mediaId = item.animeId || item.slug;
   const type = mediaId.startsWith('kinoma_tmdb_movie_') ? 'movie' : 'series';
@@ -76,7 +77,7 @@ function ContinueCard({ item, onRemove, onWatch }: { item: HistoryItem; onRemove
 
   return (
     <article className="kinoma-library-continue">
-      <Link href={watchUrl} onClick={() => onWatch(item.title)} className="kinoma-library-continue__art">
+      <Link href={watchUrl} onClick={event => { event.preventDefault(); onWatch(item.title); window.setTimeout(() => setLocation(watchUrl), 560); }} className="kinoma-library-continue__art">
         {item.image ? <img src={item.image} alt="" loading="lazy" /> : <div className="kinoma-library-card__placeholder"><Play size={22} /></div>}
         <div className="kinoma-library-card__veil" />
         <span className="kinoma-library-continue__progress">{pct}%</span>
