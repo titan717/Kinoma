@@ -2,7 +2,7 @@ services:
   - type: web
     name: kinoma
     runtime: node
-    buildCommand: npm install --no-audit --no-fund && npm run build
+    buildCommand: bun install --frozen-lockfile && bun run build
     startCommand: npm start
     healthCheckPath: /health
     autoDeploy: true
