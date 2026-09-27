@@ -17,7 +17,7 @@ function trailerSrc(url: unknown) {
     const parsed = new URL(url);
     const isYouTube = /(^|\.)youtube(?:-nocookie)?\.com$/.test(parsed.hostname) || parsed.hostname === 'youtu.be';
     parsed.searchParams.set('autoplay', '1');
-    parsed.searchParams.set('mute', '1');
+    parsed.searchParams.set('mute', '0');
     parsed.searchParams.set('playsinline', '1');
     parsed.searchParams.set('controls', '0');
     parsed.searchParams.set('disablekb', '1');
