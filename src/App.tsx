@@ -36,8 +36,11 @@ function AnimatedRoutes() {
     trackPageView(location);
   }, [location]);
 
+  if (location === '/') return <Landing />;
+
   return (
-    <AnimatePresence mode="wait">
+    <Layout>
+      <AnimatePresence mode="wait">
       <motion.div
         key={location}
         initial={{ opacity: 0, y: 8 }}
@@ -79,17 +82,14 @@ function AnimatedRoutes() {
           </Route>
           </Switch>
         </Suspense>
-      </motion.div>
-    </AnimatePresence>
+        </motion.div>
+      </AnimatePresence>
+    </Layout>
   );
 }
 
 function MainAppShell() {
-  const [location] = useLocation();
-
-  if (location === '/') return <Landing />;
-
-  return <Layout><AnimatedRoutes /></Layout>;
+  return <AnimatedRoutes />;
 }
 
 export default function App() {
