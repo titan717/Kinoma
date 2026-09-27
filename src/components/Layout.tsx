@@ -129,7 +129,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         onPointerLeave={collapseWithDelay}
       >
         <div className="kinoma-sidebar__top">
-          <Link href="/home" className="kinoma-sidebar__brand kinoma-focus" aria-label="Kinoma home">
+          <Link href="/home" className="kinoma-sidebar__brand kinoma-focus" aria-label="Panda.fun home">
             <KinomaLogo
               size={expanded ? 'md' : 'sm'}
               variant={expanded ? 'full' : 'mark'}
