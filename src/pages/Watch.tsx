@@ -48,45 +48,6 @@ export function Watch() {
 
   useEffect(() => setActiveSeason(parsed.season), [parsed.id, parsed.season]);
 
-  // Protect Panda.fun's own document from accidental external navigation.
-  // This cannot inspect or cancel navigation performed inside a cross-origin iframe.
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const originalOpen = window.open;
-    const isExternalUrl = (value: string) => {
-      try {
-        const url = new URL(value, window.location.href);
-        return url.origin !== window.location.origin;
-      } catch {
-        return false;
-      }
-    };
-
-    window.open = ((url?: string | URL, target?: string, features?: string) => {
-      if (typeof url === 'string' && isExternalUrl(url)) return null;
-      if (url instanceof URL && isExternalUrl(url.href)) return null;
-      return originalOpen.call(window, url, target, features);
-    }) as typeof window.open;
-
-    const handleDocumentClick = (event: MouseEvent) => {
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-      const anchor = target.closest('a[href]');
-      if (!(anchor instanceof HTMLAnchorElement)) return;
-      if (anchor.target === '_blank' && isExternalUrl(anchor.href)) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    };
-
-    document.addEventListener('click', handleDocumentClick, true);
-    return () => {
-      window.open = originalOpen;
-      document.removeEventListener('click', handleDocumentClick, true);
-    };
-  }, []);
-
   useEffect(() => {
     let active = true;
     if (!parsed.id) return;
@@ -125,6 +86,25 @@ export function Watch() {
   const synopsis = cleanText(data?.description) || 'No synopsis is available for this title yet.';
   const timestamp = Math.max(0, Number(query.get('t') || 0));
 
+  const customizeVidLink = (url: string) => {
+    try {
+      const parsedUrl = new URL(url);
+      parsedUrl.searchParams.set('player', 'jw');
+      parsedUrl.searchParams.set('autoplay', 'true');
+      parsedUrl.searchParams.set('poster', 'true');
+      parsedUrl.searchParams.set('title', 'false');
+      parsedUrl.searchParams.set('nextbutton', kind === 'series' ? 'true' : 'false');
+      parsedUrl.searchParams.set('primaryColor', 'A5D6A7');
+      parsedUrl.searchParams.set('secondaryColor', '26362A');
+      parsedUrl.searchParams.set('iconColor', 'FFFFFF');
+      parsedUrl.searchParams.set('icons', 'default');
+      if (timestamp > 0) parsedUrl.searchParams.set('startAt', String(Math.floor(timestamp)));
+      return parsedUrl.toString();
+    } catch {
+      return url;
+    }
+  };
+
   const watchUrl = (season: number, episode: number) =>
     '/watch/' + encodeURIComponent(parsed.id + '$season$' + season + '$episode$' + episode) + '?type=series';
 
@@ -153,7 +133,7 @@ export function Watch() {
     if (typeof window === 'undefined') return;
 
     const handlePlayerMessage = (event: MessageEvent) => {
-      if (event.origin !== 'https://vidrock.net') return;
+      if (event.origin !== 'https://vidlink.pro') return;
 
       const message = event.data;
       if (message?.type !== 'PLAYER_EVENT') return;
@@ -166,14 +146,14 @@ export function Watch() {
         !Number.isFinite(player.currentTime) ||
         typeof player.duration !== 'number' ||
         !Number.isFinite(player.duration) ||
-        typeof player.tmdbId !== 'number'
+        typeof player.mtmdbId !== 'number' && typeof player.tmdbId !== 'number'
       ) {
         return;
       }
 
       if (kind === 'movie' && player.mediaType !== 'movie') return;
       if (kind === 'series' && player.mediaType !== 'tv') return;
-      if (Number(player.tmdbId) !== Number(parsed.id)) return;
+      const playerTmdbId = Number(player.mtmdbId ?? player.tmdbId);\n      if (playerTmdbId !== Number(parsed.id)) return;
 
       const progressSeason =
         kind === 'series' && typeof player.season === 'number' && player.season > 0
@@ -208,7 +188,8 @@ export function Watch() {
       {error && <div className="kinoma-details-bottom" role="alert">{error}</div>}
       <header className="kinoma-player-topbar">
         <Link href="/home" className="kinoma-player-back"><ArrowLeft size={17} /><span>Back to Panda.fun</span></Link>
-        <div className="panda-player-brand"><KinomaLogo variant="mark" size="sm" /><span>panda.fun</span></div>\n        <div className="kinoma-player-titlebar">
+        <div className="panda-player-brand"><KinomaLogo variant="mark" size="sm" /><span>panda.fun</span></div>
+        <div className="kinoma-player-titlebar">
           {kind === 'movie' ? <Film size={14} /> : <Tv size={14} />}<span>{title}</span>
           {kind === 'series' && <small>S{activeSeason} · E{parsed.episode}</small>}
         </div>
@@ -223,10 +204,6 @@ export function Watch() {
                 title={title + ' player'}
                 className="kinoma-player-video"
                 allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                // Keep the third-party player isolated. Intentionally omit
-                // allow-top-navigation and allow-top-navigation-by-user-activation.
-                // This prevents the embedded document from navigating Panda.fun's top-level page.
-                sandbox="allow-scripts allow-forms allow-same-origin allow-presentation"
                 allowFullScreen
                 onLoad={() => kind === 'series' && saveProgress(timestamp, currentEpisode?.duration || 0)}
               />
