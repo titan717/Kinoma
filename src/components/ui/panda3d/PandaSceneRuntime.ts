@@ -201,26 +201,34 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
       }
 
       const entering = state === 'walk-in';
-      // Give the Panda enough time to take deliberate, readable steps.
-      // The longer travel time is intentional: it avoids the "sliding mascot" look.
-      const duration = entering ? 4.2 : 3.6;
+      const walking = state === 'walk-in' || state === 'walk-out';
+      // Tie travel duration to the actual source clip so the Panda reaches the
+      // destination on a predictable footfall instead of sliding between steps.
+      const walkClipDuration = walking && targetAction
+        ? targetAction.getClip().duration / 0.58
+        : 2.8;
+      const walkCycles = entering ? 2.25 : 2;
+      const duration = walking
+        ? THREE.MathUtils.clamp(walkClipDuration * walkCycles, 3.8, 5.6)
+        : 2.8;
       const progress = smooth(t / duration);
       const fromX = entering ? -5.8 : 0;
       const toX = entering ? 0 : 6.1;
-      const eased = entering ? progress * progress * (3 - 2 * progress) : progress;
-      realPanda.root.position.x = THREE.MathUtils.lerp(fromX, toX, eased);
+      // Keep forward speed almost constant during the gait. Large easing curves
+      // make the feet appear to skate because the animation itself has constant cadence.
+      const locomotionProgress = walking
+        ? THREE.MathUtils.clamp(t / duration, 0, 1)
+        : progress;
+      realPanda.root.position.x = THREE.MathUtils.lerp(fromX, toX, locomotionProgress);
       // Keep locomotion on one grounded plane; the GLB's feet provide the actual step cycle.
       realPanda.root.position.z = THREE.MathUtils.lerp(realPanda.root.position.z, 0, 0.08);
       realPanda.root.rotation.y = THREE.MathUtils.lerp(entering ? -0.24 : 0, entering ? 0 : 0.3, eased);
       realPanda.root.rotation.z = THREE.MathUtils.lerp(
         realPanda.root.rotation.z,
-        Math.sin(t * 2.1) * 0.008 + pointer.x * -0.018,
+        walking
+          ? Math.sin(t * 3.1) * 0.006 + pointer.x * -0.012
+          : pointer.x * -0.018,
         0.045,
-      );
-      realPanda.root.rotation.z = THREE.MathUtils.lerp(
-        realPanda.root.rotation.z,
-        pointer.x * -0.018,
-        0.04,
       );
 
       // Apply look-at after the mixer so the animation stays in control of the body,
