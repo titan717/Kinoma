@@ -100,6 +100,44 @@ export function PandaOnboarding() {
     setSceneEvent(step === 0 ? 'arrive' : events[Math.min(step - 1, events.length - 1)]);
   }, [step, visible]);
 
+  // Hidden Settings Dev Tools can deterministically replay/reset onboarding.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const replay = () => {
+      setState(readState());
+      setStep(0);
+      setSceneFailed(false);
+      setSceneEvent('arrive');
+      setVisible(true);
+    };
+    const reset = () => {
+      try { window.localStorage.removeItem(STORAGE_KEY); } catch {}
+      setState(DEFAULT_STATE);
+      setStep(0);
+      setSceneFailed(false);
+      setSceneEvent('arrive');
+      setVisible(true);
+    };
+    const stage = (event: Event) => {
+      const detail = (event as CustomEvent<{ step?: number }>).detail;
+      if (!detail || typeof detail.step !== 'number') return;
+      const nextStep = Math.max(0, Math.min(5, Math.round(detail.step)));
+      setState(readState());
+      setSceneFailed(false);
+      setStep(nextStep);
+      setSceneEvent(nextStep === 0 ? 'arrive' : events[Math.min(nextStep - 1, events.length - 1)]);
+      setVisible(true);
+    };
+    window.addEventListener('panda_dev_replay_onboarding', replay);
+    window.addEventListener('panda_dev_reset_onboarding', reset);
+    window.addEventListener('panda_dev_onboarding_stage', stage);
+    return () => {
+      window.removeEventListener('panda_dev_replay_onboarding', replay);
+      window.removeEventListener('panda_dev_reset_onboarding', reset);
+      window.removeEventListener('panda_dev_onboarding_stage', stage);
+    };
+  }, []);
+
   const reducedMotion = typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const finish = useCallback(() => {
