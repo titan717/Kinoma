@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check, ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import { KinomaLogo } from './KinomaLogo';
 import { preferencesUtil } from '../../lib/preferences';
@@ -47,6 +47,7 @@ export function PandaOnboarding() {
   const [state, setState] = useState<OnboardingState>(DEFAULT_STATE);
   const [sceneFailed, setSceneFailed] = useState(false);
   const [sceneEvent, setSceneEvent] = useState<PandaSceneEvent>('arrive');
+  const finishTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (localStorage.getItem(STORAGE_KEY)) return;
@@ -73,9 +74,17 @@ export function PandaOnboarding() {
       preferencesUtil.setAudioPreference('sub');
       window.dispatchEvent(new CustomEvent('panda_onboarding_complete', { detail: next }));
     } catch {}
-    const exitDelay = reducedMotion ? 0 : 700;
-    window.setTimeout(() => setVisible(false), exitDelay);
+    const exitDelay = reducedMotion ? 0 : 720;
+    if (finishTimerRef.current) window.clearTimeout(finishTimerRef.current);
+    finishTimerRef.current = window.setTimeout(() => {
+      finishTimerRef.current = null;
+      setVisible(false);
+    }, exitDelay);
   }, [state, reducedMotion]);
+
+  useEffect(() => () => {
+    if (finishTimerRef.current) window.clearTimeout(finishTimerRef.current);
+  }, []);
 
   const skip = useCallback(() => {
     try {
@@ -126,7 +135,7 @@ export function PandaOnboarding() {
           {Array.from({ length: 6 }).map((_, index) => <span key={index} className={index <= step ? 'is-active' : ''} />)}
         </div>
 
-        <div className="panda-onboarding__content">
+        <div className="panda-onboarding__content" aria-live="polite" aria-atomic="true">
           {step === 0 && (
             <div className="panda-onboarding__welcome">
               <PandaDialogue eyebrow="WELCOME TO YOUR LOUNGE" title="Your next watch is waiting." description="Let's make panda.fun feel a little more like yours. A few quick choices tune your home screen and playback experience." />
