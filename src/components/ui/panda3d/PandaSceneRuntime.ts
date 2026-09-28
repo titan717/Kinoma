@@ -190,6 +190,28 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
         rig.remote.rotation.z = -0.25 + Math.sin(t * 8.5) * 0.12;
         rig.remote.rotation.y = Math.sin(t * 5.5) * 0.08;
         rig.head.rotation.x = Math.sin(t * 3.8) * 0.045;
+      } else if (state === 'sleep') {
+        const breathe = Math.sin(t * 1.2) * 0.025;
+        rig.head.rotation.z = THREE.MathUtils.lerp(rig.head.rotation.z, -0.12, 0.08);
+        rig.head.rotation.x = THREE.MathUtils.lerp(rig.head.rotation.x, 0.12, 0.08);
+        rig.body.rotation.z = THREE.MathUtils.lerp(rig.body.rotation.z, -0.025, 0.06);
+        rig.root.position.y = THREE.MathUtils.lerp(rig.root.position.y, -0.45 + breathe, 0.08);
+        rig.leftArm.rotation.z = THREE.MathUtils.lerp(rig.leftArm.rotation.z, 0.55, 0.08);
+        rig.rightArm.rotation.z = THREE.MathUtils.lerp(rig.rightArm.rotation.z, -0.55, 0.08);
+        rig.bamboo.visible = false;
+      } else if (state === 'eat-bamboo') {
+        rig.bamboo.visible = true;
+        rig.rightArm.rotation.z = THREE.MathUtils.lerp(rig.rightArm.rotation.z, -0.92, 0.08);
+        rig.rightArm.rotation.x = THREE.MathUtils.lerp(rig.rightArm.rotation.x, -0.12, 0.08);
+        rig.bamboo.rotation.z = Math.sin(t * 2.2) * 0.045;
+        rig.bamboo.position.set(0.02, 2.0 + Math.sin(t * 2.1) * 0.025, 0.82);
+        rig.head.rotation.x = THREE.MathUtils.lerp(rig.head.rotation.x, -0.07 + Math.sin(t * 2.1) * 0.035, 0.08);
+      } else if (state === 'face-cover') {
+        rig.leftArm.rotation.z = THREE.MathUtils.lerp(rig.leftArm.rotation.z, 1.12, 0.12);
+        rig.rightArm.rotation.z = THREE.MathUtils.lerp(rig.rightArm.rotation.z, -1.12, 0.12);
+        rig.leftArm.rotation.x = THREE.MathUtils.lerp(rig.leftArm.rotation.x, -0.16, 0.12);
+        rig.rightArm.rotation.x = THREE.MathUtils.lerp(rig.rightArm.rotation.x, -0.16, 0.12);
+        rig.head.rotation.z = THREE.MathUtils.lerp(rig.head.rotation.z, 0.08, 0.08);
       } else if (state === 'celebrate') {
         const hop = Math.pow(Math.abs(Math.sin(t * 3.7)), 1.8) * 0.14;
         rig.root.position.y = THREE.MathUtils.lerp(rig.root.position.y, -0.45 + hop, 0.18);
@@ -202,13 +224,15 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
 
       // Organic blink timing, with slight pupil movement so the face never feels frozen.
       const blinkPhase = elapsed % 4.3;
-      const blinking = blinkPhase > 3.84 && blinkPhase < 3.98;
+      const blinking = state === 'sleep' || (blinkPhase > 3.84 && blinkPhase < 3.98);
       const eyeScale = blinking ? 0.08 : 1;
       rig.leftEye.scale.y = THREE.MathUtils.lerp(rig.leftEye.scale.y, eyeScale, 0.55);
       rig.rightEye.scale.y = THREE.MathUtils.lerp(rig.rightEye.scale.y, eyeScale, 0.55);
       const pupilX = pointer.x * 0.035;
       rig.leftEye.position.x = -0.34 + pupilX;
       rig.rightEye.position.x = 0.34 + pupilX;
+
+      if (state !== 'eat-bamboo') rig.bamboo.visible = false;
 
       camera.position.x = THREE.MathUtils.lerp(camera.position.x, pointer.x * -0.25, 0.025);
       camera.position.y = THREE.MathUtils.lerp(camera.position.y, 1.7 + pointer.y * -0.055, 0.025);
