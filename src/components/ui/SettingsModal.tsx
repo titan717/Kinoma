@@ -163,7 +163,7 @@ export function SettingsModal() {
                   </h4>
                   <p className="text-[11px] text-gray-400 mt-0.5">Experience the cinematic opening animation.</p>
                 </div>
-                <button onClick={() => { closeSettingsModal(); setTimeout(() => window.dispatchEvent(new CustomEvent('kinoma_replay_intro')), 200); }} className="px-3.5 py-1.5 rounded-full bg-white text-black font-bold text-xs hover:bg-gray-200 transition-all shrink-0 cursor-pointer shadow-md">
+                <button onClick={() => { closeSettingsModal(); setTimeout(() => window.dispatchEvent(new CustomEvent('panda_replay_intro')), 200); }} className="px-3.5 py-1.5 rounded-full bg-white text-black font-bold text-xs hover:bg-gray-200 transition-all shrink-0 cursor-pointer shadow-md">
                   Play Intro
                 </button>
               </div>
