@@ -26,6 +26,7 @@ import { AuthModal } from './components/ui/AuthModal';
 import { AppearanceProvider } from './lib/AppearanceContext';
 import { SettingsModal } from './components/ui/SettingsModal';
 import { IntroSplash } from './components/ui/IntroSplash';
+import { PandaOnboarding } from './components/ui/PandaOnboarding';
 import { trackPageView } from './lib/analytics';
 
 function AnimatedRoutes() {
@@ -105,6 +106,7 @@ export default function App() {
       <AuthProvider>
         <AppearanceProvider>
           <IntroSplash />
+          <PandaOnboarding />
           <MainAppShell />
           <AuthModal />
           <SettingsModal />
