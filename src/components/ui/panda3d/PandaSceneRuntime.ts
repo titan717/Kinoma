@@ -96,8 +96,8 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
     const smooth = (value: number) => THREE.MathUtils.smoothstep(THREE.MathUtils.clamp(value, 0, 1), 0, 1);
 
     if (!reducedMotion) {
-      const walkCycle = Math.sin(t * 8.8);
-      const walkCycleOpposite = Math.sin(t * 8.8 + Math.PI);
+      const walkCycle = Math.sin(t * 7.0);
+      const walkCycleOpposite = Math.sin(t * 7.0 + Math.PI);
       const breath = Math.sin(elapsed * 1.55) * 0.022;
 
       // Body mechanics stay subtle: breathing and a controlled center-of-mass shift.
@@ -115,23 +115,26 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
         rig.root.position.x = THREE.MathUtils.lerp(fromX, toX, eased);
         // Keep the feet on the floor: the body rises and falls from a planted contact point,
         // rather than translating the whole character up and down like a floating sprite.
-        const strideBounce = Math.pow(Math.max(0, Math.sin(t * 8.8)), 2) * 0.028;
+        const strideBounce = Math.abs(Math.sin(t * 3.5)) * 0.012;
         rig.root.position.y = -0.45 + strideBounce;
         rig.root.position.z = Math.sin(progress * Math.PI) * 0.22;
         rig.root.rotation.y = THREE.MathUtils.lerp(entering ? -0.24 : 0, entering ? 0 : 0.3, eased);
         rig.root.rotation.z = Math.sin(t * 4.4) * 0.012;
 
         // Alternating feet, hips and arms create a readable four-beat walking rhythm.
-        rig.leftLeg.rotation.z = walkCycle * 0.22;
-        rig.rightLeg.rotation.z = walkCycleOpposite * 0.22;
-        rig.leftFootPivot.rotation.z = walkCycle * 0.22;
-        rig.rightFootPivot.rotation.z = walkCycleOpposite * 0.22;
-        rig.leftFoot.rotation.z = -walkCycle * 0.09;
-        rig.rightFoot.rotation.z = -walkCycleOpposite * 0.09;
-        rig.leftArm.rotation.z = 0.25 - walkCycleOpposite * 0.17;
-        rig.rightArm.rotation.z = -0.25 - walkCycle * 0.17;
-        rig.head.rotation.x = THREE.MathUtils.lerp(rig.head.rotation.x, Math.sin(t * 4.4) * 0.025, 0.08);
-        rig.head.rotation.y = THREE.MathUtils.lerp(rig.head.rotation.y, pointer.x * 0.06, 0.045);
+        const stride = Math.sin(t * 7.0);
+        // Hips drive the legs; the ankle/foot follows with a small heel-to-toe roll.
+        rig.leftLeg.rotation.z = stride * 0.16;
+        rig.rightLeg.rotation.z = -stride * 0.16;
+        rig.leftFootPivot.rotation.z = -Math.max(0, stride) * 0.11;
+        rig.rightFootPivot.rotation.z = -Math.max(0, -stride) * 0.11;
+        rig.leftFoot.rotation.z = 0;
+        rig.rightFoot.rotation.z = 0;
+        rig.leftArm.rotation.z = 0.20 - stride * 0.13;
+        rig.rightArm.rotation.z = -0.20 - stride * 0.13;
+        // The head leads the body with a natural look-around and follows the pointer.
+        rig.head.rotation.y = THREE.MathUtils.lerp(rig.head.rotation.y, pointer.x * 0.24 + Math.sin(t * 1.4) * 0.045, 0.075);
+        rig.head.rotation.x = THREE.MathUtils.lerp(rig.head.rotation.x, pointer.y * -0.07 + Math.sin(t * 1.1) * 0.018, 0.075);
 
         if (!entering && progress > 0.76) {
           const fadeScale = THREE.MathUtils.lerp(0.94, 0.72, smooth((progress - 0.76) / 0.24));
@@ -147,22 +150,22 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
         // The head leads attention while the ears follow a fraction later.
         rig.head.rotation.y = THREE.MathUtils.lerp(
           rig.head.rotation.y,
-          pointer.x * 0.085 + Math.sin(elapsed * 0.72) * 0.028,
-          0.055,
+          pointer.x * 0.24 + Math.sin(elapsed * 0.72) * 0.028,
+          0.07,
         );
         rig.head.rotation.x = THREE.MathUtils.lerp(
           rig.head.rotation.x,
-          pointer.y * -0.028,
-          0.055,
+          pointer.y * -0.07,
+          0.07,
         );
         rig.leftEar.rotation.z = THREE.MathUtils.lerp(
           rig.leftEar.rotation.z,
-          -pointer.x * 0.035 + Math.sin(elapsed * 1.2) * 0.018,
+          -pointer.x * 0.055 + Math.sin(elapsed * 1.2) * 0.018,
           0.045,
         );
         rig.rightEar.rotation.z = THREE.MathUtils.lerp(
           rig.rightEar.rotation.z,
-          -pointer.x * 0.035 - Math.sin(elapsed * 1.2) * 0.018,
+          -pointer.x * 0.055 - Math.sin(elapsed * 1.2) * 0.018,
           0.045,
         );
       }
