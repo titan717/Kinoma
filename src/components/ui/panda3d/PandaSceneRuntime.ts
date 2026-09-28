@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { createPandaSceneController } from './PandaSceneController';
 import { createPandaModel, type PandaRig } from './PandaModel';
 import { createPandaEnvironment } from './PandaEnvironment';
@@ -24,6 +25,8 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
   let disposed = false;
   let running = false;
   let rig: PandaRig | null = null;
+  let realPanda: { root: THREE.Group; mixer: THREE.AnimationMixer; actions: Map<string, THREE.AnimationAction>; clips: THREE.AnimationClip[]; } | null = null;
+  let realPandaLoadFailed = false;
   let pageHidden = document.hidden;
   let sceneVisible = true;
   let visibilityObserver: IntersectionObserver | null = null;
@@ -52,6 +55,61 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
   rig.root.rotation.y = -0.22;
   rig.root.scale.setScalar(0.94);
   scene.add(rig.root);
+
+  // Use a genuine rigged GLB character as the primary Panda. The procedural mascot
+  // remains only as a resilient fallback if the remote asset cannot be reached.
+  const loadRealPanda = async () => {
+    try {
+      const loader = new GLTFLoader();
+      const gltf = await loader.loadAsync(
+        'https://cdn.jsdelivr.net/gh/Mesh2Motion/mesh2motion-app@main/static/models-variation/fox/panda.glb',
+      );
+      if (disposed) return;
+
+      const root = gltf.scene;
+      root.traverse((object) => {
+        const mesh = object as THREE.Mesh;
+        if (mesh.isMesh) {
+          mesh.castShadow = true;
+          mesh.receiveShadow = true;
+          mesh.frustumCulled = true;
+        }
+      });
+
+      const bounds = new THREE.Box3().setFromObject(root);
+      const size = bounds.getSize(new THREE.Vector3());
+      const center = bounds.getCenter(new THREE.Vector3());
+      root.position.sub(center);
+      root.position.y -= bounds.min.y - center.y;
+      const targetHeight = 4.25;
+      const modelScale = targetHeight / Math.max(size.y, 0.001);
+      root.scale.setScalar(modelScale);
+
+      const mixer = new THREE.AnimationMixer(root);
+      const actions = new Map<string, THREE.AnimationAction>();
+      for (const clip of gltf.animations) {
+        actions.set(clip.name.toLowerCase(), mixer.clipAction(clip));
+      }
+
+      root.position.set(-5.8, -0.45, 0);
+      root.rotation.y = -0.22;
+      root.visible = true;
+      scene.add(root);
+      rig.root.visible = false;
+      realPanda = { root, mixer, actions, clips: gltf.animations };
+
+      // Start with the asset's first available motion while we transition into the scene.
+      const initial = gltf.animations.find((clip) => /idle|stand|breath/i.test(clip.name)) ?? gltf.animations[0];
+      if (initial) {
+        const action = mixer.clipAction(initial);
+        action.reset().setLoop(THREE.LoopRepeat, Infinity).fadeIn(0.25).play();
+      }
+    } catch (error) {
+      realPandaLoadFailed = true;
+      onError?.(error);
+    }
+  };
+  void loadRealPanda();
 
   const stateRef = { current: 'idle' as PandaAnimationState };
   const controller = createPandaSceneController(
@@ -94,6 +152,67 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
     const state = stateRef.current;
     const t = (now - stateStartedAt) / 1000;
     const smooth = (value: number) => THREE.MathUtils.smoothstep(THREE.MathUtils.clamp(value, 0, 1), 0, 1);
+
+    if (!reducedMotion && realPanda) {
+      const findAction = (patterns: RegExp[]) => {
+        for (const [name, action] of realPanda!.actions) {
+          if (patterns.some((pattern) => pattern.test(name))) return action;
+        }
+        return undefined;
+      };
+      const targetAction =
+        state === 'walk-in' || state === 'walk-out'
+          ? findAction([/walk/, /run/])
+          : state === 'wave'
+            ? findAction([/wave/, /greet/, /hello/])
+            : state === 'sleep'
+              ? findAction([/sleep/, /sit/, /rest/])
+              : state === 'eat-bamboo'
+                ? findAction([/eat/, /bamboo/, /feed/])
+                : state === 'celebrate'
+                  ? findAction([/jump/, /celebr/, /happy/, /victory/])
+                  : state === 'react'
+                    ? findAction([/react/, /surprise/, /startle/])
+                    : findAction([/idle/, /stand/, /breath/]) ?? realPanda.mixer.clipAction(realPanda.clips[0]);
+
+      realPanda.actions.forEach((action) => {
+        if (action !== targetAction && action.isRunning()) action.fadeOut(0.18);
+      });
+      if (targetAction && !targetAction.isRunning()) {
+        targetAction.reset().setLoop(
+          state === 'walk-in' || state === 'walk-out' ? THREE.LoopRepeat : THREE.LoopRepeat,
+          Infinity,
+        ).fadeIn(0.22).play();
+      }
+
+      const entering = state === 'walk-in';
+      const duration = entering ? 1.85 : 1.65;
+      const progress = smooth(t / duration);
+      const fromX = entering ? -5.8 : 0;
+      const toX = entering ? 0 : 6.1;
+      const eased = entering ? progress * progress * (3 - 2 * progress) : progress;
+      realPanda.root.position.x = THREE.MathUtils.lerp(fromX, toX, eased);
+      realPanda.root.position.z = Math.sin(progress * Math.PI) * 0.16;
+      realPanda.root.rotation.y = THREE.MathUtils.lerp(entering ? -0.24 : 0, entering ? 0 : 0.3, eased);
+      realPanda.root.rotation.z = THREE.MathUtils.lerp(
+        realPanda.root.rotation.z,
+        pointer.x * -0.018,
+        0.04,
+      );
+
+      // Let the character acknowledge the viewer without rotating the whole body.
+      const headBone = realPanda.root.getObjectsByProperty('type', 'Bone')
+        .find((object) => /head|neck/i.test(object.name)) as THREE.Bone | undefined;
+      if (headBone) {
+        headBone.rotation.y = THREE.MathUtils.lerp(headBone.rotation.y, pointer.x * 0.28, 0.08);
+        headBone.rotation.x = THREE.MathUtils.lerp(headBone.rotation.x, pointer.y * -0.10, 0.08);
+      }
+
+      realPanda.mixer.update(1 / 60);
+      renderer.render(scene, camera);
+      frame = requestAnimationFrame(animate);
+      return;
+    }
 
     if (!reducedMotion) {
       const walkCycle = Math.sin(t * 5.8);
@@ -320,6 +439,14 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
       window.removeEventListener('pointermove', handlePointer);
       document.removeEventListener('visibilitychange', handleVisibility);
       controller.dispose();
+      realPanda?.mixer.stopAllAction();
+      if (realPanda) {
+        scene.remove(realPanda.root);
+        realPanda.root.traverse((object) => {
+          const mesh = object as THREE.Mesh;
+          if (mesh.isMesh) mesh.geometry.dispose();
+        });
+      }
       scene.traverse((object) => {
         const mesh = object as THREE.Mesh;
         if (mesh.geometry) mesh.geometry.dispose();
