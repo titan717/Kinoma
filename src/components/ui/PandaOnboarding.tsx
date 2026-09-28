@@ -73,8 +73,9 @@ export function PandaOnboarding() {
       preferencesUtil.setAudioPreference('sub');
       window.dispatchEvent(new CustomEvent('panda_onboarding_complete', { detail: next }));
     } catch {}
-    setVisible(false);
-  }, [state]);
+    const exitDelay = reducedMotion ? 0 : 700;
+    window.setTimeout(() => setVisible(false), exitDelay);
+  }, [state, reducedMotion]);
 
   const skip = useCallback(() => {
     try {
