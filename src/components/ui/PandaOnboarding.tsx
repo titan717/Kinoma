@@ -58,8 +58,16 @@ export function PandaOnboarding() {
     const hasCompleted = localStorage.getItem(STORAGE_KEY);
     if (hasCompleted) return;
     setState(readState());
-    const timer = window.setTimeout(() => setVisible(true), 150);
-    return () => window.clearTimeout(timer);
+
+    const open = () => setVisible(true);
+    const introShown = sessionStorage.getItem('panda_intro_shown_v3');
+    if (introShown) {
+      const timer = window.setTimeout(open, 150);
+      return () => window.clearTimeout(timer);
+    }
+
+    window.addEventListener('panda_intro_complete', open);
+    return () => window.removeEventListener('panda_intro_complete', open);
   }, []);
 
   const finish = () => {
