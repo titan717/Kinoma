@@ -94,6 +94,8 @@ export function PandaOnboarding() {
     setSceneEvent(step === 0 ? 'arrive' : events[Math.min(step - 1, events.length - 1)]);
   }, [step, visible]);
 
+  const reducedMotion = typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   const finish = useCallback(() => {
     const next = { ...state, name: state.name.trim() || 'Panda' };
     try {
@@ -137,8 +139,6 @@ export function PandaOnboarding() {
     if (step === 2) return state.genres.length >= 3;
     return true;
   }, [step, state]);
-
-  const reducedMotion = typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   if (!visible) return null;
 
