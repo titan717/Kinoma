@@ -7,7 +7,10 @@ export type PandaSceneEvent =
   | 'language-select'
   | 'playback-toggle'
   | 'ready'
-  | 'exit';
+  | 'exit'
+  | 'sleep'
+  | 'eat-bamboo'
+  | 'face-cover';
 
 export type PandaAnimationState =
   | 'idle'
@@ -17,7 +20,10 @@ export type PandaAnimationState =
   | 'react'
   | 'remote-interaction'
   | 'celebrate'
-  | 'walk-out';
+  | 'walk-out'
+  | 'sleep'
+  | 'eat-bamboo'
+  | 'face-cover';
 
 export interface PandaSceneOptions {
   reducedMotion: boolean;
