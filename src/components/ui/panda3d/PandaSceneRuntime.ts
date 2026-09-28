@@ -96,13 +96,14 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
     const smooth = (value: number) => THREE.MathUtils.smoothstep(THREE.MathUtils.clamp(value, 0, 1), 0, 1);
 
     if (!reducedMotion) {
-      const walkCycle = Math.sin(t * 7.0);
-      const walkCycleOpposite = Math.sin(t * 7.0 + Math.PI);
+      const walkCycle = Math.sin(t * 5.8);
+      const walkCycleOpposite = Math.sin(t * 5.8 + Math.PI);
       const breath = Math.sin(elapsed * 1.55) * 0.022;
 
       // Body mechanics stay subtle: breathing and a controlled center-of-mass shift.
       rig.body.scale.y = 1 + breath;
       rig.body.rotation.z = THREE.MathUtils.lerp(rig.body.rotation.z, Math.sin(elapsed * 1.05) * 0.018, 0.045);
+      rig.body.position.y = 1.28 + Math.sin(elapsed * 1.55) * 0.012;
 
       if (state === 'walk-in' || state === 'walk-out') {
         const entering = state === 'walk-in';
@@ -122,19 +123,24 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
         rig.root.rotation.z = Math.sin(t * 4.4) * 0.012;
 
         // Alternating feet, hips and arms create a readable four-beat walking rhythm.
-        const stride = Math.sin(t * 7.0);
-        // Hips drive the legs; the ankle/foot follows with a small heel-to-toe roll.
-        rig.leftLeg.rotation.z = stride * 0.16;
-        rig.rightLeg.rotation.z = -stride * 0.16;
-        rig.leftFootPivot.rotation.z = -Math.max(0, stride) * 0.11;
-        rig.rightFootPivot.rotation.z = -Math.max(0, -stride) * 0.11;
+        const stride = Math.sin(t * 5.8);
+        const stance = Math.max(0, Math.cos(t * 5.8));
+        // Keep the stance foot quiet while the opposite leg swings through.
+        rig.leftLeg.rotation.z = stride * 0.105;
+        rig.rightLeg.rotation.z = -stride * 0.105;
+        rig.leftFootPivot.rotation.z = -Math.max(0, stride) * 0.07;
+        rig.rightFootPivot.rotation.z = -Math.max(0, -stride) * 0.07;
+        rig.leftFoot.position.z = 0.19 + Math.max(0, -stride) * 0.045;
+        rig.rightFoot.position.z = 0.19 + Math.max(0, stride) * 0.045;
         rig.leftFoot.rotation.z = 0;
         rig.rightFoot.rotation.z = 0;
-        rig.leftArm.rotation.z = 0.20 - stride * 0.13;
-        rig.rightArm.rotation.z = -0.20 - stride * 0.13;
+        rig.leftArm.rotation.z = 0.20 - stride * 0.10;
+        rig.rightArm.rotation.z = -0.20 - stride * 0.10;
+        rig.body.rotation.y = THREE.MathUtils.lerp(rig.body.rotation.y, -stride * 0.025, 0.12);
+        rig.body.rotation.x = THREE.MathUtils.lerp(rig.body.rotation.x, 0.045 + Math.abs(stride) * 0.012, 0.1);
         // The head leads the body with a natural look-around and follows the pointer.
-        rig.head.rotation.y = THREE.MathUtils.lerp(rig.head.rotation.y, pointer.x * 0.24 + Math.sin(t * 1.4) * 0.045, 0.075);
-        rig.head.rotation.x = THREE.MathUtils.lerp(rig.head.rotation.x, pointer.y * -0.07 + Math.sin(t * 1.1) * 0.018, 0.075);
+        rig.head.rotation.y = THREE.MathUtils.lerp(rig.head.rotation.y, pointer.x * 0.30 + Math.sin(t * 1.15) * 0.055, 0.075);
+        rig.head.rotation.x = THREE.MathUtils.lerp(rig.head.rotation.x, pointer.y * -0.085 + Math.sin(t * 1.05) * 0.02, 0.075);
 
         if (!entering && progress > 0.76) {
           const fadeScale = THREE.MathUtils.lerp(0.94, 0.72, smooth((progress - 0.76) / 0.24));
@@ -150,12 +156,12 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
         // The head leads attention while the ears follow a fraction later.
         rig.head.rotation.y = THREE.MathUtils.lerp(
           rig.head.rotation.y,
-          pointer.x * 0.24 + Math.sin(elapsed * 0.72) * 0.028,
+          pointer.x * 0.30 + Math.sin(elapsed * 0.72) * 0.035,
           0.07,
         );
         rig.head.rotation.x = THREE.MathUtils.lerp(
           rig.head.rotation.x,
-          pointer.y * -0.07,
+          pointer.y * -0.085,
           0.07,
         );
         rig.leftEar.rotation.z = THREE.MathUtils.lerp(
@@ -224,7 +230,7 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
 
       // Organic blink timing, with slight pupil movement so the face never feels frozen.
       const blinkPhase = elapsed % 4.3;
-      const blinking = state === 'sleep' || (blinkPhase > 3.84 && blinkPhase < 3.98);
+      const blinking = state === 'sleep' || (blinkPhase > 3.84 && blinkPhase < 3.98) || (blinkPhase > 0.18 && blinkPhase < 0.24);
       const eyeScale = blinking ? 0.08 : 1;
       rig.leftEye.scale.y = THREE.MathUtils.lerp(rig.leftEye.scale.y, eyeScale, 0.55);
       rig.rightEye.scale.y = THREE.MathUtils.lerp(rig.rightEye.scale.y, eyeScale, 0.55);
@@ -233,6 +239,13 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
       rig.rightEye.position.x = 0.34 + pupilX;
 
       if (state !== 'eat-bamboo') rig.bamboo.visible = false;
+
+      // Small idle cues make the character feel alive without turning the scene into a looped dance.
+      if (state === 'idle' || state === 'recognize') {
+        rig.head.rotation.z = THREE.MathUtils.lerp(rig.head.rotation.z, Math.sin(elapsed * 0.9) * 0.018, 0.04);
+        rig.leftEar.rotation.x = THREE.MathUtils.lerp(rig.leftEar.rotation.x, Math.sin(elapsed * 1.4) * 0.025, 0.04);
+        rig.rightEar.rotation.x = THREE.MathUtils.lerp(rig.rightEar.rotation.x, -Math.sin(elapsed * 1.4) * 0.025, 0.04);
+      }
 
       camera.position.x = THREE.MathUtils.lerp(camera.position.x, pointer.x * -0.25, 0.025);
       camera.position.y = THREE.MathUtils.lerp(camera.position.y, 1.7 + pointer.y * -0.055, 0.025);
