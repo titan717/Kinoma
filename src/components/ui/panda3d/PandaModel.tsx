@@ -10,6 +10,8 @@ export interface PandaRig {
   rightLeg: THREE.Mesh;
   leftFoot: THREE.Mesh;
   rightFoot: THREE.Mesh;
+  leftFootPivot: THREE.Group;
+  rightFootPivot: THREE.Group;
   leftEar: THREE.Mesh;
   rightEar: THREE.Mesh;
   leftEye: THREE.Mesh;
@@ -103,16 +105,22 @@ export function createPandaModel(): PandaRig {
 
   const legs: THREE.Mesh[] = [];
   const feet: THREE.Mesh[] = [];
+  const footPivots: THREE.Group[] = [];
   for (const x of [-0.46, 0.46]) {
+    const pivot = new THREE.Group();
+    pivot.position.set(x, 0.28, 0.03);
+    root.add(pivot);
+    footPivots.push(pivot);
+
     const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.29, 0.72, 10, 18), black);
-    leg.position.set(x, 0.22, 0);
-    root.add(leg);
+    leg.position.set(0, -0.06, 0);
+    pivot.add(leg);
     legs.push(leg);
 
     const foot = new THREE.Mesh(new THREE.SphereGeometry(0.34, 24, 18), black);
     foot.scale.set(1.15, 0.62, 1.35);
-    foot.position.set(x, -0.18, 0.18);
-    root.add(foot);
+    foot.position.set(0, -0.46, 0.18);
+    pivot.add(foot);
     feet.push(foot);
   }
 
@@ -133,6 +141,7 @@ export function createPandaModel(): PandaRig {
     leftArm, rightArm,
     leftLeg: legs[0], rightLeg: legs[1],
     leftFoot: feet[0], rightFoot: feet[1],
+    leftFootPivot: footPivots[0], rightFootPivot: footPivots[1],
     leftEar: ears[0], rightEar: ears[1],
     leftEye: eyes[0], rightEye: eyes[1],
     leftEyePatch: eyePatches[0], rightEyePatch: eyePatches[1],
