@@ -1,12 +1,35 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'wouter';
-import { ChevronRight, Play, Database, Sparkles, ShieldCheck } from 'lucide-react';
+import { ChevronRight, Play, Database, Sparkles, ShieldCheck, X, RotateCcw, FlaskConical, Trash2 } from 'lucide-react';
 import { useAppearance } from '../lib/AppearanceContext';
 import { updateSEO } from '../lib/seo';
 import { KinomaLogo } from '../components/ui/KinomaLogo';
 
 export function Settings() {
   const { openSettingsModal } = useAppearance();
+  const [devToolsOpen, setDevToolsOpen] = useState(false);
+  const pandaBufferRef = React.useRef('');
+  const pandaCountRef = React.useRef(0);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.isContentEditable) return;
+      if (event.key.length !== 1 || /\\s/.test(event.key)) return;
+      const char = event.key.toLowerCase();
+      pandaBufferRef.current = (pandaBufferRef.current + char).slice(-5);
+      if (pandaBufferRef.current === 'panda') {
+        pandaCountRef.current += 1;
+        pandaBufferRef.current = '';
+        if (pandaCountRef.current >= 3) {
+          pandaCountRef.current = 0;
+          setDevToolsOpen(true);
+        }
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   React.useEffect(() => {
     updateSEO({ title: 'Settings', description: 'Manage your Panda.fun preferences.', type: 'website' });
@@ -59,6 +82,48 @@ export function Settings() {
           </div>
           <span className="panda-settings-footer__paw" aria-hidden="true">🐾</span>
         </section>
+
+        {devToolsOpen && (
+          <div className="panda-devtools" role="dialog" aria-modal="true" aria-labelledby="panda-devtools-title">
+            <button className="panda-devtools__backdrop" aria-label="Close developer tools" onClick={() => setDevToolsOpen(false)} />
+            <section className="panda-devtools__panel">
+              <header className="panda-devtools__head">
+                <div>
+                  <span className="panda-settings-page__eyebrow">SECRET TEST LAB</span>
+                  <h2 id="panda-devtools-title">Panda Dev Tools</h2>
+                  <p>Replay and inspect the onboarding flow without changing the normal Settings surface.</p>
+                </div>
+                <button className="panda-devtools__close" type="button" onClick={() => setDevToolsOpen(false)} aria-label="Close"><X size={18} /></button>
+              </header>
+
+              <div className="panda-devtools__actions">
+                <button type="button" onClick={() => window.dispatchEvent(new Event('panda_dev_replay_onboarding'))}>
+                  <RotateCcw size={17} /><span><strong>Replay onboarding</strong><small>Open it with the current saved preferences.</small></span>
+                </button>
+                <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('panda_dev_onboarding_stage', { detail: { step: 0 } }))}>
+                  <FlaskConical size={17} /><span><strong>Start / arrival</strong><small>Jump straight to Panda's entrance.</small></span>
+                </button>
+                <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('panda_dev_onboarding_stage', { detail: { step: 5 } }))}>
+                  <Play size={17} /><span><strong>Ready stage</strong><small>Test the final transition and exit.</small></span>
+                </button>
+                <button type="button" className="is-danger" onClick={() => window.dispatchEvent(new Event('panda_dev_reset_onboarding'))}>
+                  <Trash2 size={17} /><span><strong>Reset onboarding</strong><small>Clear the onboarding profile and replay from scratch.</small></span>
+                </button>
+              </div>
+
+              <div className="panda-devtools__stages">
+                <span>Jump to stage</span>
+                <div>
+                  {['Welcome', 'Your Panda', 'Taste', 'Language', 'Playback', 'Ready'].map((label, step) => (
+                    <button key={label} type="button" onClick={() => window.dispatchEvent(new CustomEvent('panda_dev_onboarding_stage', { detail: { step } }))}>{step + 1}. {label}</button>
+                  ))}
+                </div>
+              </div>
+
+              <footer>Tip: close this panel, then type <kbd>panda</kbd> three times again anytime you are on Settings.</footer>
+            </section>
+          </div>
+        )}
 
         <div className="panda-settings-page__brand" aria-hidden="true">panda<span>.fun</span></div>
       </div>
