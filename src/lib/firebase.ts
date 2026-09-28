@@ -36,18 +36,17 @@ export const db = firebaseConfig.firestoreDatabaseId
 
 export const googleProvider = new GoogleAuthProvider();
 
-// Validate connection on boot as required by Firebase skill
+// Optional diagnostics are exposed for explicit health checks only.
+// Do not perform a Firestore network request during application module startup.
 export async function testFirestoreConnection() {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
+    return true;
   } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.warn("Firestore connection check: offline", error.message);
-    }
+    console.warn('[Panda.fun] Firestore connection check failed:', error);
+    return false;
   }
 }
-
-testFirestoreConnection();
 
 export {
   signInWithPopup,
