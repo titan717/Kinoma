@@ -25,6 +25,9 @@ export function PandaScene({ event, reducedMotion = false, onReady, onError }: P
     let frame = 0;
     let disposed = false;
     let rig: PandaRig | null = null;
+    let pageHidden = document.hidden;
+    let sceneVisible = true;
+    const pointer = { x: 0, y: 0 };
 
     try {
       const scene = new THREE.Scene();
@@ -46,6 +49,18 @@ export function PandaScene({ event, reducedMotion = false, onReady, onError }: P
       rig = createPandaModel();
       rig.root.position.set(-4.5, -0.45, 0);
       scene.add(rig.root);
+
+      const handlePointer = (event: PointerEvent) => {
+        pointer.x = (event.clientX / Math.max(window.innerWidth, 1)) * 2 - 1;
+        pointer.y = (event.clientY / Math.max(window.innerHeight, 1)) * 2 - 1;
+      };
+      const handleVisibility = () => { pageHidden = document.hidden; };
+      const visibilityObserver = new IntersectionObserver(([entry]) => {
+        sceneVisible = entry?.isIntersecting ?? true;
+      }, { threshold: 0.01 });
+      visibilityObserver.observe(mount);
+      window.addEventListener('pointermove', handlePointer, { passive: true });
+      document.addEventListener('visibilitychange', handleVisibility);
 
       const resize = () => {
         if (!renderer || !mount) return;
@@ -79,6 +94,10 @@ export function PandaScene({ event, reducedMotion = false, onReady, onError }: P
         if (disposed || !renderer || !rig) return;
         const elapsed = clock.getElapsedTime();
         const state = stateRef.current;
+        if (pageHidden || !sceneVisible) {
+          frame = requestAnimationFrame(animate);
+          return;
+        }
 
         if (!reducedMotion) {
           const targetX = state === 'walk-out' ? 4.8 : 0;
@@ -120,9 +139,8 @@ export function PandaScene({ event, reducedMotion = false, onReady, onError }: P
           rig.leftEye.scale.y = eyeScale;
           rig.rightEye.scale.y = eyeScale;
 
-          const mouseX = (mount.clientWidth ? (window.innerWidth / 2 - window.innerWidth * 0.22) / Math.max(window.innerWidth, 1) : 0);
-          camera.position.x = THREE.MathUtils.lerp(camera.position.x, mouseX * -0.55, 0.025);
-          camera.position.y = THREE.MathUtils.lerp(camera.position.y, 1.75 + Math.sin(elapsed * 0.22) * 0.025, 0.025);
+          camera.position.x = THREE.MathUtils.lerp(camera.position.x, pointer.x * -0.35, 0.025);
+          camera.position.y = THREE.MathUtils.lerp(camera.position.y, 1.75 + pointer.y * -0.08 + Math.sin(elapsed * 0.22) * 0.025, 0.025);
 
           environment.leaves.children.forEach((leaf) => {
             leaf.position.y -= (leaf.userData.speed as number) * 0.003;
@@ -140,6 +158,9 @@ export function PandaScene({ event, reducedMotion = false, onReady, onError }: P
         disposed = true;
         cancelAnimationFrame(frame);
         observer.disconnect();
+        visibilityObserver.disconnect();
+        window.removeEventListener('pointermove', handlePointer);
+        document.removeEventListener('visibilitychange', handleVisibility);
         controller.dispose();
         controllerRef.current = null;
         scene.traverse((object) => {
@@ -157,6 +178,9 @@ export function PandaScene({ event, reducedMotion = false, onReady, onError }: P
       return () => {
         disposed = true;
         cancelAnimationFrame(frame);
+        visibilityObserver.disconnect();
+        window.removeEventListener('pointermove', handlePointer);
+        document.removeEventListener('visibilitychange', handleVisibility);
         renderer?.dispose();
         renderer?.domElement.remove();
       };
