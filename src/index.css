@@ -5328,3 +5328,26 @@ body {
 .kinoma-rail-card__copy p { font-size:9px; }
 @media (max-width:640px) { .kinoma-rail-card { width:138px; min-width:138px; } }
 .panda-home-hover-trailer { border:1px solid rgba(165,214,167,.12); }
+
+
+/* Complete 3D Panda notice animation. */
+.panda-stream-notice__panda { transform-style:preserve-3d; }
+.panda-stream-notice__panda::after { content:''; position:absolute; left:25px; bottom:5px; width:118px; height:16px; border-radius:50%; background:rgba(0,0,0,.28); filter:blur(7px); transform:translateZ(-12px); animation:panda-notice-shadow 4.2s ease-in-out infinite; }
+.panda-stream-notice__bamboo-stick { position:absolute; right:-2px; top:53px; font-size:32px; line-height:1; transform:rotate(22deg) translateZ(28px); transform-origin:left center; animation:panda-notice-bamboo-wave 2.8s ease-in-out infinite; filter:drop-shadow(4px 7px 6px rgba(0,0,0,.25)); z-index:8; }
+.panda-stream-notice__paw--left::after,.panda-stream-notice__paw--right::after { content:''; position:absolute; width:7px; height:7px; border-radius:50%; background:#3b3b3b; box-shadow:11px 3px #3b3b3b,22px 1px #3b3b3b; left:14px; top:9px; opacity:.8; }
+@keyframes panda-notice-shadow { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(.84);opacity:.42} }
+@keyframes panda-notice-bamboo-wave { 0%,100%{transform:rotate(22deg) translateZ(28px) translateY(0)} 50%{transform:rotate(34deg) translateZ(28px) translateY(-5px)} }
+@media (prefers-reduced-motion:reduce){.panda-stream-notice__panda::after,.panda-stream-notice__bamboo-stick{animation:none!important}}
+
+/* Search is a centered Panda stage — the companion lives below the copy instead of competing with the search field. */
+.kinoma-search-head { position:relative; display:flex; flex-direction:column; align-items:center; text-align:center; gap:18px; min-height:520px; padding-top:30px; }
+.kinoma-search-head__copy { max-width:760px!important; margin-inline:auto; }
+.kinoma-search-head__copy h1 { max-width:none; }
+.kinoma-search-head__copy p { margin-inline:auto; }
+.kinoma-search-control { justify-self:auto; width:min(720px,calc(100vw - 40px)); margin-inline:auto; order:2; position:relative; z-index:5; }
+.panda-search-companion { position:relative; right:auto; top:auto; width:300px; height:190px; transform:none; order:3; margin-top:-6px; margin-inline:auto; z-index:2; }
+.panda-search-panda { left:72px; }
+.panda-search-bamboo { right:28px; }
+.panda-search-caption { right:0; }
+@media(max-width:900px){.kinoma-search-head__copy{max-width:760px!important}.panda-search-companion{opacity:1;right:auto;transform:none}.kinoma-search-head{min-height:500px}}
+@media(max-width:640px){.kinoma-search-head{min-height:455px;padding-top:12px}.kinoma-search-control{width:calc(100vw - 28px)}.panda-search-companion{display:block;transform:scale(.78);transform-origin:center top;margin-top:-12px}.kinoma-search-head__copy{max-width:calc(100vw - 28px)!important}}
