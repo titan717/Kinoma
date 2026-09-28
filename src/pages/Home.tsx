@@ -95,6 +95,7 @@ export function Home() {
   const [pandaSecret, setPandaSecret] = useState<string | null>(null);
   const [hoverTrailer, setHoverTrailer] = useState<MovieApiMedia | null>(null);
   const [hoverTrailerUrl, setHoverTrailerUrl] = useState('');
+  const [hoverTrailerReady, setHoverTrailerReady] = useState(false);
   const hoverTrailerTimer = useRef<number | null>(null);
 
   useEffect(() => {
@@ -137,15 +138,17 @@ export function Home() {
   const showHoverTrailer = (item: MovieApiMedia) => {
     if (hoverTrailerTimer.current) window.clearTimeout(hoverTrailerTimer.current);
     setHoverTrailer(item);
+    setHoverTrailerUrl('');
+    setHoverTrailerReady(false);
     hoverTrailerTimer.current = window.setTimeout(async () => {
       const result = await api.getTrailer(item.id).catch(() => ({ available: false, trailer: null }));
-      if (result?.trailer?.embedUrl) setHoverTrailerUrl(trailerSrc(result.trailer.embedUrl, false));
+      if (result?.trailer?.embedUrl) setHoverTrailerUrl(trailerSrc(result.trailer.embedUrl, true));
     }, 280);
   };
 
   const hideHoverTrailer = () => {
     if (hoverTrailerTimer.current) window.clearTimeout(hoverTrailerTimer.current);
-    hoverTrailerTimer.current = window.setTimeout(() => { setHoverTrailer(null); setHoverTrailerUrl(''); }, 180);
+    hoverTrailerTimer.current = window.setTimeout(() => { setHoverTrailer(null); setHoverTrailerUrl(''); setHoverTrailerReady(false); }, 180);
   };
 
   useEffect(() => () => { if (hoverTrailerTimer.current) window.clearTimeout(hoverTrailerTimer.current); }, []);
@@ -189,7 +192,7 @@ export function Home() {
         {sections?.popularTv?.length > 0 && <ContentRail kind="tv" title="Popular series" items={sections.popularTv} onHover={showHoverTrailer} onLeave={hideHoverTrailer} />}
 
         {hoverTrailer && <div className="panda-home-hover-trailer" onMouseEnter={() => { if (hoverTrailerTimer.current) window.clearTimeout(hoverTrailerTimer.current); }} onMouseLeave={hideHoverTrailer} role="dialog" aria-label={hoverTrailer.title + " trailer preview"}>
-          <div className="panda-home-hover-trailer__media">{hoverTrailerUrl ? <iframe src={hoverTrailerUrl} title={hoverTrailer.title + " trailer preview"} allow="autoplay; encrypted-media; picture-in-picture" /> : <img src={(hoverTrailer.backdrop || hoverTrailer.poster || "") as string} alt="" />}</div>
+          <div className="panda-home-hover-trailer__media">{hoverTrailerUrl ? <iframe src={hoverTrailerUrl} title={hoverTrailer.title + " trailer preview"} allow="autoplay; encrypted-media; picture-in-picture" onLoad={() => setHoverTrailerReady(true)} /> : <img src={(hoverTrailer.backdrop || hoverTrailer.poster || "") as string} alt="" />}</div>
           <div className="panda-home-hover-trailer__copy"><span>🐼 QUICK LOOK</span><strong>{hoverTrailer.title}</strong><small>{[hoverTrailer.year, hoverTrailer.rating ? `★ ${hoverTrailer.rating}` : null, ...(hoverTrailer.genres || []).slice(0, 2)].filter(Boolean).join(" • ")}</small><em>Click to open details</em></div>
         </div>}
 
