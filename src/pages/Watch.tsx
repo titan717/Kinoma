@@ -153,7 +153,8 @@ export function Watch() {
 
       if (kind === 'movie' && player.mediaType !== 'movie') return;
       if (kind === 'series' && player.mediaType !== 'tv') return;
-      const playerTmdbId = Number(player.mtmdbId ?? player.tmdbId);\n      if (playerTmdbId !== Number(parsed.id)) return;
+      const playerTmdbId = Number(player.mtmdbId ?? player.tmdbId);
+      if (playerTmdbId !== Number(parsed.id)) return;
 
       const progressSeason =
         kind === 'series' && typeof player.season === 'number' && player.season > 0
