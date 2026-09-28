@@ -34,7 +34,8 @@ const STORAGE_PINNED = 'panda_sidebar_pinned';
 
 function readStorage(key: string, fallback: boolean) {
   try {
-    const value = localStorage.getItem(key);
+    if (typeof window === 'undefined') return fallback;
+    const value = window.localStorage.getItem(key);
     return value === null ? fallback : value === 'true';
   } catch {
     return fallback;
@@ -61,8 +62,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_PINNED, String(pinned));
-      localStorage.setItem(STORAGE_EXPANDED, String(expanded));
+      window.localStorage.setItem(STORAGE_PINNED, String(pinned));
+      window.localStorage.setItem(STORAGE_EXPANDED, String(expanded));
     } catch {}
   }, [expanded, pinned]);
 
