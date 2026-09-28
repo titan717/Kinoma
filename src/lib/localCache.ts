@@ -258,7 +258,7 @@ export const localCache = {
               ttl: 1000 * 60 * 60 * 2, // 2 hours default for SWR cache
               version: CACHE_VERSION
             };
-            localStorage.setItem(storageKey, JSON.stringify(entry));
+            window.localStorage.setItem(storageKey, JSON.stringify(entry));
           } catch {
             localCache.evictOldest(5);
           }
