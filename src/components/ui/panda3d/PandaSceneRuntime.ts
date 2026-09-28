@@ -211,9 +211,25 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
       camera.position.y = THREE.MathUtils.lerp(camera.position.y, 1.7 + pointer.y * -0.055, 0.025);
 
       environment.leaves.children.forEach((leaf) => {
-        leaf.position.y -= (leaf.userData.speed as number) * 0.003;
-        leaf.rotation.z += 0.002;
-        if (leaf.position.y < -0.5) leaf.position.y = 4.2;
+        const data = leaf.userData as { baseRotation?: number; sway?: number; phase?: number };
+        const phase = data.phase ?? 0;
+        const sway = data.sway ?? 0.014;
+        leaf.rotation.z = (data.baseRotation ?? leaf.rotation.z) + Math.sin(elapsed * 1.15 + phase) * sway;
+        leaf.position.x += Math.sin(elapsed * 0.22 + phase) * 0.0007;
+      });
+
+      environment.mist.children.forEach((cloud) => {
+        const data = cloud.userData as { speed?: number; phase?: number };
+        cloud.position.x += (data.speed ?? 0.001) * 0.45;
+        cloud.position.y += Math.sin(elapsed * 0.35 + (data.phase ?? 0)) * 0.00035;
+        if (cloud.position.x > 6.5) cloud.position.x = -6.5;
+      });
+
+      environment.particles.children.forEach((particle) => {
+        const data = particle.userData as { speed?: number; phase?: number };
+        particle.position.y += data.speed ?? 0.0015;
+        particle.position.x += Math.sin(elapsed * 0.7 + (data.phase ?? 0)) * 0.0008;
+        if (particle.position.y > 4.2) particle.position.y = -0.2;
       });
     }
 
