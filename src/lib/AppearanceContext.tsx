@@ -34,7 +34,8 @@ const AppearanceContext = createContext<AppearanceContextType | undefined>(undef
 export function AppearanceProvider({ children }: { children: React.ReactNode }) {
   const [playerSettings, setPlayerSettings] = useState<PlayerSettings>(() => {
     try {
-      const stored = localStorage.getItem(PLAYER_SETTINGS_KEY);
+      if (typeof window === 'undefined') return DEFAULT_PLAYER_SETTINGS;
+      const stored = window.localStorage.getItem(PLAYER_SETTINGS_KEY);
       if (stored) return { ...DEFAULT_PLAYER_SETTINGS, ...JSON.parse(stored) };
     } catch {}
     return DEFAULT_PLAYER_SETTINGS;
@@ -52,7 +53,7 @@ export function AppearanceProvider({ children }: { children: React.ReactNode }) 
           ...(typeof detail.skipIntro === 'boolean' ? { skipIntro: detail.skipIntro } : {}),
           ...(typeof detail.skipOutro === 'boolean' ? { skipOutro: detail.skipOutro } : {}),
         };
-        try { localStorage.setItem(PLAYER_SETTINGS_KEY, JSON.stringify(updated)); } catch {}
+        try { window.localStorage.setItem(PLAYER_SETTINGS_KEY, JSON.stringify(updated)); } catch {}
         return updated;
       });
     };
@@ -67,7 +68,7 @@ export function AppearanceProvider({ children }: { children: React.ReactNode }) 
     setPlayerSettings(prev => {
       const updated = { ...prev, [key]: value };
       try {
-        localStorage.setItem(PLAYER_SETTINGS_KEY, JSON.stringify(updated));
+        window.localStorage.setItem(PLAYER_SETTINGS_KEY, JSON.stringify(updated));
         window.dispatchEvent(new CustomEvent('panda_player_settings_change', { detail: updated }));
       } catch {}
       return updated;
