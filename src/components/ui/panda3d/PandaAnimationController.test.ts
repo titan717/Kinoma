@@ -4,7 +4,7 @@ import { animationForEvent } from './PandaAnimationController';
 describe('Panda animation mapping', () => {
   it('maps onboarding events to expressive animation states', () => {
     expect(animationForEvent('arrive')).toBe('walk-in');
-    expect(animationForEvent('recognize')).toBe('recognize');
+    expect(animationForEvent('recognize')).toBe('wave');
     expect(animationForEvent('genre-select')).toBe('react');
     expect(animationForEvent('language-select')).toBe('react');
     expect(animationForEvent('playback-toggle')).toBe('remote-interaction');
