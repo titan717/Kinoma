@@ -120,7 +120,7 @@ export function Settings() {
                 </div>
               </div>
 
-              <footer>Tip: close this panel, then type <kbd>panda</kbd> three times again anytime you are on Settings.</footer>
+              <footer>Tip: type <kbd>panda</kbd> three times on Settings, or press <kbd>Ctrl/Cmd + Shift + P</kbd>.</footer>
             </section>
           </div>
         )}
