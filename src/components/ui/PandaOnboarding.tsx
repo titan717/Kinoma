@@ -101,28 +101,6 @@ export function PandaOnboarding() {
     setSceneEvent(step === 0 ? 'arrive' : events[Math.min(step - 1, events.length - 1)]);
   }, [step, visible]);
 
-  useEffect(() => {
-    if (!visible || typeof window === 'undefined') return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        skip();
-      }
-      if (event.key === 'ArrowLeft' && step > 0 && step < 5) {
-        event.preventDefault();
-        setDirection('back');
-        setStep(value => value - 1);
-      }
-      if (event.key === 'ArrowRight' && step > 0 && step < 5 && canContinue) {
-        event.preventDefault();
-        setDirection('forward');
-        setStep(value => value + 1);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [visible, step, canContinue]);
-
   // Hidden Settings Dev Tools can deterministically replay/reset onboarding.
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -218,6 +196,28 @@ export function PandaOnboarding() {
     if (step === 2) return state.genres.length >= 3;
     return true;
   }, [step, state]);
+
+  useEffect(() => {
+    if (!visible || typeof window === 'undefined') return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        skip();
+      }
+      if (event.key === 'ArrowLeft' && step > 0 && step < 5) {
+        event.preventDefault();
+        setDirection('back');
+        setStep(value => value - 1);
+      }
+      if (event.key === 'ArrowRight' && step > 0 && step < 5 && canContinue) {
+        event.preventDefault();
+        setDirection('forward');
+        setStep(value => value + 1);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [visible, step, canContinue]);
 
   if (!visible) return null;
 
