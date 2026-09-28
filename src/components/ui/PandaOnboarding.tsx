@@ -32,11 +32,20 @@ const DEFAULT_STATE: OnboardingState = {
 };
 
 function readState(): OnboardingState {
+  if (typeof window === 'undefined') return DEFAULT_STATE;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return { ...DEFAULT_STATE, ...JSON.parse(raw) };
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') return { ...DEFAULT_STATE, ...parsed };
+    }
   } catch {}
   return DEFAULT_STATE;
+}
+
+function hasStorageValue(key: string, storage: Storage | undefined) {
+  if (!storage) return false;
+  try { return Boolean(storage.getItem(key)); } catch { return false; }
 }
 
 const events: PandaSceneEvent[] = ['recognize', 'genre-select', 'language-select', 'playback-toggle', 'ready'];
@@ -50,16 +59,34 @@ export function PandaOnboarding() {
   const finishTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (localStorage.getItem(STORAGE_KEY)) return;
+    if (typeof window === 'undefined') return;
+    if (hasStorageValue(STORAGE_KEY, window.localStorage)) return;
+
     setState(readState());
-    const open = () => setVisible(true);
-    const introShown = sessionStorage.getItem('panda_intro_shown_v3');
-    if (introShown) {
-      const timer = window.setTimeout(open, 150);
+    let opened = false;
+    const open = () => {
+      if (opened) return;
+      opened = true;
+      setVisible(true);
+    };
+
+    // Re-check the intro state after mounting. This closes the race where
+    // IntroSplash completes before this listener is attached (notably in
+    // React StrictMode and on fast refreshes).
+    if (hasStorageValue('panda_intro_shown_v3', window.sessionStorage)) {
+      const timer = window.setTimeout(open, 80);
       return () => window.clearTimeout(timer);
     }
+
     window.addEventListener('panda_intro_complete', open);
-    return () => window.removeEventListener('panda_intro_complete', open);
+    const recoveryTimer = window.setTimeout(() => {
+      if (hasStorageValue('panda_intro_shown_v3', window.sessionStorage)) open();
+    }, 900);
+
+    return () => {
+      window.removeEventListener('panda_intro_complete', open);
+      window.clearTimeout(recoveryTimer);
+    };
   }, []);
 
   useEffect(() => {
@@ -111,7 +138,7 @@ export function PandaOnboarding() {
     return true;
   }, [step, state]);
 
-  const reducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reducedMotion = typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   if (!visible) return null;
 
