@@ -5,7 +5,7 @@ export function animationForEvent(event: PandaSceneEvent, reducedMotion = false)
 
   switch (event) {
     case 'arrive': return 'walk-in';
-    case 'recognize': return 'recognize';
+    case 'recognize': return 'wave';
     case 'genre-select':
     case 'language-select': return 'react';
     case 'playback-toggle': return 'remote-interaction';
