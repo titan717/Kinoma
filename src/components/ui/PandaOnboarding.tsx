@@ -9,7 +9,7 @@ import { PreferenceStage } from './panda3d/PreferenceStage';
 import { CompletionTransition } from './panda3d/CompletionTransition';
 import type { PandaSceneEvent } from './panda3d/pandaSceneTypes';
 
-const STORAGE_KEY = 'panda_onboarding_v1';
+const STORAGE_KEY = 'panda_onboarding_v2';
 const GENRES = ['Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Romance', 'Sci-Fi', 'Thriller', 'Sports', 'Slice of Life'];
 const LANGUAGES = ['English', 'Japanese', 'Hindi', 'Korean', 'Spanish'];
 const AVATARS = [
@@ -79,13 +79,19 @@ export function PandaOnboarding() {
     }
 
     window.addEventListener('panda_intro_complete', open);
+
+    // The intro is intentionally non-blocking. If its session storage is
+    // unavailable (private mode, blocked storage, or a failed optional intro),
+    // do not leave first-time users stranded without onboarding.
     const recoveryTimer = window.setTimeout(() => {
       if (hasStorageValue('panda_intro_shown_v3', window.sessionStorage)) open();
     }, 900);
+    const fallbackTimer = window.setTimeout(open, 3600);
 
     return () => {
       window.removeEventListener('panda_intro_complete', open);
       window.clearTimeout(recoveryTimer);
+      window.clearTimeout(fallbackTimer);
     };
   }, []);
 
