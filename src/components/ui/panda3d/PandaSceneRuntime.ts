@@ -29,7 +29,6 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
   let visibilityObserver: IntersectionObserver | null = null;
   let resizeObserver: ResizeObserver | null = null;
   const pointer = { x: 0, y: 0 };
-  let walkOutStartedAt = 0;
   let stateStartedAt = performance.now();
 
   const scene = new THREE.Scene();
@@ -38,7 +37,11 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
   camera.lookAt(0, 1.45, 0);
 
   const cap = Math.min(window.devicePixelRatio || 1, reducedMotion ? 1.25 : 1.75);
-  renderer = new THREE.WebGLRenderer({ antialias: !reducedMotion, alpha: true, powerPreference: 'high-performance' });
+  renderer = new THREE.WebGLRenderer({
+    antialias: !reducedMotion,
+    alpha: true,
+    powerPreference: 'high-performance',
+  });
   renderer.setPixelRatio(cap);
   renderer.setClearColor(0x000000, 0);
   mount.appendChild(renderer.domElement);
@@ -56,7 +59,10 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
     (next) => {
       stateRef.current = next;
       stateStartedAt = performance.now();
-      if (next === 'walk-out') walkOutStartedAt = performance.now();
+      if (rig) {
+        rig.root.rotation.z = 0;
+        rig.root.scale.setScalar(0.94);
+      }
     },
   );
 
@@ -66,7 +72,10 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
   };
 
   const handleVisibility = () => { pageHidden = document.hidden; syncLoop(); };
-  const handleIntersection = ([entry]: IntersectionObserverEntry[]) => { sceneVisible = entry?.isIntersecting ?? true; syncLoop(); };
+  const handleIntersection = ([entry]: IntersectionObserverEntry[]) => {
+    sceneVisible = entry?.isIntersecting ?? true;
+    syncLoop();
+  };
 
   const resize = () => {
     if (!renderer || disposed) return;
@@ -80,84 +89,121 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
   const animate = () => {
     if (disposed || !renderer || !rig || !running) return;
 
-    const elapsed = performance.now() / 1000;
+    const now = performance.now();
+    const elapsed = now / 1000;
     const state = stateRef.current;
-    const t = (performance.now() - stateStartedAt) / 1000;
-    const smooth = (value: number) => THREE.MathUtils.smoothstep(Math.min(Math.max(value, 0), 1), 0, 1);
+    const t = (now - stateStartedAt) / 1000;
+    const smooth = (value: number) => THREE.MathUtils.smoothstep(THREE.MathUtils.clamp(value, 0, 1), 0, 1);
 
     if (!reducedMotion) {
-      // Cinematic idle: breathing, tiny weight shifts, eye blinks and curious head motion.
-      const breath = Math.sin(elapsed * 1.7) * 0.028;
-      rig.body.scale.y = 1 + breath;
-      rig.root.position.y = -0.45 + Math.sin(elapsed * 2.1) * 0.018;
-      rig.head.rotation.y = THREE.MathUtils.lerp(rig.head.rotation.y, pointer.x * 0.08 + Math.sin(elapsed * 0.7) * 0.035, 0.055);
-      rig.head.rotation.z = THREE.MathUtils.lerp(rig.head.rotation.z, pointer.y * -0.025, 0.055);
+      const walkCycle = Math.sin(t * 8.8);
+      const walkCycleOpposite = Math.sin(t * 8.8 + Math.PI);
+      const breath = Math.sin(elapsed * 1.55) * 0.022;
 
-      if (state === 'walk-in') {
-        const p = smooth(t / 1.55);
-        rig.root.position.x = THREE.MathUtils.lerp(-5.8, -0.05, p);
-        rig.root.rotation.y = THREE.MathUtils.lerp(-0.22, 0, p);
-        const stride = Math.sin(t * 10) * 0.16 * (1 - p * 0.7);
-        rig.leftLeg.rotation.z = stride;
-        rig.rightLeg.rotation.z = -stride;
-        rig.leftArm.rotation.z = 0.28 - stride * 0.65;
-        rig.rightArm.rotation.z = -0.28 + stride * 0.65;
-        if (t > 1.52) {
-          rig.leftLeg.rotation.z = THREE.MathUtils.lerp(rig.leftLeg.rotation.z, 0, 0.12);
-          rig.rightLeg.rotation.z = THREE.MathUtils.lerp(rig.rightLeg.rotation.z, 0, 0.12);
+      // Body mechanics stay subtle: breathing and a controlled center-of-mass shift.
+      rig.body.scale.y = 1 + breath;
+      rig.body.rotation.z = THREE.MathUtils.lerp(rig.body.rotation.z, Math.sin(elapsed * 1.05) * 0.018, 0.045);
+
+      if (state === 'walk-in' || state === 'walk-out') {
+        const entering = state === 'walk-in';
+        const duration = entering ? 1.85 : 1.65;
+        const progress = smooth(t / duration);
+        const fromX = entering ? -5.8 : 0;
+        const toX = entering ? 0 : 6.1;
+        const eased = entering ? progress * progress * (3 - 2 * progress) : progress;
+
+        rig.root.position.x = THREE.MathUtils.lerp(fromX, toX, eased);
+        rig.root.position.y = -0.45 + Math.abs(Math.sin(t * 8.8)) * 0.045;
+        rig.root.position.z = Math.sin(progress * Math.PI) * 0.22;
+        rig.root.rotation.y = THREE.MathUtils.lerp(entering ? -0.24 : 0, entering ? 0 : 0.3, eased);
+        rig.root.rotation.z = Math.sin(t * 4.4) * 0.012;
+
+        // Alternating feet, hips and arms create a readable four-beat walking rhythm.
+        rig.leftLeg.rotation.z = walkCycle * 0.22;
+        rig.rightLeg.rotation.z = walkCycleOpposite * 0.22;
+        rig.leftFoot.rotation.z = walkCycle * 0.11;
+        rig.rightFoot.rotation.z = walkCycleOpposite * 0.11;
+        rig.leftArm.rotation.z = 0.25 - walkCycleOpposite * 0.17;
+        rig.rightArm.rotation.z = -0.25 - walkCycle * 0.17;
+        rig.head.rotation.x = THREE.MathUtils.lerp(rig.head.rotation.x, Math.sin(t * 4.4) * 0.025, 0.08);
+        rig.head.rotation.y = THREE.MathUtils.lerp(rig.head.rotation.y, pointer.x * 0.06, 0.045);
+
+        if (!entering && progress > 0.76) {
+          const fadeScale = THREE.MathUtils.lerp(0.94, 0.72, smooth((progress - 0.76) / 0.24));
+          rig.root.scale.setScalar(fadeScale);
         }
-      } else if (state === 'wave') {
-        rig.root.position.x = THREE.MathUtils.lerp(rig.root.position.x, 0, 0.1);
-        rig.rightArm.rotation.z = -0.95 + Math.sin(t * 8.5) * 0.3;
-        rig.rightArm.rotation.x = Math.sin(t * 4.2) * 0.08;
-        rig.head.rotation.z = Math.sin(t * 2.6) * 0.035;
-      } else if (state === 'react') {
-        rig.root.position.x = THREE.MathUtils.lerp(rig.root.position.x, 0, 0.08);
-        const nod = Math.sin(t * 4.5) * Math.max(0, 1 - t * 0.55);
-        rig.head.rotation.x = nod * 0.13;
-        rig.leftEar.rotation.z = Math.sin(t * 6) * 0.07;
-        rig.rightEar.rotation.z = -Math.sin(t * 6) * 0.07;
-      } else if (state === 'remote-interaction') {
-        rig.root.position.x = THREE.MathUtils.lerp(rig.root.position.x, 0, 0.08);
-        rig.rightArm.rotation.z = THREE.MathUtils.lerp(rig.rightArm.rotation.z, -0.58, 0.1);
-        rig.remote.rotation.z = -0.25 + Math.sin(t * 8) * 0.16;
-        rig.remote.rotation.y = Math.sin(t * 5) * 0.12;
-        rig.head.rotation.x = Math.sin(t * 3.8) * 0.045;
-      } else if (state === 'celebrate') {
-        rig.root.position.x = THREE.MathUtils.lerp(rig.root.position.x, 0, 0.1);
-        const hop = Math.abs(Math.sin(t * 4.2)) * 0.13;
-        rig.root.position.y = -0.45 + hop;
-        rig.leftArm.rotation.z = 0.45 + Math.sin(t * 7) * 0.16;
-        rig.rightArm.rotation.z = -0.45 - Math.sin(t * 7) * 0.16;
-        rig.head.rotation.z = Math.sin(t * 5) * 0.045;
-      } else if (state === 'walk-out') {
-        const p = smooth(t / 1.35);
-        rig.root.position.x = THREE.MathUtils.lerp(0, 5.9, p);
-        rig.root.rotation.y = THREE.MathUtils.lerp(0, 0.24, p);
-        const stride = Math.sin(t * 10) * 0.16;
-        rig.leftLeg.rotation.z = stride;
-        rig.rightLeg.rotation.z = -stride;
-        rig.leftArm.rotation.z = 0.28 - stride * 0.65;
-        rig.rightArm.rotation.z = -0.28 + stride * 0.65;
-        rig.root.rotation.z = Math.sin(t * 5) * 0.018;
-        if (t > 1.15) rig.root.scale.setScalar(THREE.MathUtils.lerp(0.94, 0.72, smooth((t - 1.15) / 0.3)));
       } else {
-        rig.root.position.x = THREE.MathUtils.lerp(rig.root.position.x, 0, 0.05);
-        rig.root.rotation.y = THREE.MathUtils.lerp(rig.root.rotation.y, 0, 0.06);
-        rig.leftArm.rotation.z = THREE.MathUtils.lerp(rig.leftArm.rotation.z, 0.28, 0.06);
-        rig.rightArm.rotation.z = THREE.MathUtils.lerp(rig.rightArm.rotation.z, -0.28, 0.06);
-        rig.leftLeg.rotation.z = THREE.MathUtils.lerp(rig.leftLeg.rotation.z, 0, 0.08);
-        rig.rightLeg.rotation.z = THREE.MathUtils.lerp(rig.rightLeg.rotation.z, 0, 0.08);
+        rig.root.position.x = THREE.MathUtils.lerp(rig.root.position.x, 0, 0.07);
+        rig.root.position.y = THREE.MathUtils.lerp(rig.root.position.y, -0.45, 0.1);
+        rig.root.position.z = THREE.MathUtils.lerp(rig.root.position.z, 0, 0.08);
+        rig.root.rotation.y = THREE.MathUtils.lerp(rig.root.rotation.y, 0, 0.07);
+        rig.root.rotation.z = THREE.MathUtils.lerp(rig.root.rotation.z, 0, 0.08);
+
+        // The head leads attention while the ears follow a fraction later.
+        rig.head.rotation.y = THREE.MathUtils.lerp(
+          rig.head.rotation.y,
+          pointer.x * 0.085 + Math.sin(elapsed * 0.72) * 0.028,
+          0.055,
+        );
+        rig.head.rotation.x = THREE.MathUtils.lerp(
+          rig.head.rotation.x,
+          pointer.y * -0.028,
+          0.055,
+        );
+        rig.leftEar.rotation.z = THREE.MathUtils.lerp(
+          rig.leftEar.rotation.z,
+          -pointer.x * 0.035 + Math.sin(elapsed * 1.2) * 0.018,
+          0.045,
+        );
+        rig.rightEar.rotation.z = THREE.MathUtils.lerp(
+          rig.rightEar.rotation.z,
+          -pointer.x * 0.035 - Math.sin(elapsed * 1.2) * 0.018,
+          0.045,
+        );
       }
 
-      const blinkPhase = elapsed % 4.1;
-      const blinking = blinkPhase > 3.72 && blinkPhase < 3.87;
-      const eyeScale = blinking ? 0.12 : 1;
-      rig.leftEye.scale.y = eyeScale;
-      rig.rightEye.scale.y = eyeScale;
+      if (state === 'wave') {
+        const settle = smooth(t / 0.22);
+        rig.rightArm.rotation.z = THREE.MathUtils.lerp(-0.25, -1.02, settle) + Math.sin(t * 7.5) * 0.12;
+        rig.rightArm.rotation.x = Math.sin(t * 3.7) * 0.06;
+        rig.head.rotation.z = Math.sin(t * 2.4) * 0.035;
+      } else if (state === 'react') {
+        const anticipation = smooth(t / 0.18);
+        const settle = 1 - smooth(Math.max(t - 0.35, 0) / 0.75);
+        rig.head.rotation.x = Math.sin(t * 5.2) * 0.10 * settle * anticipation;
+        rig.head.rotation.z = Math.sin(t * 3.1) * 0.025 * settle;
+        rig.leftEar.rotation.z = Math.sin(t * 6.2) * 0.075 * settle;
+        rig.rightEar.rotation.z = -Math.sin(t * 6.2) * 0.075 * settle;
+        rig.body.rotation.z = Math.sin(t * 3.1) * 0.025 * settle;
+      } else if (state === 'remote-interaction') {
+        const reach = smooth(t / 0.3);
+        rig.rightArm.rotation.z = THREE.MathUtils.lerp(-0.25, -0.68, reach);
+        rig.rightArm.rotation.x = -0.18 * reach;
+        rig.remote.rotation.z = -0.25 + Math.sin(t * 8.5) * 0.12;
+        rig.remote.rotation.y = Math.sin(t * 5.5) * 0.08;
+        rig.head.rotation.x = Math.sin(t * 3.8) * 0.045;
+      } else if (state === 'celebrate') {
+        const hop = Math.pow(Math.abs(Math.sin(t * 3.7)), 1.8) * 0.14;
+        rig.root.position.y = THREE.MathUtils.lerp(rig.root.position.y, -0.45 + hop, 0.18);
+        rig.leftArm.rotation.z = 0.46 + Math.sin(t * 6.8) * 0.18;
+        rig.rightArm.rotation.z = -0.46 - Math.sin(t * 6.8) * 0.18;
+        rig.leftEar.rotation.z = Math.sin(t * 7) * 0.055;
+        rig.rightEar.rotation.z = -Math.sin(t * 7) * 0.055;
+        rig.head.rotation.z = Math.sin(t * 4.8) * 0.04;
+      }
 
-      camera.position.x = THREE.MathUtils.lerp(camera.position.x, pointer.x * -0.28, 0.025);
-      camera.position.y = THREE.MathUtils.lerp(camera.position.y, 1.7 + pointer.y * -0.06, 0.025);
+      // Organic blink timing, with slight pupil movement so the face never feels frozen.
+      const blinkPhase = elapsed % 4.3;
+      const blinking = blinkPhase > 3.84 && blinkPhase < 3.98;
+      const eyeScale = blinking ? 0.08 : 1;
+      rig.leftEye.scale.y = THREE.MathUtils.lerp(rig.leftEye.scale.y, eyeScale, 0.55);
+      rig.rightEye.scale.y = THREE.MathUtils.lerp(rig.rightEye.scale.y, eyeScale, 0.55);
+      const pupilX = pointer.x * 0.035;
+      rig.leftEye.position.x = -0.34 + pupilX;
+      rig.rightEye.position.x = 0.34 + pupilX;
+
+      camera.position.x = THREE.MathUtils.lerp(camera.position.x, pointer.x * -0.25, 0.025);
+      camera.position.y = THREE.MathUtils.lerp(camera.position.y, 1.7 + pointer.y * -0.055, 0.025);
 
       environment.leaves.children.forEach((leaf) => {
         leaf.position.y -= (leaf.userData.speed as number) * 0.003;
@@ -173,8 +219,14 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
   function syncLoop() {
     if (disposed) return;
     const shouldRun = !pageHidden && sceneVisible;
-    if (shouldRun && !running) { running = true; frame = requestAnimationFrame(animate); }
-    else if (!shouldRun && running) { running = false; cancelAnimationFrame(frame); frame = 0; }
+    if (shouldRun && !running) {
+      running = true;
+      frame = requestAnimationFrame(animate);
+    } else if (!shouldRun && running) {
+      running = false;
+      cancelAnimationFrame(frame);
+      frame = 0;
+    }
   }
 
   try {
@@ -189,10 +241,14 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
     controller.play('arrive');
     if (options.event && options.event !== 'arrive') controller.play(options.event);
     syncLoop();
-  } catch (error) { onError?.(error); }
+  } catch (error) {
+    onError?.(error);
+  }
 
   return {
-    play(event: PandaSceneEvent) { if (!disposed) controller.play(event); },
+    play(event: PandaSceneEvent) {
+      if (!disposed) controller.play(event);
+    },
     dispose() {
       if (disposed) return;
       disposed = true;
