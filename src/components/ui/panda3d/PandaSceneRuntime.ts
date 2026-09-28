@@ -113,7 +113,10 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
         const eased = entering ? progress * progress * (3 - 2 * progress) : progress;
 
         rig.root.position.x = THREE.MathUtils.lerp(fromX, toX, eased);
-        rig.root.position.y = -0.45 + Math.abs(Math.sin(t * 8.8)) * 0.045;
+        // Keep the feet on the floor: the body rises and falls from a planted contact point,
+        // rather than translating the whole character up and down like a floating sprite.
+        const strideBounce = Math.pow(Math.max(0, Math.sin(t * 8.8)), 2) * 0.028;
+        rig.root.position.y = -0.45 + strideBounce;
         rig.root.position.z = Math.sin(progress * Math.PI) * 0.22;
         rig.root.rotation.y = THREE.MathUtils.lerp(entering ? -0.24 : 0, entering ? 0 : 0.3, eased);
         rig.root.rotation.z = Math.sin(t * 4.4) * 0.012;
@@ -121,8 +124,10 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
         // Alternating feet, hips and arms create a readable four-beat walking rhythm.
         rig.leftLeg.rotation.z = walkCycle * 0.22;
         rig.rightLeg.rotation.z = walkCycleOpposite * 0.22;
-        rig.leftFoot.rotation.z = walkCycle * 0.11;
-        rig.rightFoot.rotation.z = walkCycleOpposite * 0.11;
+        rig.leftFootPivot.rotation.z = walkCycle * 0.22;
+        rig.rightFootPivot.rotation.z = walkCycleOpposite * 0.22;
+        rig.leftFoot.rotation.z = -walkCycle * 0.09;
+        rig.rightFoot.rotation.z = -walkCycleOpposite * 0.09;
         rig.leftArm.rotation.z = 0.25 - walkCycleOpposite * 0.17;
         rig.rightArm.rotation.z = -0.25 - walkCycle * 0.17;
         rig.head.rotation.x = THREE.MathUtils.lerp(rig.head.rotation.x, Math.sin(t * 4.4) * 0.025, 0.08);
