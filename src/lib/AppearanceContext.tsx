@@ -40,6 +40,26 @@ export function AppearanceProvider({ children }: { children: React.ReactNode }) 
     return DEFAULT_PLAYER_SETTINGS;
   });
 
+  useEffect(() => {
+    const handleOnboarding = (event: Event) => {
+      const detail = (event as CustomEvent<Partial<PlayerSettings>>).detail;
+      if (!detail) return;
+      setPlayerSettings(current => {
+        const updated = {
+          ...current,
+          ...(typeof detail.autoPlay === 'boolean' ? { autoPlay: detail.autoPlay } : {}),
+          ...(typeof detail.autoNext === 'boolean' ? { autoNext: detail.autoNext } : {}),
+          ...(typeof detail.skipIntro === 'boolean' ? { skipIntro: detail.skipIntro } : {}),
+          ...(typeof detail.skipOutro === 'boolean' ? { skipOutro: detail.skipOutro } : {}),
+        };
+        try { localStorage.setItem(PLAYER_SETTINGS_KEY, JSON.stringify(updated)); } catch {}
+        return updated;
+      });
+    };
+    window.addEventListener('panda_onboarding_complete', handleOnboarding);
+    return () => window.removeEventListener('panda_onboarding_complete', handleOnboarding);
+  }, []);
+
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [activeSettingsTab, setActiveSettingsTab] = useState<SettingsTab>('player');
 
