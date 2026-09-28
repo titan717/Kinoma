@@ -17,7 +17,7 @@ import { KinomaLogo } from './ui/KinomaLogo';
 const ITEMS = [
   { href: '/home', label: 'Home', Icon: House },
   { href: '/search', label: 'Search', Icon: Search },
-  { href: '/library', label: 'My List', Icon: Library },
+  { href: '/library', label: 'Library', Icon: Library },
   { href: '/settings', label: 'Settings', Icon: Settings },
 ];
 
@@ -29,8 +29,8 @@ const ABOUT_ITEMS = [
   { href: '/contact', label: 'Contact / Support' },
 ];
 
-const STORAGE_EXPANDED = 'kinoma_sidebar_expanded';
-const STORAGE_PINNED = 'kinoma_sidebar_pinned';
+const STORAGE_EXPANDED = 'panda_sidebar_expanded';
+const STORAGE_PINNED = 'panda_sidebar_pinned';
 
 function readStorage(key: string, fallback: boolean) {
   try {
@@ -119,12 +119,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className="kinoma-app-shell"
+      className="panda-app-shell kinoma-app-shell"
       style={{ '--sidebar-width': expanded ? '236px' : '72px' } as React.CSSProperties}
     >
       <aside
         className={`kinoma-sidebar ${expanded ? 'is-expanded' : 'is-collapsed'} ${pinned ? 'is-pinned' : ''}`}
-        aria-label="Primary navigation"
+        aria-label="Panda.fun primary navigation"
         onPointerEnter={expandWithDelay}
         onPointerLeave={collapseWithDelay}
       >
@@ -234,7 +234,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="kinoma-sidebar__avatar" aria-hidden="true">
               <UserRound size={18} strokeWidth={1.7} />
             </div>
-            <span>Profile</span>
+            <span>My Panda</span>
           </Link>
         </div>
 
