@@ -19,6 +19,7 @@ export interface PandaRig {
   leftEyePatch: THREE.Mesh;
   rightEyePatch: THREE.Mesh;
   remote: THREE.Group;
+  bamboo: THREE.Group;
 }
 
 const sphere = (geometry: THREE.BufferGeometry, material: THREE.Material) => new THREE.Mesh(geometry, material);
@@ -154,6 +155,14 @@ export function createPandaModel(): PandaRig {
   tail.position.set(0, 1.02, -0.76);
   root.add(tail);
 
+  const bamboo = new THREE.Group();
+  const bambooStem = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.045, 0.85, 10), accent);
+  bambooStem.rotation.z = -0.48;
+  bambooStem.position.set(0.24, 0.1, 0.5);
+  bamboo.add(bambooStem);
+  bamboo.visible = false;
+  root.add(bamboo);
+
   const remote = new THREE.Group();
   const remoteBody = sphere(new THREE.BoxGeometry(0.27, 0.48, 0.12), accent);
   remote.add(remoteBody);
@@ -171,5 +180,6 @@ export function createPandaModel(): PandaRig {
     leftEye: eyes[0], rightEye: eyes[1],
     leftEyePatch: eyePatches[0], rightEyePatch: eyePatches[1],
     remote,
+    bamboo,
   };
 }
