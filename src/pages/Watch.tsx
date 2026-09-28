@@ -56,12 +56,14 @@ export function Watch() {
     Promise.all([
       api.getDetails(parsed.id),
       api.getWatchLink(parsed.id, kind === 'series' ? parsed.season : 1, kind === 'series' ? parsed.episode : 1),
-      kind === 'series' ? api.getSeasons(parsed.id) : Promise.resolve({ seasons: [] as AnimeSeasonItem[] })
-    ]).then(([details, playback, seasonResult]) => {
+      kind === 'series' ? api.getSeasons(parsed.id) : Promise.resolve({ seasons: [] as AnimeSeasonItem[] }),
+      kind === 'series' ? api.getSeasonEpisodes(parsed.id, parsed.season) : Promise.resolve({ episodes: [] as Episode[] })
+    ]).then(([details, playback, seasonResult, episodeResult]) => {
       if (!active) return;
       setData(details);
       setSource(playback.source);
       setSeasons(seasonResult.seasons);
+      setEpisodes(episodeResult.episodes);
       setIsInList(libraryManager.isInWatchlist(parsed.id));
       updateSEO({ title: 'Watching ' + titleOf(details, parsed.id) + ' — Panda.fun', description: cleanText(details.description), image: details.image, type: 'video.other' });
       setLoading(false);
@@ -74,11 +76,11 @@ export function Watch() {
   }, [parsed.id, parsed.season, parsed.episode, kind]);
 
   useEffect(() => {
-    if (kind !== 'series') return;
+    if (kind !== 'series' || activeSeason === parsed.season) return;
     let active = true;
     api.getSeasonEpisodes(parsed.id, activeSeason).then(result => active && setEpisodes(result.episodes)).catch(() => active && setEpisodes([]));
     return () => { active = false; };
-  }, [parsed.id, activeSeason, kind]);
+  }, [parsed.id, activeSeason, kind, parsed.season]);
 
   const title = titleOf(data, parsed.id || 'Untitled');
   const currentEpisode = episodes.find(ep => ep.number === parsed.episode);
