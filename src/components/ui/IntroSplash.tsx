@@ -13,7 +13,7 @@ export function IntroSplash({ forceShow = false, onComplete }: IntroSplashProps)
     if (forceShow) return true;
     if (typeof window === 'undefined') return false;
     // Check if shown in this session
-    const hasShown = sessionStorage.getItem('kinoma_intro_shown_v2');
+    const hasShown = sessionStorage.getItem('panda_intro_shown_v3');
     return !hasShown;
   });
 
@@ -22,7 +22,8 @@ export function IntroSplash({ forceShow = false, onComplete }: IntroSplashProps)
   const completeIntro = useCallback(() => {
     setIsVisible(false);
     try {
-      sessionStorage.setItem('kinoma_intro_shown_v2', 'true');
+      sessionStorage.setItem('panda_intro_shown_v3', 'true');
+      window.dispatchEvent(new Event('panda_intro_complete'));
     } catch {}
     if (onComplete) onComplete();
   }, [onComplete]);
@@ -35,8 +36,8 @@ export function IntroSplash({ forceShow = false, onComplete }: IntroSplashProps)
       kinomaAudio.playIntroSound();
     };
 
-    window.addEventListener('kinoma_replay_intro', handleReplay);
-    return () => window.removeEventListener('kinoma_replay_intro', handleReplay);
+    window.addEventListener('panda_replay_intro', handleReplay);
+    return () => window.removeEventListener('panda_replay_intro', handleReplay);
   }, []);
 
   useEffect(() => {
@@ -65,7 +66,7 @@ export function IntroSplash({ forceShow = false, onComplete }: IntroSplashProps)
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          key="kinoma-splash-screen"
+          key="panda-splash-screen"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } }}
           className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center overflow-hidden select-none cursor-pointer"
