@@ -5634,3 +5634,52 @@ body {
 @keyframes panda-devtools-in{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
 @media(max-width:620px){.panda-devtools{padding:10px}.panda-devtools__panel{padding:20px;border-radius:22px;max-height:calc(100dvh - 20px)}.panda-devtools__actions{grid-template-columns:1fr}.panda-devtools__head h2{font-size:28px}}
 @media(prefers-reduced-motion:reduce){.panda-devtools__panel{animation:none}}
+
+
+/* Panda onboarding interaction polish */
+.panda-onboarding__arrival-status {
+  display:inline-flex;
+  margin-bottom:14px;
+  color:var(--panda-green);
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.22em;
+}
+.panda-avatar__mark {
+  width:38px;
+  height:38px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:50%;
+  background:rgba(255,255,255,.055);
+  color:#fff;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.08em;
+}
+.panda-onboarding__content.is-forward > div { animation-name:panda-onboarding-step-forward; }
+.panda-onboarding__content.is-back > div { animation-name:panda-onboarding-step-back; }
+.panda-onboarding button:focus-visible,
+.panda-onboarding input:focus-visible,
+.panda-onboarding select:focus-visible {
+  outline:2px solid rgba(165,214,167,.8);
+  outline-offset:3px;
+}
+@keyframes panda-onboarding-step-forward {
+  from { opacity:0; transform:translateX(18px); }
+  to { opacity:1; transform:none; }
+}
+@keyframes panda-onboarding-step-back {
+  from { opacity:0; transform:translateX(-18px); }
+  to { opacity:1; transform:none; }
+}
+@media (max-width:640px) {
+  .panda-onboarding__content { margin-left:0; width:100%; }
+  .panda-onboarding__content > div { padding:22px 19px 22px; }
+  .panda-onboarding__progress { top:82px; width:42vw; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .panda-onboarding__content.is-forward > div,
+  .panda-onboarding__content.is-back > div { animation:none !important; }
+}
