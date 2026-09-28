@@ -1,9 +1,9 @@
 // Kinoma user preferences, search history, and personalization storage
-const SEARCH_HISTORY_KEY = 'kinoma_search_history';
-const GENRE_AFFINITY_KEY = 'kinoma_genre_affinity';
-const AUDIO_PREF_PREFIX = 'kinoma_audio_pref_';
-const SERVER_PREF_PREFIX = 'kinoma_server_pref_';
-const GLOBAL_AUDIO_PREF_KEY = 'kinoma_global_audio_pref';
+const SEARCH_HISTORY_KEY = 'panda_search_history';
+const GENRE_AFFINITY_KEY = 'panda_genre_affinity';
+const AUDIO_PREF_PREFIX = 'panda_audio_pref_';
+const SERVER_PREF_PREFIX = 'panda_server_pref_';
+const GLOBAL_AUDIO_PREF_KEY = 'panda_global_audio_pref';
 export interface GenreAffinity {
   [genre: string]: number;
 }
@@ -29,7 +29,7 @@ export const preferencesUtil = {
       const filtered = existing.filter(q => q.toLowerCase() !== clean.toLowerCase());
       const updated = [clean, ...filtered].slice(0, 10);
       localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updated));
-      window.dispatchEvent(new CustomEvent('kinoma_search_history_updated', { detail: updated }));
+      window.dispatchEvent(new CustomEvent('panda_search_history_updated', { detail: updated }));
     } catch {}
   },
 
@@ -38,14 +38,14 @@ export const preferencesUtil = {
       const existing = preferencesUtil.getRecentSearches();
       const updated = existing.filter(q => q.toLowerCase() !== query.toLowerCase());
       localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updated));
-      window.dispatchEvent(new CustomEvent('kinoma_search_history_updated', { detail: updated }));
+      window.dispatchEvent(new CustomEvent('panda_search_history_updated', { detail: updated }));
     } catch {}
   },
 
   clearRecentSearches: () => {
     try {
       localStorage.removeItem(SEARCH_HISTORY_KEY);
-      window.dispatchEvent(new CustomEvent('kinoma_search_history_updated', { detail: [] }));
+      window.dispatchEvent(new CustomEvent('panda_search_history_updated', { detail: [] }));
     } catch {}
   },
 
