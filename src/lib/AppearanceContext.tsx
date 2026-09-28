@@ -28,7 +28,7 @@ const DEFAULT_PLAYER_SETTINGS: PlayerSettings = {
   preferredAudio: 'sub',
 };
 
-const PLAYER_SETTINGS_KEY = 'kinoma_player_settings';
+const PLAYER_SETTINGS_KEY = 'panda_player_settings';
 const AppearanceContext = createContext<AppearanceContextType | undefined>(undefined);
 
 export function AppearanceProvider({ children }: { children: React.ReactNode }) {
@@ -48,7 +48,7 @@ export function AppearanceProvider({ children }: { children: React.ReactNode }) 
       const updated = { ...prev, [key]: value };
       try {
         localStorage.setItem(PLAYER_SETTINGS_KEY, JSON.stringify(updated));
-        window.dispatchEvent(new CustomEvent('kinoma_player_settings_change', { detail: updated }));
+        window.dispatchEvent(new CustomEvent('panda_player_settings_change', { detail: updated }));
       } catch {}
       return updated;
     });
