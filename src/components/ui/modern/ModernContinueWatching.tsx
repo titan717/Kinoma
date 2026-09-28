@@ -49,16 +49,16 @@ export function ModernContinueWatching() {
         const isMovie = item.episodeNumber === '1' && item.seasonNumber === 1 && item.episodeId === mediaId;
         const watchPath = isMovie
           ? mediaId
-          : `${mediaId}$season${Math.max(1, item.seasonNumber || 1)}$episode${Math.max(1, Number(item.episodeNumber) || 1)}`;
+          : x;
         const watchUrl = `/watch/${encodeURIComponent(watchPath)}?type=${isMovie ? 'movie' : 'series'}&t=${Math.floor(curTime)}`;
 
         return (
           <ModernCarouselSlot key={`cw-${item.animeId || item.slug}-${item.episodeNumber}`}>
-            <div className="group relative flex flex-col w-full select-none">
+            <div className="group panda-continue-card relative flex flex-col w-full select-none">
               
               {/* Card Poster with Click-to-Play Direct Link */}
               <Link href={watchUrl} className="kinoma-focus rounded-2xl block outline-none">
-                <div className="relative aspect-[2/3] w-full rounded-2xl overflow-hidden bg-[#0e1017] border border-white/5 group-hover:border-purple-500/40 group-hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 cursor-pointer">
+                <div className="relative aspect-[2/3] w-full rounded-2xl overflow-hidden bg-[#111411] border border-[#a5d6a7]/10 group-hover:border-[#a5d6a7]/35 group-hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 cursor-pointer">
                   <img
                     src={item.image || DEFAULT_POSTER}
                     alt={item.title}
@@ -79,14 +79,14 @@ export function ModernContinueWatching() {
 
                   {/* Episode Badge */}
                   <div className="absolute top-2 left-2 z-10">
-                    <span className="px-2.5 py-0.5 bg-black/70 backdrop-blur-md text-purple-300 border border-white/10 rounded-full text-[10px] font-bold">
+                    <span className="px-2.5 py-0.5 bg-[#101510]/85 backdrop-blur-md text-[#a5d6a7] border border-white/10 rounded-full text-[10px] font-bold">
                       EP {item.episodeNumber}
                     </span>
                   </div>
 
                   {/* Center Play Button Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-full bg-purple-600 text-white flex items-center justify-center shadow-[0_4px_24px_rgba(147,51,234,0.6)] transform scale-85 group-hover:scale-100 transition-transform duration-300">
+                    <div className="w-12 h-12 rounded-full bg-[#e8f5e9] text-[#172019] flex items-center justify-center shadow-[0_4px_24px_rgba(165,214,167,0.35)] transform scale-85 group-hover:scale-100 transition-transform duration-300">
                       <Play className="w-5 h-5 fill-current ml-0.5" />
                     </div>
                   </div>
@@ -94,7 +94,7 @@ export function ModernContinueWatching() {
                   {/* Bottom Progress Bar */}
                   <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-black/70 z-10 overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-purple-600 to-purple-400 shadow-[0_0_8px_rgba(192,132,252,0.8)]" 
+                      className="h-full bg-gradient-to-r from-[#668a68] to-[#a5d6a7] shadow-[0_0_8px_rgba(165,214,167,0.5)]" 
                       style={{ width: `${progressPercent}%` }}
                     />
                   </div>
@@ -104,7 +104,7 @@ export function ModernContinueWatching() {
               {/* Title */}
               <div className="mt-2.5 px-0.5 flex flex-col">
                 <Link href={`/details/${item.slug || item.animeId}`}>
-                  <h3 className="text-xs sm:text-sm font-semibold text-white group-hover:text-purple-300 transition-colors duration-200 line-clamp-1 leading-snug cursor-pointer">
+                  <h3 className="text-xs sm:text-sm font-semibold text-white group-hover:text-[#a5d6a7] transition-colors duration-200 line-clamp-1 leading-snug cursor-pointer">
                     {item.title}
                   </h3>
                 </Link>
