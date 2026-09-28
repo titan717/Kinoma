@@ -35,9 +35,10 @@ export const localCache = {
     }
 
     // 2. Check localStorage
+    if (typeof window === 'undefined') return null;
     try {
       const storageKey = `${CACHE_PREFIX}${key}`;
-      const raw = localStorage.getItem(storageKey);
+      const raw = window.localStorage.getItem(storageKey);
       if (!raw) return null;
 
       const entry: CacheEntry<T> = JSON.parse(raw);
@@ -76,9 +77,10 @@ export const localCache = {
     memoryCache.set(key, entry);
 
     // Save to localStorage with quota eviction handling
+    if (typeof window === 'undefined') return;
     try {
       const storageKey = `${CACHE_PREFIX}${key}`;
-      localStorage.setItem(storageKey, JSON.stringify(entry));
+      window.window.localStorage.setItem(storageKey, JSON.stringify(entry));
     } catch (e) {
       // Storage quota exceeded: evict old cache entries
       console.warn(`[LocalCache] Storage quota reached, cleaning old cache entries...`);
@@ -104,8 +106,9 @@ export const localCache = {
    */
   remove: (key: string): void => {
     memoryCache.delete(key);
+    if (typeof window === 'undefined') return;
     try {
-      localStorage.removeItem(`${CACHE_PREFIX}${key}`);
+      window.localStorage.removeItem(`${CACHE_PREFIX}${key}`);
     } catch {}
   },
 
@@ -164,13 +167,14 @@ export const localCache = {
    * Evict the oldest cache entries to free up localStorage space
    */
   evictOldest: (count = 10): void => {
+    if (typeof window === 'undefined') return;
     try {
       const cacheKeys: { key: string; timestamp: number }[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
+      for (let i = 0; i < window.localStorage.length; i++) {
+        const key = window.localStorage.key(i);
         if (key && key.startsWith(CACHE_PREFIX)) {
           try {
-            const raw = localStorage.getItem(key);
+            const raw = window.localStorage.getItem(key);
             if (raw) {
               const parsed = JSON.parse(raw);
               cacheKeys.push({ key, timestamp: parsed.timestamp || 0 });
@@ -199,6 +203,7 @@ export const localCache = {
    */
   clearAll: (): void => {
     memoryCache.clear();
+    if (typeof window === 'undefined') return;
     try {
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
@@ -220,12 +225,13 @@ export const localCache = {
     return () => {
       // Rehydrate SWR state from localStorage on init
       const map = new Map<string, any>();
+      if (typeof window === 'undefined') return new Map<string, any>();
       try {
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
+        for (let i = 0; i < window.localStorage.length; i++) {
+          const key = window.localStorage.key(i);
           if (key && key.startsWith(`${CACHE_PREFIX}swr_`)) {
             const swrKey = key.replace(`${CACHE_PREFIX}swr_`, '');
-            const raw = localStorage.getItem(key);
+            const raw = window.localStorage.getItem(key);
             if (raw) {
               const entry = JSON.parse(raw);
               if (entry && Date.now() - entry.timestamp < entry.ttl) {
@@ -260,7 +266,7 @@ export const localCache = {
         delete: (key: string) => {
           map.delete(key);
           try {
-            localStorage.removeItem(`${CACHE_PREFIX}swr_${key}`);
+            window.localStorage.removeItem(`${CACHE_PREFIX}swr_${key}`);
           } catch {}
         },
         keys: () => map.keys()
