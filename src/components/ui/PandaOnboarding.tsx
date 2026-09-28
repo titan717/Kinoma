@@ -13,12 +13,12 @@ const STORAGE_KEY = 'panda_onboarding_v2';
 const GENRES = ['Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Romance', 'Sci-Fi', 'Thriller', 'Sports', 'Slice of Life'];
 const LANGUAGES = ['English', 'Japanese', 'Hindi', 'Korean', 'Spanish'];
 const AVATARS = [
-  { id: 'classic', emoji: '🐼', label: 'Classic Panda' },
-  { id: 'sleepy', emoji: '😴🐼', label: 'Sleepy Panda' },
-  { id: 'gamer', emoji: '🎮🐼', label: 'Gamer Panda' },
-  { id: 'chill', emoji: '😎🐼', label: 'Chill Panda' },
-  { id: 'bamboo', emoji: '🎋🐼', label: 'Bamboo Panda' },
-  { id: 'night', emoji: '🌙🐼', label: 'Night Panda' },
+  { id: 'classic', label: 'Classic', mark: 'C' },
+  { id: 'sleepy', label: 'Calm', mark: 'S' },
+  { id: 'gamer', label: 'Player', mark: 'P' },
+  { id: 'chill', label: 'Chill', mark: 'H' },
+  { id: 'bamboo', label: 'Bamboo', mark: 'B' },
+  { id: 'night', label: 'Night', mark: 'N' },
 ];
 
 interface OnboardingState {
@@ -56,6 +56,7 @@ export function PandaOnboarding() {
   const [state, setState] = useState<OnboardingState>(DEFAULT_STATE);
   const [sceneFailed, setSceneFailed] = useState(false);
   const [sceneEvent, setSceneEvent] = useState<PandaSceneEvent>('arrive');
+  const [direction, setDirection] = useState<'forward' | 'back'>('forward');
   const finishTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -100,6 +101,28 @@ export function PandaOnboarding() {
     setSceneEvent(step === 0 ? 'arrive' : events[Math.min(step - 1, events.length - 1)]);
   }, [step, visible]);
 
+  useEffect(() => {
+    if (!visible || typeof window === 'undefined') return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        skip();
+      }
+      if (event.key === 'ArrowLeft' && step > 0 && step < 5) {
+        event.preventDefault();
+        setDirection('back');
+        setStep(value => value - 1);
+      }
+      if (event.key === 'ArrowRight' && step > 0 && step < 5 && canContinue) {
+        event.preventDefault();
+        setDirection('forward');
+        setStep(value => value + 1);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [visible, step, canContinue]);
+
   // Hidden Settings Dev Tools can deterministically replay/reset onboarding.
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -139,6 +162,18 @@ export function PandaOnboarding() {
   }, []);
 
   const reducedMotion = typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const goNext = useCallback(() => {
+    if (!canContinue || step >= 5) return;
+    setDirection('forward');
+    setStep(value => value + 1);
+  }, [canContinue, step]);
+
+  const goBack = useCallback(() => {
+    if (step <= 0) return;
+    setDirection('back');
+    setStep(value => value - 1);
+  }, [step]);
 
   const finish = useCallback(() => {
     const next = { ...state, name: state.name.trim() || 'Panda' };
@@ -206,9 +241,10 @@ export function PandaOnboarding() {
           {Array.from({ length: 6 }).map((_, index) => <span key={index} className={index <= step ? 'is-active' : ''} />)}
         </div>
 
-        <div className="panda-onboarding__content" aria-live="polite" aria-atomic="true">
+        <div className={`panda-onboarding__content is-${direction}`} aria-live="polite" aria-atomic="true">
           {step === 0 && (
             <div className="panda-onboarding__welcome">
+              <span className="panda-onboarding__arrival-status">PANDA ARRIVES</span>
               <PandaDialogue eyebrow="WELCOME TO YOUR LOUNGE" title="Your next watch is waiting." description="Let's make panda.fun feel a little more like yours. A few quick choices tune your home screen and playback experience." />
               <button type="button" className="panda-onboarding__primary" onClick={() => setStep(1)}>
                 <span>Make it mine</span><ChevronRight size={18} />
@@ -223,7 +259,7 @@ export function PandaOnboarding() {
               <div className="panda-avatar-grid">
                 {AVATARS.map(avatar => (
                   <button key={avatar.id} type="button" className={`panda-avatar ${state.avatar === avatar.id ? 'is-selected' : ''}`} onClick={() => update('avatar', avatar.id)} aria-label={avatar.label} aria-pressed={state.avatar === avatar.id}>
-                    <span>{avatar.emoji}</span><small>{avatar.label}</small>
+                    <span className="panda-avatar__mark">{avatar.mark}</span><small>{avatar.label}</small>
                   </button>
                 ))}
               </div>
@@ -277,8 +313,8 @@ export function PandaOnboarding() {
 
         {step > 0 && step < 5 && (
           <footer className="panda-onboarding__actions">
-            <button type="button" className="panda-onboarding__back" onClick={() => setStep(value => value - 1)}><ChevronLeft size={17} /> Back</button>
-            <button type="button" className="panda-onboarding__primary" disabled={!canContinue} onClick={() => setStep(value => value + 1)}>Continue <ChevronRight size={17} /></button>
+            <button type="button" className="panda-onboarding__back" onClick={goBack}><ChevronLeft size={17} /> Back</button>
+            <button type="button" className="panda-onboarding__primary" disabled={!canContinue} onClick={goNext}>Continue <ChevronRight size={17} /></button>
           </footer>
         )}
       </section>
