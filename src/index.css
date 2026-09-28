@@ -5351,3 +5351,12 @@ body {
 .panda-search-caption { right:0; }
 @media(max-width:900px){.kinoma-search-head__copy{max-width:760px!important}.panda-search-companion{opacity:1;right:auto;transform:none}.kinoma-search-head{min-height:500px}}
 @media(max-width:640px){.kinoma-search-head{min-height:455px;padding-top:12px}.kinoma-search-control{width:calc(100vw - 28px)}.panda-search-companion{display:block;transform:scale(.78);transform-origin:center top;margin-top:-12px}.kinoma-search-head__copy{max-width:calc(100vw - 28px)!important}}
+
+
+.panda-stream-notice__share { position:relative; }
+.kinoma-search-control__submit { position:relative; overflow:hidden; box-shadow:0 4px 0 rgba(82,113,84,.65),0 10px 24px rgba(0,0,0,.22); transition:transform .2s ease,box-shadow .2s ease,background .2s ease; }
+.kinoma-search-control__submit::after { content:'🐼'; position:absolute; right:-18px; top:50%; opacity:0; transform:translateY(-50%) rotate(-18deg); transition:all .25s ease; }
+.kinoma-search-control__submit:hover { transform:translateY(-2px); box-shadow:0 6px 0 rgba(82,113,84,.65),0 14px 28px rgba(0,0,0,.25); }
+.kinoma-search-control__submit:hover::after { right:8px; opacity:.9; }
+.panda-continue-card > a > div { border-color:rgba(165,214,167,.10)!important; box-shadow:0 14px 32px rgba(0,0,0,.22); }
+.panda-continue-card > a > div:hover { border-color:rgba(165,214,167,.28)!important; }
