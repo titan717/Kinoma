@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect } from 'react';
+import React, { lazy, Suspense, useEffect, Component } from 'react';
 import { Route, Switch, useLocation } from 'wouter';
 import { AnimatePresence, motion } from 'motion/react';
 import { SWRConfig } from 'swr';
@@ -89,12 +89,44 @@ function AnimatedRoutes() {
   );
 }
 
+class AppErrorBoundary extends Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: unknown) {
+    console.error('[Panda.fun] App render error:', error);
+  }
+
+  render() {
+    if (!this.state.hasError) return this.props.children;
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-[var(--kinoma-bg)] px-6 text-center">
+        <div className="max-w-md">
+          <h1 className="text-2xl font-semibold text-white">Panda took a tiny nap.</h1>
+          <p className="mt-2 text-sm text-white/60">Something went wrong while loading this screen.</p>
+          <button
+            type="button"
+            className="mt-6 rounded-full border border-white/10 bg-white/10 px-5 py-2.5 text-sm font-medium text-white hover:bg-white/15"
+            onClick={() => window.location.reload()}
+          >
+            Try again
+          </button>
+        </div>
+      </main>
+    );
+  }
+}
+
 function MainAppShell() {
   return <AnimatedRoutes />;
 }
 
 export default function App() {
   return (
+    <AppErrorBoundary>
     <SWRConfig
       value={{
         provider: localCache.getSwrStorageProvider(),
@@ -113,5 +145,6 @@ export default function App() {
         </AppearanceProvider>
       </AuthProvider>
     </SWRConfig>
+    </AppErrorBoundary>
   );
 }
