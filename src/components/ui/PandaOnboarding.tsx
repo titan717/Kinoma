@@ -100,6 +100,9 @@ export function PandaOnboarding() {
   const toggleGenre = (genre: string) =>
     update('genres', state.genres.includes(genre) ? state.genres.filter(item => item !== genre) : [...state.genres, genre].slice(0, 6));
 
+  const togglePlaybackSetting = (key: 'autoPlay' | 'previews' | 'skipIntro' | 'skipOutro') =>
+    setState(current => ({ ...current, [key]: !current[key] }));
+
   if (!visible) return null;
 
   return (
@@ -180,7 +183,7 @@ export function PandaOnboarding() {
                 ['skipIntro', 'Skip intros automatically', 'Jump over known intros when available.'],
                 ['skipOutro', 'Skip outros automatically', 'Move on when an outro is detected.'],
               ].map(([key, label, description]) => (
-                <button key={key} type="button" className="panda-toggle-row" onClick={() => update(key as keyof OnboardingState, !state[key as keyof OnboardingState])}>
+                <button key={key} type="button" className="panda-toggle-row" onClick={() => togglePlaybackSetting(key as 'autoPlay' | 'previews' | 'skipIntro' | 'skipOutro')}>
                   <span><strong>{label}</strong><small>{description}</small></span>
                   <i className={state[key as keyof OnboardingState] ? 'is-on' : ''}><b /></i>
                 </button>
