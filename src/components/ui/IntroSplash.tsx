@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { ArrowRight } from 'lucide-react';
 import { KinomaLogo } from './KinomaLogo';
 import { kinomaAudio } from '../../lib/audioSound';
 
@@ -12,12 +13,9 @@ export function IntroSplash({ forceShow = false, onComplete }: IntroSplashProps)
   const [isVisible, setIsVisible] = useState(() => {
     if (forceShow) return true;
     if (typeof window === 'undefined') return false;
-    // Check if shown in this session
-    const hasShown = sessionStorage.getItem('panda_intro_shown_v3');
-    return !hasShown;
+    return !sessionStorage.getItem('panda_intro_shown_v3');
   });
-
-  const [hasInteracted, setHasInteracted] = useState(false);
+  const [ready, setReady] = useState(false);
 
   const completeIntro = useCallback(() => {
     setIsVisible(false);
@@ -25,73 +23,108 @@ export function IntroSplash({ forceShow = false, onComplete }: IntroSplashProps)
       sessionStorage.setItem('panda_intro_shown_v3', 'true');
       window.dispatchEvent(new Event('panda_intro_complete'));
     } catch {}
-    if (onComplete) onComplete();
+    onComplete?.();
   }, [onComplete]);
 
-  // Listen to manual replay events from navbar or settings
   useEffect(() => {
-    const handleReplay = () => {
+    const replay = () => {
       setIsVisible(true);
-      setHasInteracted(true);
+      setReady(false);
       kinomaAudio.playIntroSound();
     };
-
-    window.addEventListener('panda_replay_intro', handleReplay);
-    return () => window.removeEventListener('panda_replay_intro', handleReplay);
+    window.addEventListener('panda_replay_intro', replay);
+    return () => window.removeEventListener('panda_replay_intro', replay);
   }, []);
 
   useEffect(() => {
     if (!isVisible) return;
-
-    // Trigger audio immediately (if audio policy allows)
     kinomaAudio.playIntroSound();
+    const timer = window.setTimeout(() => setReady(true), 2200);
+    return () => window.clearTimeout(timer);
+  }, [isVisible]);
 
-    // Non-skippable cinematic intro: allow the full animation to complete.
-    const timer = setTimeout(() => {
-      completeIntro();
-    }, 3200);
+  useEffect(() => {
+    if (!ready) return;
+    const timer = window.setTimeout(completeIntro, 1500);
+    return () => window.clearTimeout(timer);
+  }, [ready, completeIntro]);
 
-    return () => clearTimeout(timer);
-  }, [isVisible, completeIntro]);
-
-  // Click on screen also triggers sound if browser required user gesture
-  const handleScreenClick = () => {
-    if (!hasInteracted) {
-      setHasInteracted(true);
-      kinomaAudio.playIntroSound();
-    }
+  const enter = () => {
+    setReady(true);
   };
 
   return (
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          key="panda-splash-screen"
-          initial={{ opacity: 1 }}
-          exit={{ opacity: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } }}
-          className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center overflow-hidden select-none cursor-pointer"
-          onClick={handleScreenClick}
+          key="panda-new-intro"
+          className="panda-intro-v4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: .45 }}
+          onClick={enter}
+          role="dialog"
+          aria-label="Panda.fun introduction"
         >
-          {/* Clean anime-style black stage — the logo is the only visual focus. */}
-          <div className="absolute inset-0 bg-black pointer-events-none" />
+          <div className="panda-intro-v4__grain" />
+          <div className="panda-intro-v4__orbit panda-intro-v4__orbit--one" />
+          <div className="panda-intro-v4__orbit panda-intro-v4__orbit--two" />
 
-          {/* Clean central wordmark reveal. */}
+          <header className="panda-intro-v4__header">
+            <span>EST. FOR YOUR NEXT WATCH</span>
+            <span>01 / 01</span>
+          </header>
+
+          <main className="panda-intro-v4__stage">
+            <motion.div
+              className="panda-intro-v4__mark"
+              initial={{ scale: .35, rotate: -18, opacity: 0 }}
+              animate={{ scale: 1, rotate: 0, opacity: 1 }}
+              transition={{ duration: 1.1, delay: .2, ease: [.16, 1, .3, 1] }}
+            >
+              <KinomaLogo size="lg" variant="mark" />
+            </motion.div>
+
+            <motion.div
+              className="panda-intro-v4__wordmark"
+              initial={{ opacity: 0, y: 35, letterSpacing: '.35em' }}
+              animate={{ opacity: 1, y: 0, letterSpacing: '-.04em' }}
+              transition={{ duration: .9, delay: .75, ease: [.16, 1, .3, 1] }}
+            >
+              <KinomaLogo size="xl" variant="typography" />
+            </motion.div>
+
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.25, duration: .7 }}
+            >
+              Stories, picked for the way you watch.
+            </motion.p>
+          </main>
+
+          <footer className="panda-intro-v4__footer">
+            <motion.div
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ duration: 1.8, delay: .15, ease: 'linear' }}
+              className="panda-intro-v4__line"
+            />
+            <button type="button" onClick={(event) => { event.stopPropagation(); enter(); }}>
+              <span>{ready ? 'ENTER' : 'SKIP INTRO'}</span>
+              <ArrowRight size={15} />
+            </button>
+          </footer>
+
           <motion.div
-            initial={{ scale: 0.68, opacity: 0, filter: 'blur(16px)' }}
-            animate={{ 
-              scale: [0.68, 0.94, 1.0, 1.04], 
-              opacity: [0, 1, 1, 0.92],
-              filter: ['blur(12px)', 'blur(0px)', 'blur(0px)'],
-              transition: { duration: 2.35, times: [0, 0.38, 0.78, 1], ease: [0.16, 1, 0.3, 1] } 
-            }}
-            className="relative z-10 flex flex-col items-center justify-center text-center px-4"
+            className="panda-intro-v4__corner"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.5 }}
           >
-            <div className="py-4 px-6">
-              <KinomaLogo size="xl" variant="full" className="pointer-events-none" />
-            </div>
+            PANDA / CINEMA / ANIME / SERIES
           </motion.div>
-
-
         </motion.div>
       )}
     </AnimatePresence>
