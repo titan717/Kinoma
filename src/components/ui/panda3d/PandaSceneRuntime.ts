@@ -190,7 +190,10 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
         targetAction.reset();
         targetAction.setLoop(THREE.LoopRepeat, Infinity);
         targetAction.enabled = true;
-        targetAction.setEffectiveTimeScale(1);
+        // The entrance should read as a calm, heavy walk rather than a run cycle.
+        // Slow the source animation while keeping its foot contacts intact.
+        const isWalking = state === 'walk-in' || state === 'walk-out';
+        targetAction.setEffectiveTimeScale(isWalking ? 0.58 : 1);
         targetAction.setEffectiveWeight(1);
         targetAction.fadeIn(0.28).play();
         previousAction?.fadeOut(0.28);
@@ -198,14 +201,22 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
       }
 
       const entering = state === 'walk-in';
-      const duration = entering ? 1.85 : 1.65;
+      // Give the Panda enough time to take deliberate, readable steps.
+      // The longer travel time is intentional: it avoids the "sliding mascot" look.
+      const duration = entering ? 4.2 : 3.6;
       const progress = smooth(t / duration);
       const fromX = entering ? -5.8 : 0;
       const toX = entering ? 0 : 6.1;
       const eased = entering ? progress * progress * (3 - 2 * progress) : progress;
       realPanda.root.position.x = THREE.MathUtils.lerp(fromX, toX, eased);
-      realPanda.root.position.z = Math.sin(progress * Math.PI) * 0.16;
+      // Keep locomotion on one grounded plane; the GLB's feet provide the actual step cycle.
+      realPanda.root.position.z = THREE.MathUtils.lerp(realPanda.root.position.z, 0, 0.08);
       realPanda.root.rotation.y = THREE.MathUtils.lerp(entering ? -0.24 : 0, entering ? 0 : 0.3, eased);
+      realPanda.root.rotation.z = THREE.MathUtils.lerp(
+        realPanda.root.rotation.z,
+        Math.sin(t * 2.1) * 0.008 + pointer.x * -0.018,
+        0.045,
+      );
       realPanda.root.rotation.z = THREE.MathUtils.lerp(
         realPanda.root.rotation.z,
         pointer.x * -0.018,
