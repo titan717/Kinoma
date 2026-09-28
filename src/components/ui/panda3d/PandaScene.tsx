@@ -12,10 +12,6 @@ interface PandaSceneProps {
   onError?: (error: unknown) => void;
 }
 
-function optionsReady(onReady?: () => void) {
-  onReady?.();
-}
-
 export function PandaScene({ event, reducedMotion = false, onReady, onError }: PandaSceneProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<ReturnType<typeof createPandaSceneController> | null>(null);
@@ -33,6 +29,7 @@ export function PandaScene({ event, reducedMotion = false, onReady, onError }: P
     let rig: PandaRig | null = null;
     let pageHidden = document.hidden;
     let sceneVisible = true;
+    let visibilityObserver: IntersectionObserver | null = null;
     const pointer = { x: 0, y: 0 };
 
     try {
@@ -61,7 +58,7 @@ export function PandaScene({ event, reducedMotion = false, onReady, onError }: P
         pointer.y = (event.clientY / Math.max(window.innerHeight, 1)) * 2 - 1;
       };
       const handleVisibility = () => { pageHidden = document.hidden; };
-      const visibilityObserver = new IntersectionObserver(([entry]) => {
+      visibilityObserver = new IntersectionObserver(([entry]) => {
         sceneVisible = entry?.isIntersecting ?? true;
       }, { threshold: 0.01 });
       visibilityObserver.observe(mount);
@@ -90,7 +87,7 @@ export function PandaScene({ event, reducedMotion = false, onReady, onError }: P
         (next) => { stateRef.current = next; },
       );
       controllerRef.current = controller;
-      optionsReady(onReady);
+      callbacksRef.current.onReady?.();
       controller.play('arrive');
 
       const clock = new THREE.Clock();
@@ -165,7 +162,7 @@ export function PandaScene({ event, reducedMotion = false, onReady, onError }: P
         disposed = true;
         cancelAnimationFrame(frame);
         observer.disconnect();
-        visibilityObserver.disconnect();
+        visibilityObserver?.disconnect();
         window.removeEventListener('pointermove', handlePointer);
         document.removeEventListener('visibilitychange', handleVisibility);
         controller.dispose();
@@ -185,7 +182,7 @@ export function PandaScene({ event, reducedMotion = false, onReady, onError }: P
       return () => {
         disposed = true;
         cancelAnimationFrame(frame);
-        visibilityObserver.disconnect();
+        visibilityObserver?.disconnect();
         window.removeEventListener('pointermove', handlePointer);
         document.removeEventListener('visibilitychange', handleVisibility);
         renderer?.dispose();
