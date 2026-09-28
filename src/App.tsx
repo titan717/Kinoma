@@ -89,6 +89,25 @@ function AnimatedRoutes() {
   );
 }
 
+class OptionalFeatureBoundary extends Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: unknown) {
+    console.error('[Panda.fun] Optional feature error:', error);
+  }
+
+  render() {
+    return this.state.hasError ? null : this.props.children;
+  }
+}
+
 class AppErrorBoundary extends Component<{ children: React.ReactNode }, { hasError: boolean }> {
   state = { hasError: false };
 
@@ -137,8 +156,12 @@ export default function App() {
     >
       <AuthProvider>
         <AppearanceProvider>
-          <IntroSplash />
-          <PandaOnboarding />
+          <OptionalFeatureBoundary>
+            <IntroSplash />
+          </OptionalFeatureBoundary>
+          <OptionalFeatureBoundary>
+            <PandaOnboarding />
+          </OptionalFeatureBoundary>
           <MainAppShell />
           <AuthModal />
           <SettingsModal />
