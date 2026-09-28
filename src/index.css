@@ -5605,3 +5605,32 @@ body {
 @media (prefers-reduced-motion:reduce) {
   .panda-onboarding__fallback-panda { animation:none; }
 }
+
+
+/* Hidden Panda Dev Tools — opened by typing "panda" three times in Settings. */
+.panda-devtools{position:fixed;inset:0;z-index:1400;display:grid;place-items:center;padding:20px;isolation:isolate}
+.panda-devtools__backdrop{position:absolute;inset:0;border:0;background:rgba(2,4,3,.78);backdrop-filter:blur(16px);cursor:default}
+.panda-devtools__panel{position:relative;width:min(680px,100%);max-height:min(760px,calc(100dvh - 40px));overflow:auto;padding:28px;border:1px solid rgba(255,255,255,.1);border-radius:28px;background:linear-gradient(145deg,rgba(20,24,20,.97),rgba(8,11,9,.98));box-shadow:0 36px 100px rgba(0,0,0,.62);color:#fff;animation:panda-devtools-in .28s cubic-bezier(.16,1,.3,1) both}
+.panda-devtools__head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}
+.panda-devtools__head h2{margin:5px 0 8px;font-size:clamp(25px,4vw,36px);letter-spacing:-.04em}
+.panda-devtools__head p{margin:0;max-width:510px;color:rgba(255,255,255,.56);font-size:12px;line-height:1.6}
+.panda-devtools__close{width:38px;height:38px;border:1px solid rgba(255,255,255,.09);border-radius:13px;background:rgba(255,255,255,.045);color:#fff;display:grid;place-items:center;cursor:pointer}
+.panda-devtools__actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px}
+.panda-devtools__actions>button{min-height:74px;display:flex;align-items:flex-start;gap:12px;text-align:left;padding:15px;border:1px solid rgba(255,255,255,.08);border-radius:16px;background:rgba(255,255,255,.035);color:#fff;cursor:pointer;transition:transform .18s ease,border-color .18s ease,background .18s ease}
+.panda-devtools__actions>button:hover{transform:translateY(-2px);border-color:rgba(165,214,167,.28);background:rgba(165,214,167,.07)}
+.panda-devtools__actions>button.is-danger:hover{border-color:rgba(239,120,120,.3);background:rgba(120,30,30,.12)}
+.panda-devtools__actions svg{flex:none;margin-top:2px;color:#a5d6a7}
+.panda-devtools__actions .is-danger svg{color:#f0a0a0}
+.panda-devtools__actions strong,.panda-devtools__actions small{display:block}
+.panda-devtools__actions strong{font-size:11px}
+.panda-devtools__actions small{margin-top:5px;color:rgba(255,255,255,.48);font-size:9px;line-height:1.45}
+.panda-devtools__stages{margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,.07)}
+.panda-devtools__stages>span{display:block;margin-bottom:10px;color:rgba(255,255,255,.48);font-size:9px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}
+.panda-devtools__stages>div{display:flex;flex-wrap:wrap;gap:7px}
+.panda-devtools__stages button{padding:9px 11px;border:1px solid rgba(255,255,255,.08);border-radius:11px;background:rgba(255,255,255,.035);color:rgba(255,255,255,.78);font:700 10px/1 inherit;cursor:pointer}
+.panda-devtools__stages button:hover{color:#fff;border-color:rgba(165,214,167,.25);background:rgba(165,214,167,.07)}
+.panda-devtools footer{margin-top:20px;color:rgba(255,255,255,.4);font-size:10px}
+.panda-devtools kbd{padding:3px 6px;border:1px solid rgba(255,255,255,.1);border-radius:6px;background:rgba(255,255,255,.06);color:#dcebdd;font:800 9px/1 monospace}
+@keyframes panda-devtools-in{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+@media(max-width:620px){.panda-devtools{padding:10px}.panda-devtools__panel{padding:20px;border-radius:22px;max-height:calc(100dvh - 20px)}.panda-devtools__actions{grid-template-columns:1fr}.panda-devtools__head h2{font-size:28px}}
+@media(prefers-reduced-motion:reduce){.panda-devtools__panel{animation:none}}
