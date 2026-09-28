@@ -43,13 +43,13 @@ export const localCache = {
 
       const entry: CacheEntry<T> = JSON.parse(raw);
       if (!entry || entry.version !== CACHE_VERSION) {
-        localStorage.removeItem(storageKey);
+        window.localStorage.removeItem(storageKey);
         return null;
       }
 
       // Check TTL expiration
       if (Date.now() - entry.timestamp > entry.ttl) {
-        localStorage.removeItem(storageKey);
+        window.localStorage.removeItem(storageKey);
         return null;
       }
 
@@ -87,7 +87,7 @@ export const localCache = {
       localCache.evictOldest(10);
       try {
         const storageKey = `${CACHE_PREFIX}${key}`;
-        localStorage.setItem(storageKey, JSON.stringify(entry));
+        window.localStorage.setItem(storageKey, JSON.stringify(entry));
       } catch (retryErr) {
         console.warn(`[LocalCache] Unable to persist key to storage: ${key}`, retryErr);
       }
@@ -189,7 +189,7 @@ export const localCache = {
       cacheKeys.sort((a, b) => a.timestamp - b.timestamp);
       const toRemove = cacheKeys.slice(0, count);
       toRemove.forEach(item => {
-        localStorage.removeItem(item.key);
+        window.localStorage.removeItem(item.key);
         const memKey = item.key.replace(CACHE_PREFIX, '');
         memoryCache.delete(memKey);
       });
@@ -206,13 +206,13 @@ export const localCache = {
     if (typeof window === 'undefined') return;
     try {
       const keysToRemove: string[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
+      for (let i = 0; i < window.localStorage.length; i++) {
+        const key = window.localStorage.key(i);
         if (key && key.startsWith(CACHE_PREFIX)) {
           keysToRemove.push(key);
         }
       }
-      keysToRemove.forEach(k => localStorage.removeItem(k));
+      keysToRemove.forEach(k => window.localStorage.removeItem(k));
     } catch (e) {
       console.warn('[LocalCache] Clear error:', e);
     }
@@ -258,7 +258,7 @@ export const localCache = {
               ttl: 1000 * 60 * 60 * 2, // 2 hours default for SWR cache
               version: CACHE_VERSION
             };
-            window.localStorage.setItem(storageKey, JSON.stringify(entry));
+            window.window.localStorage.setItem(storageKey, JSON.stringify(entry));
           } catch {
             localCache.evictOldest(5);
           }
