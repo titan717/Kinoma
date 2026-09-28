@@ -12,10 +12,16 @@ interface PandaSceneProps {
   onError?: (error: unknown) => void;
 }
 
+function optionsReady(onReady?: () => void) {
+  onReady?.();
+}
+
 export function PandaScene({ event, reducedMotion = false, onReady, onError }: PandaSceneProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<ReturnType<typeof createPandaSceneController> | null>(null);
   const stateRef = useRef<PandaAnimationState>('idle');
+  const callbacksRef = useRef({ onReady, onError });
+  callbacksRef.current = { onReady, onError };
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -78,12 +84,13 @@ export function PandaScene({ event, reducedMotion = false, onReady, onError }: P
         {
           reducedMotion,
           pixelRatioCap: cap,
-          onReady: () => onReady?.(),
-          onError: (error) => onError?.(error),
+          onReady: () => callbacksRef.current.onReady?.(),
+          onError: (error) => callbacksRef.current.onError?.(error),
         },
         (next) => { stateRef.current = next; },
       );
       controllerRef.current = controller;
+      optionsReady(onReady);
       controller.play('arrive');
 
       const clock = new THREE.Clock();
@@ -174,7 +181,7 @@ export function PandaScene({ event, reducedMotion = false, onReady, onError }: P
         renderer?.domElement.remove();
       };
     } catch (error) {
-      onError?.(error);
+      callbacksRef.current.onError?.(error);
       return () => {
         disposed = true;
         cancelAnimationFrame(frame);
@@ -185,7 +192,7 @@ export function PandaScene({ event, reducedMotion = false, onReady, onError }: P
         renderer?.domElement.remove();
       };
     }
-  }, [reducedMotion, onError, onReady]);
+  }, [reducedMotion]);
 
   useEffect(() => {
     if (event) controllerRef.current?.play(event);
