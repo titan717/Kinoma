@@ -11,6 +11,9 @@ export function animationForEvent(event: PandaSceneEvent, reducedMotion = false)
     case 'playback-toggle': return 'remote-interaction';
     case 'ready': return 'celebrate';
     case 'exit': return 'walk-out';
+    case 'sleep': return 'sleep';
+    case 'eat-bamboo': return 'eat-bamboo';
+    case 'face-cover': return 'face-cover';
   }
 }
 
