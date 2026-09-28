@@ -40,8 +40,8 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(31, 1, 0.1, 100);
-  camera.position.set(0, 1.7, 7.5);
-  camera.lookAt(0, 1.45, 0);
+  camera.position.set(0, 1.7, 9.4);
+  camera.lookAt(0, 1.35, 0);
 
   const cap = Math.min(window.devicePixelRatio || 1, reducedMotion ? 1.25 : 1.75);
   renderer = new THREE.WebGLRenderer({
@@ -85,7 +85,9 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
       const center = bounds.getCenter(new THREE.Vector3());
       root.position.sub(center);
       root.position.y -= bounds.min.y - center.y;
-      const targetHeight = 4.25;
+      // Keep the character intentionally small in the onboarding composition.
+      // The environment and empty space should frame Panda, not be swallowed by it.
+      const targetHeight = 2.9;
       const modelScale = targetHeight / Math.max(size.y, 0.001);
       root.scale.setScalar(modelScale);
 
@@ -96,6 +98,7 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
       }
 
       root.position.set(-5.8, -0.45, 0);
+      root.scale.multiplyScalar(0.92);
       root.rotation.y = -0.22;
       root.visible = true;
       scene.add(root);
@@ -213,7 +216,7 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
         : 2.8;
       const progress = smooth(t / duration);
       const fromX = entering ? -5.8 : 0;
-      const toX = entering ? 0 : 6.1;
+      const toX = entering ? 0 : 5.9;
       // Keep forward speed almost constant during the gait. Large easing curves
       // make the feet appear to skate because the animation itself has constant cadence.
       const locomotionProgress = walking
@@ -402,8 +405,8 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
         rig.rightEar.rotation.x = THREE.MathUtils.lerp(rig.rightEar.rotation.x, -Math.sin(elapsed * 1.4) * 0.025, 0.04);
       }
 
-      camera.position.x = THREE.MathUtils.lerp(camera.position.x, pointer.x * -0.25, 0.025);
-      camera.position.y = THREE.MathUtils.lerp(camera.position.y, 1.7 + pointer.y * -0.055, 0.025);
+      camera.position.x = THREE.MathUtils.lerp(camera.position.x, pointer.x * -0.18, 0.025);
+      camera.position.y = THREE.MathUtils.lerp(camera.position.y, 1.7 + pointer.y * -0.045, 0.025);
 
       environment.leaves.children.forEach((leaf) => {
         const data = leaf.userData as { baseRotation?: number; sway?: number; phase?: number };
