@@ -93,6 +93,9 @@ class OptionalFeatureBoundary extends Component<
 > {
   state = { hasError: false };
 
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+  }
   static getDerivedStateFromError() {
     return { hasError: true };
   }
