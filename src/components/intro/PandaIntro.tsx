@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { KinomaLogo } from '../ui/KinomaLogo';
 import './panda-intro.css';
+import introAudioUrl from '../../../assets/reelaudio-52430_VbuEeMF7.mp3';
 
 const INTRO_SEEN_KEY = 'panda_intro_seen_v4';
 const INTRO_SHOWN_SESSION_KEY = 'panda_intro_shown_v3';
@@ -113,7 +114,7 @@ export function PandaIntro() {
 
   return (
     <div className={`panda-intro ${leaving ? 'is-leaving' : ''}`} role="presentation" aria-hidden="true">
-      <audio ref={audioRef} src="/assets/reelaudio-52430_VbuEeMF7.mp3" preload="auto" />
+      <audio ref={audioRef} src={introAudioUrl} preload="auto" />
 
       <div className="panda-intro__backdrop" />
       <div className="panda-intro__fog panda-intro__fog--back" />
