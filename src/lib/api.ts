@@ -84,7 +84,24 @@ export const MOVIE_API_FALLBACK_URL = rawFallback.replace(/\/+$/, '');
 
 const cache = new Map<string, { expires: number; value: unknown }>();
 const inflight = new Map<string, Promise<unknown>>();
-const CACHE_TTL = 120_000;
+const CACHE_TTL = 120_000;\nconst PLAYBACK_PREFERENCES_KEY = 'panda_playback_preferences';
+const DEFAULT_PLAYBACK_PREFERENCES = { videoProvider: 'nxsha', audioLanguage: 'en', subtitleLanguage: 'en', subtitleProvider: 'nitro' } as const;
+
+type PlaybackPreferences = typeof DEFAULT_PLAYBACK_PREFERENCES;
+
+function getPlaybackPreferences(): PlaybackPreferences {
+  try {
+    const stored = window.localStorage.getItem(PLAYBACK_PREFERENCES_KEY);
+    if (stored) return { ...DEFAULT_PLAYBACK_PREFERENCES, ...JSON.parse(stored) } as PlaybackPreferences;
+  } catch {}
+  return DEFAULT_PLAYBACK_PREFERENCES;
+}
+
+function embedWaveServer(provider: PlaybackPreferences['videoProvider']) {
+  return provider === 'cinesrc' ? 'cinesrc' : provider === 'videasy' ? 'videasy' : 'nxsha';
+}
+
+
 
 function unwrap<T>(payload: any): T {
   if (payload?.success === false) {
@@ -449,14 +466,23 @@ export const api = {
     const base = media.type === 'movie'
       ? `https://embedwave.cc/embed/movie/${tmdbId}`
       : `https://embedwave.cc/embed/tv/${tmdbId}/${season}/${episode}`;
+    const preferences = getPlaybackPreferences();
     const separator = base.includes('?') ? '&' : '?';
-    const url = `${base}${separator}autoplay=1&nobrand=1&server=nxsha&lang=en&sub=en`;
+    const query = new URLSearchParams({
+      autoplay: '1',
+      nobrand: '1',
+      server: embedWaveServer(preferences.videoProvider),
+      ...(preferences.audioLanguage !== 'auto' ? { lang: preferences.audioLanguage } : {}),
+      ...(preferences.subtitleLanguage !== 'auto' && preferences.subtitleLanguage !== 'off' ? { sub: preferences.subtitleLanguage } : {}),
+      ...(preferences.subtitleProvider === 'nitro' ? { subtitleProvider: 'nitro' } : {}),
+    });
+    const url = `${base}${separator}${query.toString()}`;
     const source: MovieApiPlaybackSource = {
-      id: `embedwave-multihd-${tmdbId}`,
+      id: `embedwave-${preferences.videoProvider}-${tmdbId}`,
       provider: 'embedwave',
       type: 'embed',
       url,
-      title: 'EmbedWave · Multi HD · English Audio',
+      title: `EmbedWave · ${preferences.videoProvider === 'nxsha' ? 'Multi HD' : preferences.videoProvider === 'cinesrc' ? 'CineSrc' : 'Videasy'}`;
       quality: 'auto',
       requiresClientPlayback: true,
     };
