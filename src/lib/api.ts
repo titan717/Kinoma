@@ -84,7 +84,8 @@ export const MOVIE_API_FALLBACK_URL = rawFallback.replace(/\/+$/, '');
 
 const cache = new Map<string, { expires: number; value: unknown }>();
 const inflight = new Map<string, Promise<unknown>>();
-const CACHE_TTL = 120_000;\nconst PLAYBACK_PREFERENCES_KEY = 'panda_playback_preferences';
+const CACHE_TTL = 120_000;
+const PLAYBACK_PREFERENCES_KEY = 'panda_playback_preferences';
 const DEFAULT_PLAYBACK_PREFERENCES = { videoProvider: 'nxsha', audioLanguage: 'en', subtitleLanguage: 'en', subtitleProvider: 'nitro' } as const;
 
 type PlaybackPreferences = typeof DEFAULT_PLAYBACK_PREFERENCES;
@@ -491,7 +492,7 @@ export const api = {
       provider: 'embedwave',
       type: 'embed',
       url,
-      title: `EmbedWave · ${preferences.videoProvider === 'nxsha' ? 'Multi HD' : preferences.videoProvider === 'cinesrc' ? 'CineSrc' : 'Videasy'}`;
+      title: `EmbedWave · ${preferences.videoProvider === 'nxsha' ? 'Multi HD' : preferences.videoProvider === 'cinesrc' ? 'CineSrc' : 'Videasy'}`,
       quality: 'auto',
       requiresClientPlayback: true,
     };
