@@ -155,9 +155,7 @@ function PandaRail({
         {action && <Link href="/search" className="panda-home-v2__see-all">Explore <ArrowRight size={13} /></Link>}
       </div>
       <div className="panda-home-v2__rail">
-        {items.slice(0, 8).map((item, index) => (
-          {React.createElement(PandaContentCard, { key: `${kind}-${item.id}-${index}`, item, onHover, onLeave, badge })}
-        ))}
+        {items.slice(0, 8).map((item, index) => React.createElement(PandaContentCard, { key: `${kind}-${item.id}-${index}`, item, onHover, onLeave, badge }))}
       </div>
     </section>
   );
