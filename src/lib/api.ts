@@ -458,7 +458,7 @@ export const api = {
     return { url: data.url };
   },
 
-  async getSchedule() {
+  async getSchedule(_day?: string) {
     return this.getAiringSchedule();
   },
 
