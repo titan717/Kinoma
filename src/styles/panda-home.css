@@ -548,13 +548,13 @@
 }
 .kinoma-home-footer__art { opacity:.42 !important; transform:scale(.9); transform-origin:right center; }
 @media (max-width: 1180px) {
-  .panda-home-v2__rail { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .panda-home-v2__rail { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 13px; }
 }
 @media (max-width: 900px) {
   .panda-global-header__inner { grid-template-columns:auto 1fr auto; }
   .panda-global-header__status { display:none; }
   .panda-global-header__search { justify-self:stretch; width:100%; }
-  .panda-home-v2__rail { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .panda-home-v2__rail { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
 }
 @media (max-width: 620px) {
   .panda-global-header { padding: 8px 10px; }
@@ -565,8 +565,8 @@
   .panda-stream-notice { width: calc(100% - 22px); margin-top:10px; }
   .panda-stream-notice__caution p span { display:none; }
   .panda-stream-notice__share { display:none; }
-  .panda-home-v2__rail { grid-template-columns:repeat(2,minmax(0,1fr)); display:grid; overflow:visible; }
-  .panda-content-card { flex:initial; }
+  .panda-home-v2__rail { display:flex; overflow-x:auto; grid-template-columns:none; gap:10px; padding-bottom:8px; }
+  .panda-content-card { flex:0 0 calc((100vw - 44px) / 2.25); }
 }
 @media (prefers-reduced-motion: reduce) {
   .panda-content-card__image-skeleton { animation:none; }
