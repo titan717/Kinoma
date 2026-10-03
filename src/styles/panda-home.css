@@ -571,3 +571,51 @@
 @media (prefers-reduced-motion: reduce) {
   .panda-content-card__image-skeleton { animation:none; }
 }
+
+
+/* =========================================================
+   PANDA.FUN — home shell stabilization
+   Keep the homepage as one continuous document. The legacy home
+   selectors in index.css must not create a second layout context.
+   ========================================================= */
+.kinoma-home {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: clip;
+}
+
+.kinoma-home__inner {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  display: block;
+}
+
+.kinoma-home-hero--trailer {
+  width: 100%;
+  margin: 0;
+  border-radius: 0;
+}
+
+.panda-home-v2 {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+.panda-home-v2__inner {
+  width: min(calc(100% - 40px), 1560px);
+  max-width: 1560px;
+  min-width: 0;
+  margin-inline: auto;
+}
+
+@media (max-width: 620px) {
+  .panda-home-v2__inner { width: min(calc(100% - 22px), 560px); }
+}
