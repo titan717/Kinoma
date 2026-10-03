@@ -1,0 +1,351 @@
+/* Panda.fun home v2 — content experience below the preserved hero */
+.panda-home-v2 {
+  --panda-panel: rgba(17, 17, 24, 0.72);
+  --panda-panel-strong: rgba(22, 22, 31, 0.9);
+  --panda-line: rgba(255,255,255,0.085);
+  --panda-muted: rgba(235,235,245,0.58);
+  --panda-soft: rgba(255,255,255,0.055);
+  --panda-accent: #c9b6ff;
+  padding: 4px 0 72px;
+}
+
+.panda-home-v2__inner {
+  width: min(100% - 40px, 1560px);
+  margin: 0 auto;
+}
+
+.panda-home-v2__welcome {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 48px 0 28px;
+}
+
+.panda-home-v2__eyebrow,
+.panda-profile-v2__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--panda-muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.panda-home-v2__welcome h2 {
+  margin: 8px 0 0;
+  font-size: clamp(26px, 3vw, 42px);
+  line-height: 1.02;
+  letter-spacing: -.045em;
+  color: #fff;
+}
+
+.panda-home-v2__welcome p {
+  max-width: 540px;
+  margin: 10px 0 0;
+  color: var(--panda-muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.panda-home-v2__shortcut {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--panda-line);
+  background: rgba(255,255,255,.045);
+  color: rgba(255,255,255,.82);
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform .2s ease, background .2s ease, border-color .2s ease;
+}
+.panda-home-v2__shortcut:hover { transform: translateY(-2px); background: rgba(255,255,255,.075); border-color: rgba(255,255,255,.14); }
+
+.panda-home-v2__section { margin: 42px 0; }
+.panda-home-v2__section--compact { margin-top: 28px; }
+
+.panda-home-v2__section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 17px;
+}
+.panda-home-v2__section-title h3 {
+  margin: 5px 0 0;
+  color: #fff;
+  font-size: clamp(19px, 2vw, 25px);
+  line-height: 1.1;
+  letter-spacing: -.025em;
+}
+.panda-home-v2__section-title p {
+  margin: 6px 0 0;
+  color: var(--panda-muted);
+  font-size: 12px;
+}
+.panda-home-v2__see-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: rgba(255,255,255,.56);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.panda-home-v2__see-all:hover { color: #fff; }
+
+.panda-home-v2__rail {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.panda-content-card {
+  position: relative;
+  min-width: 0;
+  color: #fff;
+  text-decoration: none;
+  outline: none;
+  border-radius: 17px;
+  transition: transform .24s cubic-bezier(.16,1,.3,1);
+}
+.panda-content-card:hover,
+.panda-content-card:focus-visible { transform: translateY(-5px); }
+
+.panda-content-card__media {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border-radius: 17px;
+  background: linear-gradient(145deg, #191923, #0c0c11);
+  border: 1px solid var(--panda-line);
+  box-shadow: 0 12px 30px rgba(0,0,0,.18);
+}
+.panda-content-card__media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 45%, rgba(0,0,0,.78));
+  opacity: .7;
+  pointer-events: none;
+}
+.panda-content-card img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  transition: transform .55s cubic-bezier(.16,1,.3,1), filter .35s ease;
+}
+.panda-content-card:hover img,
+.panda-content-card:focus-visible img { transform: scale(1.055); filter: saturate(1.04) brightness(.9); }
+
+.panda-content-card__top {
+  position: absolute;
+  z-index: 2;
+  inset: 10px 10px auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.panda-content-card__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid rgba(255,255,255,.11);
+  background: rgba(10,10,15,.62);
+  backdrop-filter: blur(14px);
+  color: rgba(255,255,255,.82);
+  border-radius: 999px;
+  padding: 5px 8px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+.panda-content-card__quick {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 50%;
+  background: rgba(10,10,15,.58);
+  backdrop-filter: blur(14px);
+  color: #fff;
+  opacity: 0;
+  transform: scale(.86);
+  transition: opacity .2s ease, transform .2s ease, background .2s ease;
+}
+.panda-content-card:hover .panda-content-card__quick,
+.panda-content-card:focus-visible .panda-content-card__quick { opacity: 1; transform: scale(1); }
+.panda-content-card__quick:hover { background: rgba(255,255,255,.14); }
+
+.panda-content-card__play {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 50%;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255,255,255,.94);
+  color: #111;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  opacity: 0;
+  transform: translate(-50%, -43%) scale(.82);
+  transition: opacity .22s ease, transform .28s cubic-bezier(.16,1,.3,1);
+}
+.panda-content-card:hover .panda-content-card__play,
+.panda-content-card:focus-visible .panda-content-card__play { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+.panda-content-card__copy { padding: 10px 3px 0; }
+.panda-content-card__copy strong {
+  display: block;
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.3;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.panda-content-card__copy span {
+  display: block;
+  margin-top: 4px;
+  color: rgba(235,235,245,.48);
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.panda-content-card__progress {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: rgba(0,0,0,.55);
+}
+.panda-content-card__progress i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #b9a2ff, #eee8ff);
+  box-shadow: 0 0 12px rgba(201,182,255,.35);
+}
+
+.panda-home-v2__featured-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, .55fr);
+  gap: 15px;
+}
+.panda-discovery-panel {
+  position: relative;
+  min-height: 225px;
+  overflow: hidden;
+  border: 1px solid var(--panda-line);
+  border-radius: 21px;
+  background: var(--panda-panel);
+  box-shadow: 0 18px 50px rgba(0,0,0,.18);
+}
+.panda-discovery-panel--large { min-height: 285px; }
+.panda-discovery-panel__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: .55;
+  transition: transform .6s ease, opacity .35s ease;
+}
+.panda-discovery-panel:hover .panda-discovery-panel__image { transform: scale(1.035); opacity: .66; }
+.panda-discovery-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(8,8,12,.96) 0%, rgba(8,8,12,.68) 42%, rgba(8,8,12,.15) 100%);
+}
+.panda-discovery-panel__content {
+  position: relative;
+  z-index: 1;
+  max-width: 500px;
+  padding: 28px;
+}
+.panda-discovery-panel__content h3 {
+  margin: 8px 0 7px;
+  color: #fff;
+  font-size: clamp(21px, 2.5vw, 31px);
+  letter-spacing: -.035em;
+}
+.panda-discovery-panel__content p {
+  margin: 0;
+  color: var(--panda-muted);
+  font-size: 12px;
+  line-height: 1.65;
+}
+.panda-discovery-panel__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 19px;
+  border-radius: 12px;
+  padding: 10px 13px;
+  background: rgba(255,255,255,.92);
+  color: #111;
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: transform .2s ease;
+}
+.panda-discovery-panel__button:hover { transform: translateY(-2px); }
+
+.panda-home-v2__empty {
+  padding: 34px;
+  border: 1px dashed rgba(255,255,255,.11);
+  border-radius: 18px;
+  color: var(--panda-muted);
+  background: rgba(255,255,255,.025);
+  font-size: 13px;
+}
+
+@media (max-width: 1180px) {
+  .panda-home-v2__rail { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .panda-home-v2__inner { width: min(100% - 28px, 760px); }
+  .panda-home-v2__rail { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .panda-home-v2__featured-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 620px) {
+  .panda-home-v2 { padding-bottom: 48px; }
+  .panda-home-v2__inner { width: min(100% - 22px, 560px); }
+  .panda-home-v2__welcome { align-items: flex-start; flex-direction: column; margin-top: 34px; }
+  .panda-home-v2__welcome h2 { font-size: 29px; }
+  .panda-home-v2__shortcut { display: none; }
+  .panda-home-v2__section { margin: 32px 0; }
+  .panda-home-v2__rail {
+    display: flex;
+    overflow-x: auto;
+    gap: 11px;
+    padding: 2px 1px 8px;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+  }
+  .panda-home-v2__rail::-webkit-scrollbar { display: none; }
+  .panda-content-card { flex: 0 0 142px; scroll-snap-align: start; }
+  .panda-content-card__quick { opacity: 1; transform: scale(1); }
+  .panda-discovery-panel__content { padding: 22px; }
+  .panda-discovery-panel--large { min-height: 245px; }
+}
+
+/* Keep the existing hero untouched; these styles only govern the new content shell. */
