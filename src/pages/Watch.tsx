@@ -184,62 +184,66 @@ export function Watch() {
         </div>
 
         {type === 'series' && (
-          <aside className={'panda-watch-episodes ' + (episodesOpen ? 'is-open' : '')}>
-            <button type="button" className="panda-watch-episodes__mobile" onClick={() => setEpisodesOpen(v => !v)}>
-              <span><ListVideo size={17} /> Season {season} · Episode {episode}</span><ChevronDown size={17} />
-            </button>
-            <div className="panda-watch-episodes__head">
-              <div><span>WATCHING</span><strong>{title}</strong></div>
-              <div className="panda-watch-season-tabs" role="tablist" aria-label="Seasons">
-                {seasons.map(item => (
-                  <button
-                    key={item.seasonNumber}
-                    type="button"
-                    role="tab"
-                    aria-selected={item.seasonNumber === season}
-                    className={item.seasonNumber === season ? 'is-active' : ''}
-                    onClick={() => chooseSeason(item.seasonNumber)}
-                  >
-                    <span>Season {item.seasonNumber}</span>
-                    {item.episodeCount > 0 && <small>{item.episodeCount} eps</small>}
-                  </button>
-                ))}
+          <section className="panda-watch-player-episodes">
+            <div className="kinoma-details-section__heading">
+              <div>
+                <span>KEEP WATCHING</span>
+                <h2>Seasons & Episodes</h2>
               </div>
+              <small>{seasons.length} {seasons.length === 1 ? 'season' : 'seasons'}</small>
             </div>
-            <div className="panda-watch-episodes__list">
+
+            <div className="kinoma-season-tabs panda-watch-season-tabs" role="tablist" aria-label="Seasons">
+              {seasons.map(item => (
+                <button
+                  type="button"
+                  key={item.seasonNumber}
+                  role="tab"
+                  aria-selected={season === item.seasonNumber}
+                  className={season === item.seasonNumber ? 'is-selected' : ''}
+                  onClick={() => chooseSeason(item.seasonNumber)}
+                >
+                  Season {item.seasonNumber}
+                </button>
+              ))}
+            </div>
+
+            <div className="kinoma-episode-list panda-watch-episode-list">
               {episodes.map(item => (
                 <button
                   type="button"
                   key={item.number}
-                  className={'panda-watch-episode-card ' + (item.number === episode ? 'is-current' : '')}
+                  className={'kinoma-episode-card panda-watch-episode-card ' + (item.number === episode ? 'is-current' : '')}
                   onClick={() => {
                     setEpisode(item.number);
-                    setEpisodesOpen(false);
                     setLocation('/watch/' + encodeURIComponent(id + '$season$' + season + '$episode$' + item.number) + '?type=series');
                   }}
                 >
-                  <span className="panda-watch-episode-thumb">
-                    {item.image ? <img src={item.image} alt="" loading="lazy" /> : <span className="panda-watch-episode-thumb__fallback"><Film size={17} /></span>}
-                    <span className="panda-watch-episode-thumb__number">{String(item.number).padStart(2, '0')}</span>
-                  </span>
-                  <span className="panda-watch-episode-copy">
+                  <div className="kinoma-episode-art">
+                    {item.image ? <img src={item.image} alt="" loading="lazy" /> : <span><Film size={20} /></span>}
+                    <b>EP {item.number}</b>
+                    {item.number === episode && <i className="panda-watch-current-indicator"><Play size={12} fill="currentColor" /></i>}
+                  </div>
+                  <div className="kinoma-episode-copy">
                     <strong>{clean(item.title) || 'Episode ' + item.number}</strong>
-                    {item.synopsis && <small>{clean((item as any).synopsis)}</small>}
-                    {item.duration && <em>{item.duration}</em>}
-                  </span>
-                  <span className="panda-watch-episode-play">
-                    {item.number === episode ? <Play size={13} fill="currentColor" /> : <Play size={13} />}
-                  </span>
+                    {item.synopsis && <p>{clean((item as any).synopsis)}</p>}
+                    {item.duration && <small>{item.duration}</small>}
+                  </div>
+                  <ChevronRight className="kinoma-episode-arrow" size={18} />
                 </button>
               ))}
-              {!episodes.length && <div className="panda-watch-empty">No episodes available.</div>}
+              {!episodes.length && <div className="panda-watch-empty">No episodes were returned for this season.</div>}
             </div>
 
             <div className="panda-watch-episodes__nav">
-              <button type="button" disabled={!episodes.find(item => item.number === episode - 1)} onClick={() => navigateEpisode(-1)}><ChevronLeft size={15} /> Previous</button>
-              <button type="button" disabled={!episodes.find(item => item.number === episode + 1)} onClick={() => navigateEpisode(1)}>Next <ChevronRight size={15} /></button>
+              <button type="button" disabled={!episodes.find(item => item.number === episode - 1)} onClick={() => navigateEpisode(-1)}>
+                <ChevronLeft size={15} /> Previous
+              </button>
+              <button type="button" disabled={!episodes.find(item => item.number === episode + 1)} onClick={() => navigateEpisode(1)}>
+                Next <ChevronRight size={15} />
+              </button>
             </div>
-          </aside>
+          </section>
         )}
       </section>
 
