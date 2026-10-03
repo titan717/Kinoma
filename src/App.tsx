@@ -16,7 +16,6 @@ import { Docs } from './pages/Docs';
 import { Home } from './pages/Home';
 const Search = lazy(() => import('./pages/Search').then(m => ({ default: m.Search })));
 const Details = lazy(() => import('./pages/Details').then(m => ({ default: m.Details })));
-const Watch = lazy(() => import('./pages/Watch').then(m => ({ default: m.Watch })));
 const Library = lazy(() => import('./pages/Library').then(m => ({ default: m.Library })));
 const WhatsNew = lazy(() => import('./pages/WhatsNew').then(m => ({ default: m.WhatsNew })));
 const Admin = lazy(() => import('./pages/Admin').then(m => ({ default: m.Admin })));
@@ -73,7 +72,6 @@ function AnimatedRoutes() {
           <Route path="/explore" component={Search} />
           <Route path="/whats-new" component={WhatsNew} />
           <Route path="/details/:id" component={Details} />
-          <Route path="/watch/:id" component={Watch} />
           <Route path="/library" component={Library} />
           <Route path="/history" component={Library} />
           <Route>
