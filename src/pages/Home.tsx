@@ -193,16 +193,12 @@ export function Home() {
         if (!active) return;
         setHome(data);
         if (data?.featured?.id) {
-          const [trailerResult, recommendationResult] = await Promise.allSettled([
-            api.getTrailer(data.featured.id),
-            api.getRecommendations(data.featured.id)
+          const [trailerResult] = await Promise.allSettled([
+            api.getTrailer(data.featured.id)
           ]);
           if (!active) return;
           if (trailerResult.status === 'fulfilled') setTrailer(trailerResult.value);
-          if (recommendationResult.status === 'fulfilled') {
-            setRecommended((recommendationResult.value.results || []) as unknown as MovieApiMedia[]);
-          }
-        }
+         }
       })
       .catch((err: unknown) => {
         if (active) setError(err instanceof MovieApiError ? err.message : 'MovieApi is unavailable right now.');
@@ -342,8 +338,8 @@ export function Home() {
             <ModernContinueWatching />
 
             <PandaRail kind="trending" title="Trending now" subtitle="The titles getting attention today." items={trending} onHover={showHoverTrailer} onLeave={hideHoverTrailer} />
-            <PandaRail kind="streamingNetflix" title="New on Netflix" subtitle="Recently added titles surfaced from TMDB." items={newOnNetflix} onHover={showHoverTrailer} onLeave={hideHoverTrailer} badge="Netflix" />
-            <PandaRail kind="streamingDisney" title="New on Disney+" subtitle="Recently added titles surfaced from TMDB." items={newOnDisneyPlus} onHover={showHoverTrailer} onLeave={hideHoverTrailer} badge="Disney+" />
+            <PandaRail kind="streamingNetflix" title="New on Netflix" subtitle="Freshly released movies now showing on the service." items={newOnNetflix} onHover={showHoverTrailer} onLeave={hideHoverTrailer} badge="NETFLIX" />
+            <PandaRail kind="streamingDisney" title="New on Disney+" subtitle="Recently added titles surfaced from TMDB." items={newOnDisneyPlus} onHover={showHoverTrailer} onLeave={hideHoverTrailer} badge="DISNEY+" />
             <PandaRail kind="movie" title="Popular movies" items={popularMovies} onHover={showHoverTrailer} onLeave={hideHoverTrailer} />
             <PandaRail kind="tv" title="Popular TV shows" items={popularTv} onHover={showHoverTrailer} onLeave={hideHoverTrailer} />
             <PandaRail kind="airing" title="Airing today" subtitle="What's moving through today's schedule." items={airing} onHover={showHoverTrailer} onLeave={hideHoverTrailer} />
