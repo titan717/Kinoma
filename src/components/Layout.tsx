@@ -252,6 +252,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </button>
       </aside>
 
+      <div className="panda-global-header">
+        <div className="panda-global-header__inner">
+          <Link href="/home" className="panda-global-header__brand" aria-label="Panda.fun home">
+            <KinomaLogo size="sm" variant="mark" />
+            <span>Panda.fun</span>
+          </Link>
+          <div className="panda-global-header__status"><span className="panda-global-header__dot" /> Streaming shelf</div>
+          <Link href="/search" className="panda-global-header__search"><Search size={15} /><span>Search titles, movies and series</span><kbd>⌘ K</kbd></Link>
+          <Link href="/profile" className="panda-global-header__profile" aria-label="Open profile"><UserRound size={16} /></Link>
+        </div>
+      </div>
       <main className="kinoma-app-main">{children}</main>
     </div>
   );
