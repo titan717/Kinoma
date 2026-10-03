@@ -80,7 +80,15 @@ export function ModernHero({ items }: ModernHeroProps) {
   const heroEpisode = Math.max(1, Number(activeHistory?.episodeNumber) || 1);
   const heroWatchId = heroType === 'movie'
     ? currentItem.id
-    : currentItem.id + '$season (0-100 or 0-10)
+    : currentItem.id + '$season$' + heroSeason + '$episode$' + heroEpisode;
+  const watchUrl = hasHistory && activeHistory
+    ? '/watch/' + encodeURIComponent(heroWatchId) + '?type=' + heroType + '&t=' + Math.floor(activeHistory.playbackTimestamp ?? activeHistory.progress ?? 0)
+    : '/watch/' + encodeURIComponent(heroWatchId) + '?type=' + heroType;
+  const primaryLabel = hasHistory && activeHistory
+    ? 'Continue Watching' + (heroType === 'series' ? ' (S' + heroSeason + ' E' + heroEpisode + ')' : '')
+    : 'Watch Now';
+
+  // Format rating percentage (0-100 or 0-10)
   const numRating = currentItem.rating ? Number(currentItem.rating) : NaN;
   const ratingDisplay = !isNaN(numRating) && numRating > 0
     ? (numRating > 10 ? `${(numRating / 10).toFixed(1)}` : `${numRating.toFixed(1)}`)
