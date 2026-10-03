@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'wouter';
 import { KinomaLogo } from '../components/ui/KinomaLogo';
-import { ArrowRight, Film, Github, Instagram, Play, Plus, Search, Sparkles, Tv, Youtube } from 'lucide-react';
+import { ArrowRight, Check, Film, Github, Play, Plus, Search, Sparkles, Tv } from 'lucide-react';
 import { api, MovieApiError, MovieApiMedia } from '../lib/api';
 import { libraryManager } from '../lib/library';
 import { ModernContinueWatching } from '../components/ui/modern/ModernContinueWatching';
@@ -91,6 +91,12 @@ function PandaContentCard({
   onLeave: () => void;
   badge?: string;
 }) {
+  const [inList, setInList] = useState(() => libraryManager.isInWatchlist(item.id));
+  const toggleList = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setInList(libraryManager.toggleWatchlist({ id: item.id, title: item.title, image: item.poster || '' }));
+  };
   const type = item.type === 'movie' ? 'movie' : 'series';
   const metadata = [
     item.year,
@@ -112,7 +118,7 @@ function PandaContentCard({
         <PandaPoster item={item} />
         <div className="panda-content-card__top">
           <span className="panda-content-card__badge">{badge || (item.type === 'movie' ? 'Movie' : 'Series')}</span>
-          <span className="panda-content-card__quick" aria-hidden="true"><Plus size={15} /></span>
+          <button type="button" className={`panda-content-card__quick${inList ? " is-added" : ""}`} onClick={toggleList} aria-label={inList ? `Remove ${item.title} from My List` : `Add ${item.title} to My List`} title={inList ? "Remove from My List" : "Add to My List"}>{inList ? <Check size={15} /> : <Plus size={15} />}</button>
         </div>
         <span className="panda-content-card__play" aria-hidden="true"><Play size={17} fill="currentColor" /></span>
       </div>
@@ -416,7 +422,7 @@ export function Home() {
                 <div className="kinoma-home-footer__links">
                   <div><span>Explore</span><Link href="/home">Home</Link><Link href="/search">Search</Link><Link href="/library">My List</Link></div>
                   <div><span>Panda.fun</span><Link href="/profile">Profile</Link><Link href="/about">About</Link><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link></div>
-                  <div><span>Follow</span><a href="https://github.com/titan717/Panda.fun" target="_blank" rel="noreferrer"><Github size={15} /> GitHub</a><a href="#" aria-label="Panda.fun Instagram"><Instagram size={15} /> Instagram</a><a href="#" aria-label="Panda.fun YouTube"><Youtube size={15} /> YouTube</a></div>
+                  <div><span>Project</span><a href="https://github.com/titan717/Panda.fun" target="_blank" rel="noreferrer"><Github size={15} /> Source</a><Link href="/contact">Support</Link></div>
                 </div>
               </div>
               <div className="kinoma-home-footer__bottom"><span>© 2026 Panda.fun</span><span>Built for the next watch.</span><Link href="/contact">Contact / Support</Link></div>
