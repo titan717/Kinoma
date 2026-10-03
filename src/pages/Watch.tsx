@@ -136,9 +136,9 @@ export function Watch() {
   return (
     <main className="panda-watch-page">
       <div className="panda-watch-topbar">
-        <button type="button" onClick={() => window.history.length > 1 ? window.history.back() : setLocation('/home')}><ArrowLeft size={17} /> Back</button>
-        <div className="panda-watch-brand">🐼 <strong>Panda.fun</strong><span>NOW PLAYING</span></div>
-        <button type="button" onClick={toggleList}>{inList ? <Check size={16} /> : <Plus size={16} />} {inList ? 'My List' : 'Add to My List'}</button>
+        <button className="panda-watch-back" type="button" onClick={() => window.history.length > 1 ? window.history.back() : setLocation('/home')}><ArrowLeft size={17} /><span>Back</span></button>
+        <div className="panda-watch-brand"><span className="panda-watch-brand__mark">🐼</span><strong>Panda.fun</strong><span className="panda-watch-brand__status">NOW PLAYING</span></div>
+        <button className="panda-watch-list-btn" type="button" onClick={toggleList}>{inList ? <Check size={16} /> : <Plus size={16} />}<span>{inList ? 'My List' : 'Add to My List'}</span></button>
       </div>
 
       {error && <div className="panda-watch-error" role="alert">{error}</div>}
@@ -188,6 +188,10 @@ export function Watch() {
 
       <section className="panda-watch-info">
         <div className="panda-watch-info__copy">
+          <div className="panda-watch-info__actions">
+            <button type="button" className="panda-watch-info__action is-primary" onClick={toggleList}>{inList ? <Check size={15} /> : <Plus size={15} />} {inList ? 'Saved to My List' : 'Add to My List'}</button>
+            <button type="button" className="panda-watch-info__action" onClick={() => navigator.share?.({ title, url: window.location.href }).catch(() => {})}>Share</button>
+          </div>
           <div className="panda-watch-kicker">{type === 'movie' ? <Film size={12} /> : <Tv size={12} />} {type === 'movie' ? 'MOVIE' : 'TV SERIES'} {type === 'series' && <>· S{season} E{episode}</>}</div>
           <h1>{title}</h1>
           {currentEpisode && <p className="panda-watch-episode-title">{currentEpisode.title}</p>}
