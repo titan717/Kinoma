@@ -647,6 +647,17 @@
 }
 
 
+
+.panda-watch-season-tabs{display:flex;gap:7px;align-items:center;max-width:100%;overflow-x:auto;scrollbar-width:none;padding:1px 1px 2px}
+.panda-watch-season-tabs::-webkit-scrollbar{display:none}
+.panda-watch-season-tabs button{flex:0 0 auto;display:flex;align-items:center;gap:7px;border:1px solid rgba(255,255,255,.075);background:rgba(255,255,255,.025);color:rgba(255,255,255,.48);border-radius:9px;padding:8px 11px;cursor:pointer;transition:background .2s ease,border-color .2s ease,color .2s ease,transform .2s ease}
+.panda-watch-season-tabs button:hover{color:#fff;background:rgba(255,255,255,.055);border-color:rgba(255,255,255,.13);transform:translateY(-1px)}
+.panda-watch-season-tabs button.is-active{color:#171512;background:rgba(224,205,174,.92);border-color:transparent}
+.panda-watch-season-tabs span{font-size:9px;font-weight:800;white-space:nowrap}
+.panda-watch-season-tabs small{font-size:7px;opacity:.6;white-space:nowrap}
+.panda-watch-season-tabs button.is-active small{opacity:.7}
+@media(max-width:800px){.panda-watch-season-tabs{margin-top:3px}.panda-watch-season-tabs button{padding:7px 9px}.panda-watch-season-tabs span{font-size:8px}}
+
 /* =========================================================
    PANDA.FUN — player experience
    Cinematic, spacious and responsive. The player is the focus;
