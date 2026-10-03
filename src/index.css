@@ -5790,18 +5790,7 @@ body {
 @media(max-width:620px) { .panda-stream-notice { width:min(100% - 20px,1280px); } .panda-stream-notice__content{padding:12px}.panda-stream-notice__share-copy{align-items:flex-start;flex-direction:column}.panda-stream-notice__share-button{width:100%}.panda-stream-notice__share{align-items:flex-start}.panda-stream-notice__bamboo{display:none}.panda-stream-notice__share-grid{grid-template-columns:repeat(2,1fr)} }
 
 
-/* App content column: header and routed pages must occupy the same pane beside the sidebar. */
-.panda-app-content {
-  min-width: 0;
-  min-height: 100dvh;
-  width: calc(100% - var(--sidebar-width));
-  margin-left: var(--sidebar-width);
-  display: flex;
-  flex-direction: column;
-  transition: width 240ms var(--ease-kinoma), margin-left 240ms var(--ease-kinoma);
-}
-.panda-app-content .panda-global-header { flex: 0 0 auto; width: 100%; }
-.panda-app-content .kinoma-app-main { width: 100%; margin-left: 0; flex: 1 1 auto; }
-@media (max-width: 700px) {
-  .panda-app-content { width: 100%; margin-left: 0; }
-}
+/* Routed content column sits beside the fixed sidebar. */
+.panda-app-content { min-width: 0; width: calc(100% - var(--sidebar-width)); margin-left: var(--sidebar-width); min-height: 100dvh; }
+.panda-app-content .kinoma-app-main { width: 100%; margin-left: 0; min-width: 0; }
+@media (max-width: 700px) { .panda-app-content { width: 100%; margin-left: 0; } }
