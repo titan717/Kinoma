@@ -474,7 +474,6 @@ export const api = {
       server: embedWaveServer(preferences.videoProvider),
       ...(preferences.audioLanguage !== 'auto' ? { lang: preferences.audioLanguage } : {}),
       ...(preferences.subtitleLanguage !== 'auto' && preferences.subtitleLanguage !== 'off' ? { sub: preferences.subtitleLanguage } : {}),
-      ...(preferences.subtitleProvider === 'nitro' ? { subtitleProvider: 'nitro' } : {}),
     });
     const url = `${base}${separator}${query.toString()}`;
     const source: MovieApiPlaybackSource = {
