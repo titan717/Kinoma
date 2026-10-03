@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './panda-intro.css';
 import introAudioUrl from '../../../assets/reelaudio-52430_VbuEeMF7.mp3';
 
@@ -31,7 +31,7 @@ export function PandaIntro() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const finishTimerRef = useRef<number | null>(null);
   const transitionTimerRef = useRef<number | null>(null);
-  
+
   useEffect(() => {
     if (typeof window === 'undefined' || !visible) return;
     const audio = audioRef.current;
@@ -39,7 +39,10 @@ export function PandaIntro() {
 
     const startAudio = async () => {
       if (!audio || cancelled || !audio.paused) return;
-      try { audio.currentTime = 0; await audio.play(); } catch {}
+      try {
+        audio.currentTime = 0;
+        await audio.play();
+      } catch {}
     };
 
     const retryAudio = () => {
@@ -78,7 +81,11 @@ export function PandaIntro() {
   if (!visible) return null;
 
   return (
-    <div className={"panda-intro " + (leaving ? 'is-leaving' : '')} role="presentation" aria-hidden="true">
+    <div
+      className={"panda-intro " + (leaving ? 'is-leaving' : '')}
+      role="presentation"
+      aria-hidden="true"
+    >
       <audio ref={audioRef} src={introAudioUrl} preload="auto" autoPlay playsInline />
       <div className="panda-intro__backdrop" />
       <div className="panda-intro__fog-simple" />
@@ -87,8 +94,6 @@ export function PandaIntro() {
           <span className="panda-intro__typed">PANDA.FUN</span>
         </span>
       </div>
-      </div>
-
     </div>
   );
 }
