@@ -1,18 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'wouter';
 import { KinomaLogo } from '../components/ui/KinomaLogo';
-import { ArrowRight, Clapperboard, Film, Github, Instagram, Play, Plus, Sparkles, Tv, Youtube } from 'lucide-react';
+import { ArrowRight, Film, Github, Instagram, Play, Plus, Search, Sparkles, Tv, Youtube } from 'lucide-react';
 import { api, MovieApiError, MovieApiMedia } from '../lib/api';
 import { libraryManager } from '../lib/library';
 import { ModernContinueWatching } from '../components/ui/modern/ModernContinueWatching';
 import { PandaStreamNotice } from '../components/ui/PandaStreamNotice';
+import '../styles/panda-home.css';
 
-type RailKind = 'trending' | 'latest' | 'popular' | 'tv' | 'movie';
+type RailKind = 'trending' | 'latest' | 'popular' | 'tv' | 'movie' | 'airing' | 'recommended';
 
 function KindIcon({ kind }: { kind: RailKind }) {
-  if (kind === 'movie') return <Film size={15} strokeWidth={1.8} />;
-  if (kind === 'trending') return <Sparkles size={15} strokeWidth={1.8} />;
-  return <Tv size={15} strokeWidth={1.8} />;
+  if (kind === 'movie') return <Film size={14} strokeWidth={1.9} />;
+  if (kind === 'trending' || kind === 'recommended') return <Sparkles size={14} strokeWidth={1.9} />;
+  if (kind === 'airing' || kind === 'tv') return <Tv size={14} strokeWidth={1.9} />;
+  return <Sparkles size={14} strokeWidth={1.9} />;
 }
 
 function trailerSrc(url: unknown, soundEnabled = true) {
@@ -38,51 +40,103 @@ function trailerSrc(url: unknown, soundEnabled = true) {
   }
 }
 
-function RailCard({ item, onHover, onLeave }: { item: MovieApiMedia; onHover: (item: MovieApiMedia) => void; onLeave: () => void }) {
-  const kind = item.type === 'movie' ? 'movie' : 'tv';
+function PandaContentCard({
+  item,
+  onHover,
+  onLeave,
+  badge
+}: {
+  item: MovieApiMedia;
+  onHover: (item: MovieApiMedia) => void;
+  onLeave: () => void;
+  badge?: string;
+}) {
+  const type = item.type === 'movie' ? 'movie' : 'series';
+  const metadata = [
+    item.year,
+    item.rating ? `★ ${Number(item.rating).toFixed(1)}` : null,
+    item.type === 'movie' ? 'Movie' : 'Series'
+  ].filter(Boolean).join(' · ');
+
   return (
-    <Link href={`/details/${encodeURIComponent(item.id)}?type=${kind === 'movie' ? 'movie' : 'series'}`} className="kinoma-rail-card" aria-label={`Open ${item.title}`} onMouseEnter={() => onHover(item)} onMouseLeave={onLeave} onFocus={() => onHover(item)} onBlur={onLeave}>
-      <div className="kinoma-rail-card__art" aria-hidden="true">
-        {(item.backdrop || item.poster) ? <img src={(item.backdrop || item.poster) as string} alt="" loading="lazy" decoding="async" /> : <span className="kinoma-rail-card__orb kinoma-rail-card__orb--one" />}
-        <span className="kinoma-rail-card__shine" />
+    <Link
+      href={`/details/${encodeURIComponent(item.id)}?type=${type}`}
+      className="panda-content-card"
+      aria-label={`Open ${item.title}`}
+      onMouseEnter={() => onHover(item)}
+      onMouseLeave={onLeave}
+      onFocus={() => onHover(item)}
+      onBlur={onLeave}
+    >
+      <div className="panda-content-card__media">
+        {item.poster || item.backdrop ? (
+          <img
+            src={(item.poster || item.backdrop) as string}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            referrerPolicy="no-referrer"
+          />
+        ) : (
+          <div aria-hidden="true" style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg,#20202a,#0b0b10)' }} />
+        )}
+        <div className="panda-content-card__top">
+          <span className="panda-content-card__badge">{badge || (item.type === 'movie' ? 'Movie' : 'Series')}</span>
+          <span className="panda-content-card__quick" aria-hidden="true"><Plus size={15} /></span>
+        </div>
+        <span className="panda-content-card__play" aria-hidden="true"><Play size={17} fill="currentColor" /></span>
       </div>
-      <div className="kinoma-rail-card__copy">
-        <h3>{item.title}</h3>
-        <p>{[item.year, item.rating ? `★ ${item.rating}` : null, ...(item.genres || []).slice(0, 1)].filter(Boolean).join(' • ') || 'MovieApi'}</p>
+      <div className="panda-content-card__copy">
+        <strong title={item.title}>{item.title}</strong>
+        <span>{metadata || 'Panda.fun'}</span>
       </div>
     </Link>
   );
 }
 
-function ContentRail({ kind, title, items, onHover, onLeave }: { kind: RailKind; title: string; items: MovieApiMedia[]; onHover: (item: MovieApiMedia) => void; onLeave: () => void }) {
+function PandaRail({
+  kind,
+  title,
+  subtitle,
+  items,
+  onHover,
+  onLeave,
+  action = true,
+  badge
+}: {
+  kind: RailKind;
+  title: string;
+  subtitle?: string;
+  items: MovieApiMedia[];
+  onHover: (item: MovieApiMedia) => void;
+  onLeave: () => void;
+  action?: boolean;
+  badge?: string;
+}) {
   if (!items.length) return null;
   return (
-    <section className="kinoma-home-section" aria-labelledby={`kinoma-${kind}-heading`}>
-      <div className="kinoma-home-section__heading">
-        <div>
-          <div className="kinoma-home-section__eyebrow"><KindIcon kind={kind} /> {kind === 'trending' ? 'For tonight' : kind === 'latest' ? 'Fresh' : 'Most watched'}</div>
-          <h2 id={`kinoma-${kind}-heading`}>{title}</h2>
+    <section className="panda-home-v2__section" aria-labelledby={`panda-${kind}-heading`}>
+      <div className="panda-home-v2__section-head">
+        <div className="panda-home-v2__section-title">
+          <span className="panda-home-v2__eyebrow"><KindIcon kind={kind} /> {kind === 'recommended' ? 'Picked for you' : kind === 'trending' ? 'Right now' : kind === 'latest' ? 'Fresh arrivals' : kind === 'airing' ? 'On today' : 'Panda picks'}</span>
+          <h3 id={`panda-${kind}-heading`}>{title}</h3>
+          {subtitle && <p>{subtitle}</p>}
         </div>
-        <Link href="/search" className="kinoma-home-section__link">See all <ArrowRight size={14} /></Link>
+        {action && <Link href="/search" className="panda-home-v2__see-all">Explore <ArrowRight size={13} /></Link>}
       </div>
-      <div className="kinoma-rail" tabIndex={0} aria-label={title}>
-        {items.slice(0, 4).map((item, index) => <RailCard key={`${kind}-${item.id}-${index}`} item={item} onHover={onHover} onLeave={onLeave} />)}
+      <div className="panda-home-v2__rail">
+        {items.slice(0, 8).map((item, index) => (
+          <PandaContentCard key={`${kind}-${item.id}-${index}`} item={item} onHover={onHover} onLeave={onLeave} badge={badge} />
+        ))}
       </div>
     </section>
   );
 }
 
-function ThreeDButton({ children, secondary = false }: { children: React.ReactNode; secondary?: boolean }) {
-  return (
-    <Link href={secondary ? '/library' : '/search'} className={`kinoma-3d-button ${secondary ? 'kinoma-3d-button--secondary' : ''}`}>
-      <span className="kinoma-3d-button__face">{children}</span>
-      <span className="kinoma-3d-button__depth" aria-hidden="true" />
-    </Link>
-  );
-}
-
 export function Home() {
   const [home, setHome] = useState<any>(null);
+  const [recommended, setRecommended] = useState<MovieApiMedia[]>([]);
+  const [airing, setAiring] = useState<MovieApiMedia[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [trailer, setTrailer] = useState<any>(null);
   const [isInList, setIsInList] = useState(false);
@@ -95,23 +149,57 @@ export function Home() {
   const [pandaSecret, setPandaSecret] = useState<string | null>(null);
   const [hoverTrailer, setHoverTrailer] = useState<MovieApiMedia | null>(null);
   const [hoverTrailerUrl, setHoverTrailerUrl] = useState('');
-  const [hoverTrailerReady, setHoverTrailerReady] = useState(false);
   const hoverTrailerTimer = useRef<number | null>(null);
 
   useEffect(() => {
     let active = true;
     api.getHome()
-      .then(async data => { if (!active) return; setHome(data); if (data?.featured?.id) { const result = await api.getTrailer(data.featured.id).catch(() => ({ available: false, trailer: null })); if (active) setTrailer(result); } })
-      .catch((err: unknown) => active && setError(err instanceof MovieApiError ? err.message : 'MovieApi is unavailable right now.'));
+      .then(async data => {
+        if (!active) return;
+        setHome(data);
+        if (data?.featured?.id) {
+          const [trailerResult, recommendationResult] = await Promise.allSettled([
+            api.getTrailer(data.featured.id),
+            api.getRecommendations(data.featured.id)
+          ]);
+          if (!active) return;
+          if (trailerResult.status === 'fulfilled') setTrailer(trailerResult.value);
+          if (recommendationResult.status === 'fulfilled') {
+            setRecommended((recommendationResult.value.results || []) as unknown as MovieApiMedia[]);
+          }
+        }
+      })
+      .catch((err: unknown) => {
+        if (active) setError(err instanceof MovieApiError ? err.message : 'MovieApi is unavailable right now.');
+      });
+
+    api.getAiringToday()
+      .then(data => active && setAiring((data.results || []) as unknown as MovieApiMedia[]))
+      .catch(() => {});
+
     return () => { active = false; };
   }, []);
 
   const featured = home?.featured as MovieApiMedia | null | undefined;
   const sections = home?.sections;
-  const trending = sections?.trending || [];
+  const trending = (sections?.trending || []) as MovieApiMedia[];
+  const latest = [...(sections?.latestMovies || []), ...(sections?.latestTv || [])] as MovieApiMedia[];
+  const popularMovies = (sections?.popularMovies || []) as MovieApiMedia[];
+  const popularTv = (sections?.popularTv || []) as MovieApiMedia[];
+  const fallbackRecommended = trending.length ? trending : [...popularMovies, ...popularTv];
   const featuredType = featured?.type === 'movie' ? 'movie' : 'series';
   const featuredWatchUrl = featured?.id ? '/watch/' + encodeURIComponent(featured.id) + '?type=' + featuredType : '/search';
-  const toggleFeaturedList = () => { if (featured) setIsInList(libraryManager.toggleWatchlist({ id: featured.id, title: featured.title, image: featured.poster || '' })); };
+
+  const toggleFeaturedList = () => {
+    if (featured) {
+      setIsInList(libraryManager.toggleWatchlist({
+        id: featured.id,
+        title: featured.title,
+        image: featured.poster || ''
+      }));
+    }
+  };
+
   useEffect(() => {
     setTrailerReady(false);
     if (featured?.id) setIsInList(libraryManager.isInWatchlist(featured.id));
@@ -139,19 +227,23 @@ export function Home() {
     if (hoverTrailerTimer.current) window.clearTimeout(hoverTrailerTimer.current);
     setHoverTrailer(item);
     setHoverTrailerUrl('');
-    setHoverTrailerReady(false);
     hoverTrailerTimer.current = window.setTimeout(async () => {
       const result = await api.getTrailer(item.id).catch(() => ({ available: false, trailer: null }));
       if (result?.trailer?.embedUrl) setHoverTrailerUrl(trailerSrc(result.trailer.embedUrl, true));
-    }, 280);
+    }, 650);
   };
 
   const hideHoverTrailer = () => {
     if (hoverTrailerTimer.current) window.clearTimeout(hoverTrailerTimer.current);
-    hoverTrailerTimer.current = window.setTimeout(() => { setHoverTrailer(null); setHoverTrailerUrl(''); setHoverTrailerReady(false); }, 180);
+    hoverTrailerTimer.current = window.setTimeout(() => {
+      setHoverTrailer(null);
+      setHoverTrailerUrl('');
+    }, 180);
   };
 
-  useEffect(() => () => { if (hoverTrailerTimer.current) window.clearTimeout(hoverTrailerTimer.current); }, []);
+  useEffect(() => () => {
+    if (hoverTrailerTimer.current) window.clearTimeout(hoverTrailerTimer.current);
+  }, []);
 
   const wakePanda = () => {
     pandaTapCount.current += 1;
@@ -165,12 +257,22 @@ export function Home() {
 
   return (
     <main className="kinoma-home">
-      <div className="kinoma-home__ambient" aria-hidden="true"><span className="kinoma-home__ambient-orb kinoma-home__ambient-orb--one" /><span className="kinoma-home__ambient-orb kinoma-home__ambient-orb--two" /></div>
+      <div className="kinoma-home__ambient" aria-hidden="true">
+        <span className="kinoma-home__ambient-orb kinoma-home__ambient-orb--one" />
+        <span className="kinoma-home__ambient-orb kinoma-home__ambient-orb--two" />
+      </div>
       <div className="kinoma-home__inner">
+        {/* PRESERVED HERO/TRAILER — intentionally unchanged */}
         <section className="kinoma-home-hero kinoma-home-hero--trailer" aria-labelledby="kinoma-home-title">
           <div className="kinoma-home-hero__trailer-bg" aria-label={featured?.title ? featured.title + ' trailer' : 'Featured trailer'}>
             {featured?.backdrop && <img src={featured.backdrop} alt="" className="kinoma-home-hero__banner-image kinoma-home-hero__banner-image--underlay" loading="eager" fetchPriority="high" decoding="async" />}
-            {trailer?.trailer?.embedUrl ? <iframe ref={trailerFrameRef} src={trailerSrc(trailer.trailer.embedUrl, soundEnabled)} title={featured?.title ? featured.title + ' trailer' : 'Featured trailer'} className={`kinoma-home-hero__trailer-video${trailerReady ? ' is-ready' : ''}`} onLoad={() => setTrailerReady(true)} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen /> : featured?.backdrop ? <img src={featured.backdrop} alt="" className="kinoma-home-hero__banner-image" loading="eager" fetchPriority="high" decoding="async" /> : <div className="kinoma-home-hero__banner-grid" />}
+            {trailer?.trailer?.embedUrl ? (
+              <iframe ref={trailerFrameRef} src={trailerSrc(trailer.trailer.embedUrl, soundEnabled)} title={featured?.title ? featured.title + ' trailer' : 'Featured trailer'} className={`kinoma-home-hero__trailer-video${trailerReady ? ' is-ready' : ''}`} onLoad={() => setTrailerReady(true)} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
+            ) : featured?.backdrop ? (
+              <img src={featured.backdrop} alt="" className="kinoma-home-hero__banner-image" loading="eager" fetchPriority="high" decoding="async" />
+            ) : (
+              <div className="kinoma-home-hero__banner-grid" />
+            )}
             <div className="kinoma-home-hero__trailer-shade" />
           </div>
           <div className="kinoma-home-hero__copy">
@@ -179,33 +281,120 @@ export function Home() {
             <p>{featured?.overview || error || 'Movies, series and stories worth pressing play for. Discover something, save it, and come back whenever you like.'}</p>
             <div className="kinoma-home-hero__actions">
               <Link href={featuredWatchUrl} className="kinoma-3d-button"><span className="kinoma-3d-button__face"><Play size={16} fill="currentColor" /> Watch Now</span><span className="kinoma-3d-button__depth" aria-hidden="true" /></Link>
-              <button type="button" onClick={toggleFeaturedList} className={"kinoma-3d-button kinoma-3d-button--secondary" + (isInList ? " is-added" : "")}><span className="kinoma-3d-button__face">{isInList ? <><span>✓</span> In My List</> : <><Plus size={16} /> Add to My List</>}</span><span className="kinoma-3d-button__depth" aria-hidden="true" /></button>
+              <button type="button" onClick={toggleFeaturedList} className={`kinoma-3d-button kinoma-3d-button--secondary${isInList ? ' is-added' : ''}`}><span className="kinoma-3d-button__face">{isInList ? <><span>✓</span> In My List</> : <><Plus size={16} /> Add to My List</>}</span><span className="kinoma-3d-button__depth" aria-hidden="true" /></button>
             </div>
           </div>
         </section>
 
         <PandaStreamNotice />
 
-        <ModernContinueWatching />
-        {trending.length > 0 && <ContentRail kind="trending" title="Trending today" items={trending} onHover={showHoverTrailer} onLeave={hideHoverTrailer} />}
-        {sections?.popularMovies?.length > 0 && <ContentRail kind="movie" title="Popular movies" items={sections.popularMovies} onHover={showHoverTrailer} onLeave={hideHoverTrailer} />}
-        {sections?.popularTv?.length > 0 && <ContentRail kind="tv" title="Popular series" items={sections.popularTv} onHover={showHoverTrailer} onLeave={hideHoverTrailer} />}
+        <div className="panda-home-v2">
+          <div className="panda-home-v2__inner">
+            <header className="panda-home-v2__welcome">
+              <div>
+                <span className="panda-home-v2__eyebrow"><Sparkles size={13} /> Your Panda shelf</span>
+                <h2>Stay a little. Find something good.</h2>
+                <p>Fresh releases, popular picks and stories you can keep close. Everything below the hero is designed to feel like a calm, personal shelf instead of a dashboard.</p>
+              </div>
+              <Link href="/search" className="panda-home-v2__shortcut"><Search size={14} /> Search the library <span>⌘K</span></Link>
+            </header>
 
-        {hoverTrailer && <div className="panda-home-hover-trailer" onMouseEnter={() => { if (hoverTrailerTimer.current) window.clearTimeout(hoverTrailerTimer.current); }} onMouseLeave={hideHoverTrailer} role="dialog" aria-label={hoverTrailer.title + " trailer preview"}>
-          <div className="panda-home-hover-trailer__media">{hoverTrailerUrl ? <iframe src={hoverTrailerUrl} title={hoverTrailer.title + " trailer preview"} allow="autoplay; encrypted-media; picture-in-picture" onLoad={() => setHoverTrailerReady(true)} /> : <img src={(hoverTrailer.backdrop || hoverTrailer.poster || "") as string} alt="" />}</div>
-          <div className="panda-home-hover-trailer__copy"><span>🐼 QUICK LOOK</span><strong>{hoverTrailer.title}</strong><small>{[hoverTrailer.year, hoverTrailer.rating ? `★ ${hoverTrailer.rating}` : null, ...(hoverTrailer.genres || []).slice(0, 2)].filter(Boolean).join(" • ")}</small><em>Click to open details</em></div>
-        </div>}
+            <ModernContinueWatching />
 
-        <section className="kinoma-home-section kinoma-home-section--split" aria-label="Browse by format">
-          <div className="kinoma-home-section__heading"><div><div className="kinoma-home-section__eyebrow"><Tv size={15} /> Browse</div><h2>Pick your format</h2></div><Link href="/search" className="kinoma-home-section__link">Discover <ArrowRight size={14} /></Link></div>
-          <div className="kinoma-home-format-grid"><Link href="/search?keyword=series" className="kinoma-home-format-card kinoma-home-format-card--series"><Tv size={22} /><span>TV Series</span><small>Stories made for a binge.</small></Link><Link href="/search?keyword=movie" className="kinoma-home-format-card kinoma-home-format-card--movie"><Film size={22} /><span>Movies</span><small>One story. One sitting.</small></Link></div>
-        </section>
+            <PandaRail
+              kind="recommended"
+              title="Recommended for you"
+              subtitle="A few places to start based on what's currently playing."
+              items={recommended.length ? recommended : fallbackRecommended}
+              onHover={showHoverTrailer}
+              onLeave={hideHoverTrailer}
+              badge="For you"
+            />
 
-        <footer className="kinoma-home-footer">
-          <div className="kinoma-home-footer__art" aria-hidden="true"><div className="kinoma-home-footer__halo" /><div className="kinoma-home-footer__orbit kinoma-home-footer__orbit--one" /><div className="kinoma-home-footer__orbit kinoma-home-footer__orbit--two" /><div className="kinoma-home-footer__orbit kinoma-home-footer__orbit--three" /><div className="kinoma-home-footer__core"><span className="kinoma-home-footer__core-glow" /><button type="button" className="kinoma-home-footer__panda-button" onClick={wakePanda} aria-label="Wake the Panda"><KinomaLogo size="md" variant="mark" className="kinoma-home-footer__mark" /></button></div></div>
-          <div className="kinoma-home-footer__content"><div className="kinoma-home-footer__brand"><div className="kinoma-home-footer__logo" aria-label="Panda.fun"><KinomaLogo size="lg" variant="full" /></div><p>Stories, shelves and little moments worth pressing play for.</p></div><div className="kinoma-home-footer__links"><div><span>Explore</span><Link href="/home">Home</Link><Link href="/search">Search</Link><Link href="/library">My List</Link></div><div><span>Panda.fun</span><Link href="/about">About</Link><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link></div><div><span>Follow</span><a href="https://github.com/titan717/Panda.fun" target="_blank" rel="noreferrer"><Github size={15} /> GitHub</a><a href="#" aria-label="Panda.fun Instagram"><Instagram size={15} /> Instagram</a><a href="#" aria-label="Panda.fun YouTube"><Youtube size={15} /> YouTube</a></div></div></div>
-          <div className="kinoma-home-footer__bottom"><span>© 2026 Panda.fun</span><span>Built for the next watch.</span><Link href="/contact">Contact / Support</Link></div>
-        </footer>
+            <PandaRail kind="trending" title="Trending now" subtitle="The titles getting attention today." items={trending} onHover={showHoverTrailer} onLeave={hideHoverTrailer} />
+            <PandaRail kind="latest" title="Latest" subtitle="Newly surfaced titles from MovieAPI." items={latest} onHover={showHoverTrailer} onLeave={hideHoverTrailer} badge="New" />
+            <PandaRail kind="movie" title="Popular movies" items={popularMovies} onHover={showHoverTrailer} onLeave={hideHoverTrailer} />
+            <PandaRail kind="tv" title="Popular TV shows" items={popularTv} onHover={showHoverTrailer} onLeave={hideHoverTrailer} />
+            <PandaRail kind="airing" title="Airing today" subtitle="What's moving through today's schedule." items={airing} onHover={showHoverTrailer} onLeave={hideHoverTrailer} />
+
+            <section className="panda-home-v2__section panda-home-v2__section--compact" aria-label="Browse">
+              <div className="panda-home-v2__section-head">
+                <div className="panda-home-v2__section-title">
+                  <span className="panda-home-v2__eyebrow"><Tv size={14} /> Browse your way</span>
+                  <h3>Pick a mood, not a menu.</h3>
+                </div>
+                <Link href="/search" className="panda-home-v2__see-all">Open Search <ArrowRight size={13} /></Link>
+              </div>
+              <div className="panda-home-v2__featured-grid">
+                <article className="panda-discovery-panel panda-discovery-panel--large">
+                  {popularTv[0]?.backdrop && <img className="panda-discovery-panel__image" src={popularTv[0].backdrop as string} alt="" loading="lazy" />}
+                  <div className="panda-discovery-panel__content">
+                    <span className="panda-home-v2__eyebrow"><Tv size={13} /> TV nights</span>
+                    <h3>Settle into a series.</h3>
+                    <p>Open Search, filter for series and find something with enough episodes to keep the night going.</p>
+                    <Link href="/search?keyword=series" className="panda-discovery-panel__button">Browse TV <ArrowRight size={13} /></Link>
+                  </div>
+                </article>
+                <article className="panda-discovery-panel">
+                  {popularMovies[0]?.backdrop && <img className="panda-discovery-panel__image" src={popularMovies[0].backdrop as string} alt="" loading="lazy" />}
+                  <div className="panda-discovery-panel__content">
+                    <span className="panda-home-v2__eyebrow"><Film size={13} /> Movie break</span>
+                    <h3>One story. One sitting.</h3>
+                    <p>Jump into movies when you want something complete.</p>
+                    <Link href="/search?keyword=movie" className="panda-discovery-panel__button">Browse movies <ArrowRight size={13} /></Link>
+                  </div>
+                </article>
+              </div>
+            </section>
+
+            {hoverTrailer && (
+              <div
+                className="panda-home-hover-trailer"
+                onMouseEnter={() => { if (hoverTrailerTimer.current) window.clearTimeout(hoverTrailerTimer.current); }}
+                onMouseLeave={hideHoverTrailer}
+                role="dialog"
+                aria-label={hoverTrailer.title + ' trailer preview'}
+              >
+                <div className="panda-home-hover-trailer__media">
+                  {hoverTrailerUrl ? <iframe src={hoverTrailerUrl} title={hoverTrailer.title + ' trailer preview'} allow="autoplay; encrypted-media; picture-in-picture" /> : <img src={(hoverTrailer.backdrop || hoverTrailer.poster || '') as string} alt="" />}
+                </div>
+                <div className="panda-home-hover-trailer__copy">
+                  <span>🐼 QUICK LOOK</span>
+                  <strong>{hoverTrailer.title}</strong>
+                  <small>{[hoverTrailer.year, hoverTrailer.rating ? `★ ${hoverTrailer.rating}` : null, ...(hoverTrailer.genres || []).slice(0, 2)].filter(Boolean).join(' • ')}</small>
+                  <em>Click the card to open details</em>
+                </div>
+              </div>
+            )}
+
+            <footer className="kinoma-home-footer">
+              <div className="kinoma-home-footer__art" aria-hidden="true">
+                <div className="kinoma-home-footer__halo" />
+                <div className="kinoma-home-footer__orbit kinoma-home-footer__orbit--one" />
+                <div className="kinoma-home-footer__orbit kinoma-home-footer__orbit--two" />
+                <div className="kinoma-home-footer__orbit kinoma-home-footer__orbit--three" />
+                <div className="kinoma-home-footer__core">
+                  <span className="kinoma-home-footer__core-glow" />
+                  <button type="button" className="kinoma-home-footer__panda-button" onClick={wakePanda} aria-label="Wake the Panda">
+                    <KinomaLogo size="md" variant="mark" className="kinoma-home-footer__mark" />
+                  </button>
+                </div>
+              </div>
+              <div className="kinoma-home-footer__content">
+                <div className="kinoma-home-footer__brand">
+                  <div className="kinoma-home-footer__logo" aria-label="Panda.fun"><KinomaLogo size="lg" variant="full" /></div>
+                  <p>Stories, shelves and little moments worth pressing play for.</p>
+                </div>
+                <div className="kinoma-home-footer__links">
+                  <div><span>Explore</span><Link href="/home">Home</Link><Link href="/search">Search</Link><Link href="/library">My List</Link></div>
+                  <div><span>Panda.fun</span><Link href="/profile">Profile</Link><Link href="/about">About</Link><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link></div>
+                  <div><span>Follow</span><a href="https://github.com/titan717/Panda.fun" target="_blank" rel="noreferrer"><Github size={15} /> GitHub</a><a href="#" aria-label="Panda.fun Instagram"><Instagram size={15} /> Instagram</a><a href="#" aria-label="Panda.fun YouTube"><Youtube size={15} /> YouTube</a></div>
+                </div>
+              </div>
+              <div className="kinoma-home-footer__bottom"><span>© 2026 Panda.fun</span><span>Built for the next watch.</span><Link href="/contact">Contact / Support</Link></div>
+            </footer>
+          </div>
+        </div>
       </div>
       {pandaSecret && <div className="panda-easter-egg" role="status" aria-live="polite">{pandaSecret}</div>}
     </main>
