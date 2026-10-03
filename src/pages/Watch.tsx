@@ -190,9 +190,21 @@ export function Watch() {
             </button>
             <div className="panda-watch-episodes__head">
               <div><span>WATCHING</span><strong>{title}</strong></div>
-              <select value={season} onChange={event => chooseSeason(Number(event.target.value))} aria-label="Season">
-                {seasons.map(item => <option key={item.seasonNumber} value={item.seasonNumber}>Season {item.seasonNumber}</option>)}
-              </select>
+              <div className="panda-watch-season-tabs" role="tablist" aria-label="Seasons">
+                {seasons.map(item => (
+                  <button
+                    key={item.seasonNumber}
+                    type="button"
+                    role="tab"
+                    aria-selected={item.seasonNumber === season}
+                    className={item.seasonNumber === season ? 'is-active' : ''}
+                    onClick={() => chooseSeason(item.seasonNumber)}
+                  >
+                    <span>Season {item.seasonNumber}</span>
+                    {item.episodeCount > 0 && <small>{item.episodeCount} eps</small>}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="panda-watch-episodes__list">
               {episodes.map(item => (
