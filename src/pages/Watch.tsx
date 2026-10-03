@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useRoute } from 'wouter';
-import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, Film, ListVideo, Play, Plus, Check, Share2, Tv } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Film, Play, Plus, Check, Share2, Tv } from 'lucide-react';
 import { api } from '../lib/api';
 import { historyUtil } from '../lib/history';
 import { libraryManager } from '../lib/library';
@@ -34,7 +34,6 @@ export function Watch() {
   const [source, setSource] = useState<string>('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-  const [episodesOpen, setEpisodesOpen] = useState(false);
   const [inList, setInList] = useState(false);
   const [shareMessage, setShareMessage] = useState('');
 
@@ -123,7 +122,6 @@ export function Watch() {
 
   const chooseSeason = (next: number) => {
     setSeason(next);
-    setEpisodesOpen(true);
   };
 
   const toggleList = () => setInList(libraryManager.toggleWatchlist({ id, title, image: poster }));
