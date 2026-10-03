@@ -88,24 +88,6 @@ export function Watch() {
   const synopsis = cleanText(data?.description) || 'No synopsis is available for this title yet.';
   const timestamp = Math.max(0, Number(query.get('t') || 0));
 
-  const customizeVidLink = (url: string) => {
-    try {
-      const parsedUrl = new URL(url);
-      parsedUrl.searchParams.set('player', 'jw');
-      parsedUrl.searchParams.set('autoplay', 'true');
-      parsedUrl.searchParams.set('poster', 'true');
-      parsedUrl.searchParams.set('title', 'false');
-      parsedUrl.searchParams.set('nextbutton', kind === 'series' ? 'true' : 'false');
-      parsedUrl.searchParams.set('primaryColor', 'A5D6A7');
-      parsedUrl.searchParams.set('secondaryColor', '26362A');
-      parsedUrl.searchParams.set('iconColor', 'FFFFFF');
-      parsedUrl.searchParams.set('icons', 'default');
-      if (timestamp > 0) parsedUrl.searchParams.set('startAt', String(Math.floor(timestamp)));
-      return parsedUrl.toString();
-    } catch {
-      return url;
-    }
-  };
 
   const watchUrl = (season: number, episode: number) =>
     '/watch/' + encodeURIComponent(parsed.id + '$season$' + season + '$episode$' + episode) + '?type=series';
@@ -128,56 +110,6 @@ export function Watch() {
     );
   };
 
-  // VidRock exposes documented playback events through postMessage.
-  // Only accept messages from the exact VidRock origin and validate the payload
-  // before writing anything to Panda.fun's Continue Watching history.
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const handlePlayerMessage = (event: MessageEvent) => {
-      if (event.origin !== 'https://vidlink.pro') return;
-
-      const message = event.data;
-      if (message?.type !== 'PLAYER_EVENT') return;
-
-      const player = message.data;
-      if (
-        !player ||
-        !['play', 'pause', 'seeked', 'ended', 'timeupdate'].includes(player.event) ||
-        typeof player.currentTime !== 'number' ||
-        !Number.isFinite(player.currentTime) ||
-        typeof player.duration !== 'number' ||
-        !Number.isFinite(player.duration) ||
-        typeof player.mtmdbId !== 'number' && typeof player.tmdbId !== 'number'
-      ) {
-        return;
-      }
-
-      if (kind === 'movie' && player.mediaType !== 'movie') return;
-      if (kind === 'series' && player.mediaType !== 'tv') return;
-      const playerTmdbId = Number(player.mtmdbId ?? player.tmdbId);
-      if (playerTmdbId !== Number(parsed.id)) return;
-
-      const progressSeason =
-        kind === 'series' && typeof player.season === 'number' && player.season > 0
-          ? Math.floor(player.season)
-          : activeSeason;
-      const progressEpisode =
-        kind === 'series' && typeof player.episode === 'number' && player.episode > 0
-          ? Math.floor(player.episode)
-          : parsed.episode;
-
-      saveProgress(
-        Math.max(0, player.currentTime),
-        Math.max(0, player.duration),
-        progressSeason,
-        progressEpisode
-      );
-    };
-
-    window.addEventListener('message', handlePlayerMessage);
-    return () => window.removeEventListener('message', handlePlayerMessage);
-  }, [kind, parsed.id, parsed.episode, activeSeason, title, poster]);
 
   const handleVideoProgress = (event: React.SyntheticEvent<HTMLVideoElement>) => {
     const video = event.currentTarget;
