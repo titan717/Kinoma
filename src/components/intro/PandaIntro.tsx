@@ -7,19 +7,16 @@ const INTRO_DURATION = 5200;
 const FOG_TRANSITION = 1050;
 
 function createParticles(count: number) {
-  return Array.from({ length: count }, (_, index) => {
-    const seed = (index * 47 + 19) % 101;
-    return {
-      id: index,
-      x: (index * 37.7 + 11) % 100,
-      y: (index * 61.3 + 7) % 100,
-      size: 1 + (index % 4) * 0.55,
-      delay: -((index * 0.17) % 2.8),
-      duration: 2.8 + (index % 7) * 0.45,
-      drift: ((seed % 23) - 11) * 1.8,
-      opacity: 0.16 + (index % 6) * 0.045,
-    };
-  });
+  return Array.from({ length: count }, (_, index) => ({
+    id: index,
+    x: (index * 37.7 + 11) % 100,
+    y: (index * 61.3 + 7) % 100,
+    size: 1 + (index % 4) * 0.55,
+    delay: -((index * 0.17) % 2.8),
+    duration: 2.8 + (index % 7) * 0.45,
+    drift: ((((index * 47 + 19) % 101) % 23) - 11) * 1.8,
+    opacity: 0.16 + (index % 6) * 0.045,
+  }));
 }
 
 export function PandaIntro() {
@@ -32,18 +29,16 @@ export function PandaIntro() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-
     const audio = audioRef.current;
     let cancelled = false;
 
     const startAudio = async () => {
-      if (!audio || cancelled) return;
+      if (!audio || cancelled || !audio.paused) return;
       try {
         audio.currentTime = 0;
         await audio.play();
       } catch {
-        // Autoplay can only be rejected by the browser itself. We retry on the
-        // first trusted interaction without adding a skip control to the intro.
+        // Browsers may block unmuted autoplay. A trusted first interaction retries it.
       }
     };
 
@@ -53,8 +48,6 @@ export function PandaIntro() {
       window.removeEventListener('keydown', retryAudio);
     };
 
-    // Try immediately and again after the document is interactive. No muted
-    // fallback is used: the intro is always intended to play with its audio.
     void startAudio();
     const begin = window.setTimeout(startAudio, 120);
     window.addEventListener('pointerdown', retryAudio, { once: true, passive: true });
@@ -85,7 +78,7 @@ export function PandaIntro() {
 
   return (
     <div className={`panda-intro ${leaving ? 'is-leaving' : ''}`} role="presentation" aria-hidden="true">
-      <audio ref={audioRef} src={introAudioUrl} preload="auto" playsInline />
+      <audio ref={audioRef} src={introAudioUrl} preload="auto" autoPlay playsInline />
       <div className="panda-intro__backdrop" />
       <div className="panda-intro__fog panda-intro__fog--back" />
       <div className="panda-intro__fog panda-intro__fog--mid" />
