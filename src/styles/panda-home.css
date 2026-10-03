@@ -767,3 +767,34 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+
+/* Player UI polish */
+.panda-watch-topbar{padding:2px 0 10px}
+.panda-watch-topbar button{transition:background .2s ease,border-color .2s ease,transform .2s ease}
+.panda-watch-topbar button:active{transform:scale(.98)}
+.panda-watch-back{background:rgba(255,255,255,.025)!important}
+.panda-watch-brand{position:absolute;left:50%;transform:translateX(-50%);pointer-events:none;white-space:nowrap}
+.panda-watch-brand__mark{font-size:14px;filter:grayscale(.15)}
+.panda-watch-brand strong{font-size:13px;letter-spacing:-.02em}
+.panda-watch-brand__status{margin-left:3px}
+.panda-watch-list-btn{background:rgba(255,255,255,.055)!important;color:#fff!important}
+.panda-watch-list-btn svg{opacity:.8}
+.panda-watch-error{backdrop-filter:blur(14px)}
+.panda-watch-info{position:relative;overflow:hidden}
+.panda-watch-info:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 0 0,rgba(255,255,255,.035),transparent 38%);pointer-events:none}
+.panda-watch-info__copy{position:relative}
+.panda-watch-info__actions{display:flex;gap:8px;margin-bottom:10px}
+.panda-watch-info__action{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.035);color:rgba(255,255,255,.7);border-radius:9px;padding:7px 10px;font-size:9px;cursor:pointer;transition:.2s ease}
+.panda-watch-info__action:hover{background:rgba(255,255,255,.075);color:#fff;border-color:rgba(255,255,255,.14)}
+.panda-watch-info__action.is-primary{background:rgba(255,255,255,.075);color:#fff}
+.panda-watch-section-head{padding-bottom:2px}
+.panda-watch-similar-grid button>div{transition:border-color .25s ease,transform .25s ease,box-shadow .25s ease}
+.panda-watch-similar-grid button:hover>div{border-color:rgba(255,255,255,.16);transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.28)}
+@media(max-width:700px){
+  .panda-watch-brand{position:static;transform:none}
+  .panda-watch-brand__status{display:none}
+  .panda-watch-list-btn span{display:none}
+  .panda-watch-list-btn{padding:8px 9px!important}
+  .panda-watch-info__actions{margin-bottom:8px}
+}
