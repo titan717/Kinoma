@@ -76,9 +76,10 @@ export class MovieApiError extends Error {
 
 const DEFAULT_BASE_URL = 'https://movieapi-3d0v.onrender.com';
 const DEFAULT_FALLBACK_URL = '';
-const rawBase = String(import.meta.env.VITE_MOVIE_API_URL || DEFAULT_BASE_URL).trim();
+const viteEnv = (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env || {};
+const rawBase = String(viteEnv.VITE_MOVIE_API_URL || DEFAULT_BASE_URL).trim();
 export const MOVIE_API_BASE_URL = rawBase.replace(/\/+$/, '');
-const rawFallback = String(import.meta.env.VITE_MOVIE_API_FALLBACK_URL || DEFAULT_FALLBACK_URL).trim();
+const rawFallback = String(viteEnv.VITE_MOVIE_API_FALLBACK_URL || DEFAULT_FALLBACK_URL).trim();
 export const MOVIE_API_FALLBACK_URL = rawFallback.replace(/\/+$/, '');
 
 const cache = new Map<string, { expires: number; value: unknown }>();
