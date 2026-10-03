@@ -98,17 +98,14 @@ export function Watch() {
     if (!data) return;
     const timer = window.setInterval(() => {
       try {
-        historyUtil.saveAnimeProgress({
-          animeId: id,
-          title,
-          image: poster,
-          seasonNumber: type === 'series' ? season : undefined,
-          episodeNumber: type === 'series' ? episode : undefined,
-          playbackTimestamp: 0,
-          duration: 0,
-          isCompleted: false,
-          updatedAt: Date.now(),
-        });
+        historyUtil.saveProgress(
+          id,
+          currentEpisode?.id || String(episode),
+          episode,
+          0,
+          currentEpisode?.duration || 1440,
+          { title, image: poster, animeId: id, seasonNumber: type === 'series' ? season : 1 }
+        );
       } catch {}
     }, 15000);
     return () => window.clearInterval(timer);
