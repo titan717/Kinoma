@@ -194,21 +194,21 @@ export function Library() {
         {active === 'continue' ? (
           filtered.length ? (
             <section className="kinoma-library-continue-grid">
-              {(filtered as HistoryItem[]).map(item => <ContinueCard key={item.episodeId || item.slug} item={item} onRemove={() => removeHistory(item.slug)} onWatch={celebrateWatch} />)}
+              {(filtered as HistoryItem[]).map(item => {React.createElement(ContinueCard, { key: item.episodeId || item.slug, item, onRemove: () => removeHistory(item.slug), onWatch: celebrateWatch })})}
             </section>
           ) : <EmptyState tab="continue" onBrowse={browse} />
         ) : filtered.length ? (
           <section className="kinoma-library-grid">
             {(filtered as LibraryItem[]).map(item => (
-              <PosterCard
-                key={item.id}
-                item={item}
+              {React.createElement(PosterCard, {
+                key: item.id,
+                item,
                 action={
                   <button type="button" className="kinoma-library-card__remove" onClick={() => removeLibrary(item.id, active === 'watchlist' ? 'watchlist' : active === 'favorites' ? 'favorites' : 'completed')} aria-label={`Remove ${item.title}`}>
                     <Trash2 size={13} />
                   </button>
                 }
-              />
+              })}
             ))}
           </section>
         ) : <EmptyState tab={active} onBrowse={browse} />}
