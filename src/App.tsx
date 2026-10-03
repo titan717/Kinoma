@@ -23,7 +23,6 @@ import { AuthProvider } from './lib/AuthContext';
 import { AuthModal } from './components/ui/AuthModal';
 import { AppearanceProvider } from './lib/AppearanceContext';
 import { SettingsModal } from './components/ui/SettingsModal';
-import { PandaOnboarding } from './components/ui/PandaOnboarding';
 import { PandaIntro } from './components/intro/PandaIntro';
 import { PWAInstallPrompt } from './components/ui/PWAInstallPrompt';
 import { PWAUpdatePrompt } from './components/ui/PWAUpdatePrompt';
@@ -43,59 +42,51 @@ function AnimatedRoutes() {
   return (
     <Layout>
       <AnimatePresence mode="wait">
-      <motion.div
-        key={location}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -8 }}
-        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full flex-1 flex flex-col will-change-transform"
-      >
-        <Suspense
-          fallback={
-            <div className="min-h-[55vh] w-full flex items-center justify-center bg-[var(--kinoma-bg)]">
-              <div className="h-8 w-8 rounded-full border-2 border-white/15 border-t-white/80 animate-spin" aria-label="Loading Panda.fun" />
-            </div>
-          }
+        <motion.div
+          key={location}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full flex-1 flex flex-col will-change-transform"
         >
-          <Switch location={location}>
-          <Route path="/" component={Landing} />
-          <Route path="/browse" component={Home} />
-          <Route path="/home" component={Home} />
-          <Route path="/terms" component={Terms} />
-          <Route path="/privacy" component={Privacy} />
-          <Route path="/contact" component={Contact} />
-          <Route path="/docs" component={Docs} />
-          <Route path="/profile" component={Profile} />
-          <Route path="/about" component={About} />
-          <Route path="/admin" component={Admin} />
-          <Route path="/settings" component={SettingsPage} />
-          <Route path="/search" component={Search} />
-          <Route path="/explore" component={Search} />
-          <Route path="/whats-new" component={WhatsNew} />
-          <Route path="/details/:id" component={Details} />
-          <Route path="/watch/:id" component={Watch} />
-          <Route path="/library" component={Library} />
-          <Route path="/history" component={Library} />
-          <Route>
-            <div className="flex min-h-[60vh] items-center justify-center text-gray-500 font-medium">
-              404 - Page Not Found
-            </div>
-          </Route>
-          </Switch>
-        </Suspense>
+          <Suspense
+            fallback={
+              <div className="min-h-[55vh] w-full flex items-center justify-center bg-[var(--kinoma-bg)]">
+                <div className="h-8 w-8 rounded-full border-2 border-white/15 border-t-white/80 animate-spin" aria-label="Loading Panda.fun" />
+              </div>
+            }
+          >
+            <Switch location={location}>
+              <Route path="/" component={Landing} />
+              <Route path="/browse" component={Home} />
+              <Route path="/home" component={Home} />
+              <Route path="/terms" component={Terms} />
+              <Route path="/privacy" component={Privacy} />
+              <Route path="/contact" component={Contact} />
+              <Route path="/docs" component={Docs} />
+              <Route path="/profile" component={Profile} />
+              <Route path="/about" component={About} />
+              <Route path="/admin" component={Admin} />
+              <Route path="/settings" component={SettingsPage} />
+              <Route path="/search" component={Search} />
+              <Route path="/explore" component={Search} />
+              <Route path="/whats-new" component={WhatsNew} />
+              <Route path="/details/:id" component={Details} />
+              <Route path="/watch/:id" component={Watch} />
+              <Route path="/library" component={Library} />
+              <Route path="/history" component={Library} />
+              <Route>
+                <div className="flex min-h-[60vh] items-center justify-center text-gray-500 font-medium">
+                  404 - Page Not Found
+                </div>
+              </Route>
+            </Switch>
+          </Suspense>
         </motion.div>
       </AnimatePresence>
     </Layout>
   );
-}
-
-class OptionalFeatureBoundary extends Component<{ children: React.ReactNode }, { hasError: boolean }> {
-  state = { hasError: false };
-  constructor(props: { children: React.ReactNode }) { super(props); }
-  static getDerivedStateFromError() { return { hasError: true }; }
-  componentDidCatch(error: unknown) { console.error('[Panda.fun] Optional feature error:', error); }
-  render() { return this.state.hasError ? null : this.props.children; }
 }
 
 class AppErrorBoundary extends Component<{ children: React.ReactNode }, { hasError: boolean }> {
@@ -126,9 +117,6 @@ export default function App() {
         <AuthProvider>
           <AppearanceProvider>
             <PandaIntro />
-            <OptionalFeatureBoundary>
-              <PandaOnboarding />
-            </OptionalFeatureBoundary>
             <PWAUpdateBridge />
             <MainAppShell />
             <PWAInstallPrompt />
