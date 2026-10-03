@@ -200,15 +200,23 @@ export function Library() {
         ) : filtered.length ? (
           <section className="kinoma-library-grid">
             {(filtered as LibraryItem[]).map(item => (
-              {React.createElement(PosterCard, {
-                key: item.id,
-                item,
+              <PosterCard
+                key={item.id}
+                item={item}
                 action={
-                  <button type="button" className="kinoma-library-card__remove" onClick={() => removeLibrary(item.id, active === 'watchlist' ? 'watchlist' : active === 'favorites' ? 'favorites' : 'completed')} aria-label={`Remove ${item.title}`}>
+                  <button
+                    type="button"
+                    className="kinoma-library-card__remove"
+                    onClick={() => removeLibrary(
+                      item.id,
+                      active === 'watchlist' ? 'watchlist' : active === 'favorites' ? 'favorites' : 'completed'
+                    )}
+                    aria-label={`Remove ${item.title}`}
+                  >
                     <Trash2 size={13} />
                   </button>
                 }
-              })}
+              />
             ))}
           </section>
         ) : <EmptyState tab={active} onBrowse={browse} />}
