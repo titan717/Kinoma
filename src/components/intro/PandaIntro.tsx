@@ -3,19 +3,22 @@ import { KinomaLogo } from '../ui/KinomaLogo';
 import './panda-intro.css';
 import introAudioUrl from '../../../assets/reelaudio-52430_VbuEeMF7.mp3';
 
-const INTRO_DURATION = 5200;
-const FOG_TRANSITION = 1050;
+const INTRO_DURATION = 9000;
+const FOG_TRANSITION = 1800;
 
 function createParticles(count: number) {
   return Array.from({ length: count }, (_, index) => ({
     id: index,
-    x: (index * 37.7 + 11) % 100,
-    y: (index * 61.3 + 7) % 100,
-    size: 1 + (index % 4) * 0.55,
-    delay: -((index * 0.17) % 2.8),
-    duration: 2.8 + (index % 7) * 0.45,
-    drift: ((((index * 47 + 19) % 101) % 23) - 11) * 1.8,
-    opacity: 0.16 + (index % 6) * 0.045,
+    x: ((index * 73.37 + 17) % 100) - 50,
+    y: ((index * 41.91 + 29) % 100) - 50,
+    z: -520 + ((index * 97.13 + 7) % 100) * 10.4,
+    size: 1 + (index % 7) * 0.55,
+    delay: -((index * 0.043) % 6),
+    duration: 5.2 + (index % 9) * 0.62,
+    driftX: ((index * 19) % 31) - 15,
+    driftY: ((index * 23) % 25) - 12,
+    driftZ: 80 + (index % 13) * 24,
+    opacity: 0.12 + (index % 8) * 0.035,
   }));
 }
 
@@ -25,34 +28,25 @@ export function PandaIntro() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const finishTimerRef = useRef<number | null>(null);
   const transitionTimerRef = useRef<number | null>(null);
-  const particles = useMemo(() => createParticles(110), []);
+  const particles = useMemo(() => createParticles(420), []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const audio = audioRef.current;
     let cancelled = false;
-
     const startAudio = async () => {
       if (!audio || cancelled || !audio.paused) return;
-      try {
-        audio.currentTime = 0;
-        await audio.play();
-      } catch {
-        // Browsers may block unmuted autoplay. A trusted first interaction retries it.
-      }
+      try { audio.currentTime = 0; await audio.play(); } catch {}
     };
-
     const retryAudio = () => {
       void startAudio();
       window.removeEventListener('pointerdown', retryAudio);
       window.removeEventListener('keydown', retryAudio);
     };
-
     void startAudio();
     const begin = window.setTimeout(startAudio, 120);
     window.addEventListener('pointerdown', retryAudio, { once: true, passive: true });
     window.addEventListener('keydown', retryAudio, { once: true });
-
     finishTimerRef.current = window.setTimeout(() => {
       if (cancelled) return;
       setLeaving(true);
@@ -62,7 +56,6 @@ export function PandaIntro() {
         window.dispatchEvent(new CustomEvent('panda_intro_complete'));
       }, FOG_TRANSITION);
     }, INTRO_DURATION);
-
     return () => {
       cancelled = true;
       window.clearTimeout(begin);
@@ -75,26 +68,24 @@ export function PandaIntro() {
   }, []);
 
   if (!visible) return null;
-
   return (
-    <div className={`panda-intro ${leaving ? 'is-leaving' : ''}`} role="presentation" aria-hidden="true">
+    <div className={"panda-intro " + (leaving ? 'is-leaving' : '')} role="presentation" aria-hidden="true">
       <audio ref={audioRef} src={introAudioUrl} preload="auto" autoPlay playsInline />
       <div className="panda-intro__backdrop" />
+      <div className="panda-intro__volumetric panda-intro__volumetric--back" />
+      <div className="panda-intro__volumetric panda-intro__volumetric--mid" />
       <div className="panda-intro__fog panda-intro__fog--back" />
       <div className="panda-intro__fog panda-intro__fog--mid" />
-      <div className="panda-intro__particles">
+      <div className="panda-intro__depth">
         {particles.map((particle) => (
           <i key={particle.id} style={{
-            '--x': `${particle.x}%`,
-            '--y': `${particle.y}%`,
-            '--size': `${particle.size}px`,
-            '--delay': `${particle.delay}s`,
-            '--duration': `${particle.duration}s`,
-            '--drift': `${particle.drift}px`,
-            '--opacity': particle.opacity,
+            '--x': particle.x + 'vw', '--y': particle.y + 'vh', '--z': particle.z + 'px',
+            '--size': particle.size + 'px', '--delay': particle.delay + 's', '--duration': particle.duration + 's',
+            '--dx': particle.driftX + 'vw', '--dy': particle.driftY + 'vh', '--dz': particle.driftZ + 'px', '--opacity': particle.opacity,
           } as React.CSSProperties} />
         ))}
       </div>
+      <div className="panda-intro__mist-field"><span /><span /><span /><span /><span /><span /><span /><span /></div>
       <div className="panda-intro__mark">
         <div className="panda-intro__halo" />
         <div className="panda-intro__logo"><KinomaLogo size="lg" variant="full" /></div>
