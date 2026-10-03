@@ -1,5 +1,6 @@
 .panda-intro{position:fixed;inset:0;z-index:9999;overflow:hidden;isolation:isolate;background:#050404;color:#f8f1eb;perspective:1100px}
 .panda-intro__backdrop,.panda-intro__fog,.panda-intro__rush,.panda-intro__depth,.panda-intro__volumetric,.panda-intro__mist-field{position:absolute;inset:-12%;pointer-events:none}
+.panda-intro__webgl-fog{position:absolute;inset:0;width:100%;height:100%;z-index:5;display:block;pointer-events:none}
 .panda-intro__backdrop{background:radial-gradient(circle at 50% 46%,rgba(205,157,111,.12),transparent 20%),radial-gradient(circle at 20% 72%,rgba(105,62,49,.16),transparent 34%),#050404;animation:pandaIntroBreathe 9s ease both}
 .panda-intro__mark{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;animation:pandaIntroMark 9s cubic-bezier(.16,1,.3,1) both}
 .panda-intro__logo{position:relative;z-index:2;opacity:.92;filter:drop-shadow(0 18px 55px rgba(0,0,0,.85));animation:pandaLogoReveal 9s ease both}
@@ -7,7 +8,7 @@
 .panda-intro__wordmark{position:relative;z-index:2;display:block;overflow:hidden;white-space:nowrap;opacity:.92;font-size:clamp(19px,3vw,32px);font-weight:800;letter-spacing:.18em;line-height:1;transform:translateX(.09em);text-shadow:0 8px 30px rgba(0,0,0,.65)}
 .panda-intro__typed{display:inline-block;clip-path:inset(0 100% 0 0);animation:pandaType 2.8s steps(9,end) .35s forwards}
 .panda-intro__halo{position:absolute;width:min(440px,76vw);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(218,172,123,.2),rgba(148,91,70,.08) 34%,transparent 68%);filter:blur(20px);opacity:0;animation:pandaIntroHalo 9s ease both}
-.panda-intro__volumetric{z-index:2;transform-style:preserve-3d;filter:blur(38px);opacity:.55}
+.panda-intro__volumetric{z-index:2;transform-style:preserve-3d;filter:blur(38px);opacity:0}
 .panda-intro__volumetric:before,.panda-intro__volumetric:after{content:"";position:absolute;border-radius:50%;background:radial-gradient(ellipse at 35% 50%,rgba(235,224,214,.18),transparent 58%),radial-gradient(ellipse at 70% 45%,rgba(181,151,132,.13),transparent 62%);filter:blur(55px)}
 .panda-intro__volumetric:before{width:85%;height:38%;left:-20%;top:25%;animation:pandaVolumeA 11s ease-in-out infinite alternate}
 .panda-intro__volumetric:after{width:78%;height:42%;right:-18%;top:48%;animation:pandaVolumeB 13s ease-in-out -4s infinite alternate}
@@ -19,9 +20,9 @@
 .panda-intro__fog--back{animation:pandaFogArrival 5s cubic-bezier(.16,1,.3,1) forwards,pandaFogRotate 16s linear 5s infinite}
 .panda-intro__fog--mid{filter:blur(29px);transform:scale(1.14);animation:pandaFogArrivalMid 5s cubic-bezier(.16,1,.3,1) .15s forwards,pandaFogRotate 11s linear 5s -2s infinite reverse}
 .panda-intro__fog--front{z-index:15;opacity:0;filter:blur(15px)}
-.panda-intro__depth{z-index:6;inset:0;transform-style:preserve-3d;overflow:hidden}
+.panda-intro__depth{z-index:6;inset:0;transform-style:preserve-3d;overflow:hidden;opacity:0}
 .panda-intro__depth i{position:absolute;left:50%;top:50%;width:var(--size);height:var(--size);border-radius:50%;background:rgba(236,224,213,.82);box-shadow:0 0 12px rgba(224,190,160,.24),0 0 28px rgba(224,190,160,.08);opacity:0;transform-style:preserve-3d;transform:translate3d(var(--x),var(--y),var(--z)) scale(.45);animation:pandaDepthParticle var(--duration) cubic-bezier(.2,.7,.25,1) var(--delay) infinite}
-.panda-intro__mist-field{z-index:7;transform-style:preserve-3d}
+.panda-intro__mist-field{z-index:7;transform-style:preserve-3d;opacity:0}
 .panda-intro__mist-field span{position:absolute;width:42vw;height:17vw;border-radius:50%;background:radial-gradient(ellipse,rgba(228,215,204,.14),rgba(184,154,137,.08) 36%,transparent 70%);filter:blur(24px);opacity:.45;animation:pandaMistDrift 12s ease-in-out infinite alternate}
 .panda-intro__mist-field span:nth-child(1){left:-8%;top:15%;animation-delay:-1s}.panda-intro__mist-field span:nth-child(2){left:18%;top:5%;animation-delay:-4s}.panda-intro__mist-field span:nth-child(3){left:48%;top:20%;animation-delay:-7s}.panda-intro__mist-field span:nth-child(4){left:72%;top:9%;animation-delay:-2s}.panda-intro__mist-field span:nth-child(5){left:-14%;top:58%;animation-delay:-6s}.panda-intro__mist-field span:nth-child(6){left:16%;top:68%;animation-delay:-9s}.panda-intro__mist-field span:nth-child(7){left:52%;top:62%;animation-delay:-3s}.panda-intro__mist-field span:nth-child(8){left:78%;top:72%;animation-delay:-11s}
 .panda-intro__rush{z-index:18;opacity:0;background:radial-gradient(ellipse at 50% 50%,rgba(241,231,220,.28),transparent 21%),radial-gradient(ellipse at 15% 55%,rgba(205,177,159,.22),transparent 40%),radial-gradient(ellipse at 85% 42%,rgba(211,184,165,.2),transparent 38%);filter:blur(18px);transform:scale(1)}
