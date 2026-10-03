@@ -455,13 +455,13 @@ export const api = {
       : `https://embedwave.cc/embed/tv/${tmdbId}/${season}/${episode}`;
     const separator = base.includes('?') ? '&' : '?';
     const language = originalLanguage ? `&lang=${encodeURIComponent(originalLanguage)}` : '';
-    const url = `${base}${separator}autoplay=1&nobrand=1&server=cinesrc${language}`;
+    const url = `${base}${separator}autoplay=1&nobrand=1&server=nxsha${language}`;
     const source: MovieApiPlaybackSource = {
       id: `embedwave-cinesrc-${tmdbId}`,
       provider: 'embedwave',
       type: 'embed',
       url,
-      title: 'EmbedWave · CineSrc',
+      title: 'EmbedWave · Multi HD',
       quality: 'auto',
       requiresClientPlayback: true,
     };
