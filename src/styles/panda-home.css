@@ -1289,3 +1289,91 @@
 @media(prefers-reduced-motion:reduce){
   .panda-watch-brand__status::before{animation:none}
 }
+
+/* Final responsive pass — player */
+.panda-watch-page{width:100%;box-sizing:border-box}
+.panda-watch-topbar,.panda-watch-stage,.panda-watch-similar{min-width:0}
+.panda-watch-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.panda-watch-brand{min-width:0;display:flex;align-items:center}
+.panda-watch-brand strong{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.panda-watch-player{width:100%;aspect-ratio:16/9;min-height:0;overflow:hidden;background:#0b0908}
+.panda-watch-player iframe{width:100%;height:100%;min-height:0;display:block}
+.panda-watch-info__copy{min-width:0}
+.panda-watch-info h1,.panda-watch-episode-title,.panda-watch-info__description{overflow-wrap:anywhere}
+.panda-watch-info__actions{min-width:0}
+.panda-watch-info__action{white-space:nowrap}
+.panda-watch-player-episodes{min-width:0}
+.panda-watch-player-episodes .kinoma-season-tabs{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain}
+.panda-watch-player-episodes .kinoma-episode-card{min-width:0}
+.panda-watch-player-episodes .kinoma-episode-copy{min-width:0}
+.panda-watch-player-episodes .kinoma-episode-copy strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.panda-watch-similar-grid{min-width:0}
+
+@media (min-width:1400px){
+  .panda-watch-page{padding-inline:clamp(28px,5vw,88px)}
+  .panda-watch-player{border-radius:24px}
+}
+@media (max-width:900px){
+  .panda-watch-page{padding-inline:clamp(12px,3vw,24px)}
+  .panda-watch-info{grid-template-columns:112px minmax(0,1fr);align-items:start}
+  .panda-watch-info__copy{padding-top:2px}
+  .panda-watch-info__meta{grid-column:2}
+  .panda-watch-info__description{grid-column:1/-1}
+  .panda-watch-info__actions{grid-column:1/-1}
+  .panda-watch-similar-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+}
+@media (max-width:700px){
+  .panda-watch-page{padding:8px 10px 44px}
+  .panda-watch-topbar{margin-bottom:10px}
+  .panda-watch-back{flex:0 0 auto}
+  .panda-watch-brand{gap:5px;max-width:55vw}
+  .panda-watch-brand__mark{font-size:15px}
+  .panda-watch-brand strong{font-size:12px}
+  .panda-watch-list-btn{flex:0 0 auto}
+  .panda-watch-info{grid-template-columns:76px minmax(0,1fr);gap:13px;padding:16px;margin-top:16px}
+  .panda-watch-info__visual{width:76px}
+  .panda-watch-info h1{font-size:clamp(22px,7vw,28px)}
+  .panda-watch-episode-title{font-size:11px}
+  .panda-watch-info__meta{gap:7px}
+  .panda-watch-info__meta span{font-size:8px}
+  .panda-watch-info__actions{gap:6px}
+  .panda-watch-info__action{padding:7px 9px}
+  .panda-watch-player-episodes{margin-top:28px}
+  .panda-watch-player-episodes .kinoma-season-tabs{padding-right:4px}
+  .panda-watch-player-episodes .kinoma-season-tabs button{padding:8px 11px}
+  .panda-watch-player-episodes .kinoma-episode-card{
+    grid-template-columns:104px minmax(0,1fr) 16px;
+    gap:9px;
+    min-height:74px;
+  }
+  .panda-watch-player-episodes .kinoma-episode-copy strong{font-size:10px}
+  .panda-watch-player-episodes .kinoma-episode-copy p{display:none}
+  .panda-watch-similar-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+}
+@media (max-width:420px){
+  .panda-watch-page{padding-inline:7px}
+  .panda-watch-topbar{gap:7px}
+  .panda-watch-back{font-size:9px!important}
+  .panda-watch-brand{max-width:48vw}
+  .panda-watch-brand strong{font-size:11px}
+  .panda-watch-info{grid-template-columns:64px minmax(0,1fr);gap:11px;padding:13px;border-radius:13px}
+  .panda-watch-info__visual{width:64px}
+  .panda-watch-kicker{font-size:7px}
+  .panda-watch-info h1{font-size:21px}
+  .panda-watch-info__description{font-size:10px!important}
+  .panda-watch-info__action{padding:6px 8px;font-size:8px}
+  .panda-watch-player-episodes .kinoma-episode-card{grid-template-columns:88px minmax(0,1fr) 14px;gap:8px}
+  .panda-watch-player-episodes .kinoma-episode-card{border-radius:12px}
+  .panda-watch-similar-grid{gap:9px}
+}
+@media (max-width:360px){
+  .panda-watch-list-btn{width:30px;height:30px}
+  .panda-watch-brand__mark{display:none}
+  .panda-watch-brand strong{font-size:10px}
+  .panda-watch-info__meta span{font-size:7px}
+  .panda-watch-info__action{font-size:7px}
+  .panda-watch-player-episodes .kinoma-episode-card{grid-template-columns:78px minmax(0,1fr) 12px}
+}
+@media (min-width:2000px){
+  .panda-watch-stage,.panda-watch-similar{max-width:1680px}
+}
