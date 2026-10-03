@@ -12,7 +12,6 @@ import {
   ChevronRight,
   X,
 } from 'lucide-react';
-import { KinomaLogo } from './ui/KinomaLogo';
 
 const ITEMS = [
   { href: '/home', label: 'Home', Icon: House },
