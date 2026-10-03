@@ -3,30 +3,8 @@ import { KinomaLogo } from '../ui/KinomaLogo';
 import './panda-intro.css';
 import introAudioUrl from '../../../assets/reelaudio-52430_VbuEeMF7.mp3';
 
-const INTRO_SEEN_KEY = 'panda_intro_seen_v4';
-const INTRO_SHOWN_SESSION_KEY = 'panda_intro_shown_v3';
 const INTRO_DURATION = 5200;
-
-function hasSeenIntro() {
-  if (typeof window === 'undefined') return true;
-  try {
-    return window.localStorage.getItem(INTRO_SEEN_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
-function markIntroSeen() {
-  try {
-    window.localStorage.setItem(INTRO_SEEN_KEY, '1');
-    window.sessionStorage.setItem(INTRO_SHOWN_SESSION_KEY, '1');
-  } catch {}
-}
-
-function completeIntro() {
-  markIntroSeen();
-  window.dispatchEvent(new CustomEvent('panda_intro_complete'));
-}
+const FOG_TRANSITION = 1050;
 
 function createParticles(count: number) {
   return Array.from({ length: count }, (_, index) => {
@@ -45,21 +23,16 @@ function createParticles(count: number) {
 }
 
 export function PandaIntro() {
-  const [visible, setVisible] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [visible, setVisible] = useState(true);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const finishTimerRef = useRef<number | null>(null);
+  const transitionTimerRef = useRef<number | null>(null);
   const particles = useMemo(() => createParticles(110), []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    if (hasSeenIntro()) {
-      window.setTimeout(completeIntro, 0);
-      return;
-    }
-
-    setVisible(true);
     const audio = audioRef.current;
     let cancelled = false;
 
@@ -69,81 +42,71 @@ export function PandaIntro() {
         audio.currentTime = 0;
         await audio.play();
       } catch {
-        // Browser autoplay policy may block sound. The cinematic visual still runs.
+        // Autoplay can only be rejected by the browser itself. We retry on the
+        // first trusted interaction without adding a skip control to the intro.
       }
     };
 
-    const begin = window.setTimeout(startAudio, 80);
+    const retryAudio = () => {
+      void startAudio();
+      window.removeEventListener('pointerdown', retryAudio);
+      window.removeEventListener('keydown', retryAudio);
+    };
+
+    // Try immediately and again after the document is interactive. No muted
+    // fallback is used: the intro is always intended to play with its audio.
+    void startAudio();
+    const begin = window.setTimeout(startAudio, 120);
+    window.addEventListener('pointerdown', retryAudio, { once: true, passive: true });
+    window.addEventListener('keydown', retryAudio, { once: true });
+
     finishTimerRef.current = window.setTimeout(() => {
       if (cancelled) return;
       setLeaving(true);
-
-      window.setTimeout(() => {
+      transitionTimerRef.current = window.setTimeout(() => {
         if (cancelled) return;
         setVisible(false);
-        completeIntro();
-      }, 1050);
+        window.dispatchEvent(new CustomEvent('panda_intro_complete'));
+      }, FOG_TRANSITION);
     }, INTRO_DURATION);
 
     return () => {
       cancelled = true;
       window.clearTimeout(begin);
       if (finishTimerRef.current) window.clearTimeout(finishTimerRef.current);
+      if (transitionTimerRef.current) window.clearTimeout(transitionTimerRef.current);
+      window.removeEventListener('pointerdown', retryAudio);
+      window.removeEventListener('keydown', retryAudio);
       audio?.pause();
     };
   }, []);
-
-  useEffect(() => {
-    if (!visible || typeof window === 'undefined') return;
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      event.preventDefault();
-      setLeaving(true);
-      window.setTimeout(() => {
-        setVisible(false);
-        completeIntro();
-      }, 450);
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [visible]);
 
   if (!visible) return null;
 
   return (
     <div className={`panda-intro ${leaving ? 'is-leaving' : ''}`} role="presentation" aria-hidden="true">
-      <audio ref={audioRef} src={introAudioUrl} preload="auto" />
-
+      <audio ref={audioRef} src={introAudioUrl} preload="auto" playsInline />
       <div className="panda-intro__backdrop" />
       <div className="panda-intro__fog panda-intro__fog--back" />
       <div className="panda-intro__fog panda-intro__fog--mid" />
       <div className="panda-intro__particles">
         {particles.map((particle) => (
-          <i
-            key={particle.id}
-            style={{
-              '--x': `${particle.x}%`,
-              '--y': `${particle.y}%`,
-              '--size': `${particle.size}px`,
-              '--delay': `${particle.delay}s`,
-              '--duration': `${particle.duration}s`,
-              '--drift': `${particle.drift}px`,
-              '--opacity': particle.opacity,
-            } as React.CSSProperties}
-          />
+          <i key={particle.id} style={{
+            '--x': `${particle.x}%`,
+            '--y': `${particle.y}%`,
+            '--size': `${particle.size}px`,
+            '--delay': `${particle.delay}s`,
+            '--duration': `${particle.duration}s`,
+            '--drift': `${particle.drift}px`,
+            '--opacity': particle.opacity,
+          } as React.CSSProperties} />
         ))}
       </div>
-
       <div className="panda-intro__mark">
         <div className="panda-intro__halo" />
-        <div className="panda-intro__logo">
-          <KinomaLogo size="lg" variant="full" />
-        </div>
+        <div className="panda-intro__logo"><KinomaLogo size="lg" variant="full" /></div>
         <span className="panda-intro__wordmark">PANDA.FUN</span>
       </div>
-
       <div className="panda-intro__fog panda-intro__fog--front" />
       <div className="panda-intro__rush" />
       <div className="panda-intro__grain" />
