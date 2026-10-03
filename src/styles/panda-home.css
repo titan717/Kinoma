@@ -1249,3 +1249,43 @@
   .panda-watch-similar{margin-top:42px}
   .panda-watch-similar-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
 }
+/* Bold cinematic NOW PLAYING treatment */
+.panda-watch-brand__status{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  margin-left:8px;
+  padding:7px 11px 7px 10px;
+  border:1px solid rgba(255,222,201,.16);
+  border-radius:9px;
+  background:rgba(169,72,61,.14);
+  color:#fff4eb;
+  font-size:8px;
+  font-weight:950;
+  letter-spacing:.18em;
+  line-height:1;
+  box-shadow:0 7px 18px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.06);
+  text-shadow:0 1px 12px rgba(255,220,196,.14);
+}
+.panda-watch-brand__status::before{
+  content:"";
+  width:6px;
+  height:6px;
+  flex:0 0 6px;
+  border-radius:50%;
+  background:#f2c6a9;
+  box-shadow:0 0 0 3px rgba(242,198,169,.10),0 0 12px rgba(242,198,169,.35);
+  animation:pandaNowPlayingPulse 2s ease-in-out infinite;
+}
+@keyframes pandaNowPlayingPulse{
+  0%,100%{opacity:.62;transform:scale(.9)}
+  50%{opacity:1;transform:scale(1)}
+}
+@media(max-width:620px){
+  .panda-watch-brand__status{padding:6px 8px;font-size:7px;letter-spacing:.14em}
+  .panda-watch-brand__status::before{width:5px;height:5px;flex-basis:5px}
+}
+@media(prefers-reduced-motion:reduce){
+  .panda-watch-brand__status::before{animation:none}
+}
