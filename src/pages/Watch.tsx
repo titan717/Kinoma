@@ -181,8 +181,6 @@ export function Watch() {
           ) : <div className="panda-watch-player-empty"><Film size={32} /><strong>Playback unavailable</strong><span>The EmbedWave source could not be resolved for this title.</span></div>}
         </div>
 
-
-
       <section className="panda-watch-info">
         <div className="panda-watch-info__copy">
           <div className="panda-watch-info__actions">
@@ -201,9 +199,6 @@ export function Watch() {
           {(data?.genres || []).slice(0, 4).map((genre: string) => <span key={genre}>{genre}</span>)}
         </div>
       </section>
-
->
-
 
         {type === 'series' && (
           <section className="panda-watch-player-episodes">
@@ -267,26 +262,6 @@ export function Watch() {
             </div>
           </section>
         )}
-      </section
-
-      <section className="panda-watch-info">
-        <div className="panda-watch-info__copy">
-          <div className="panda-watch-info__actions">
-            {shareMessage && <span className="panda-watch-share-feedback" role="status" aria-live="polite">{shareMessage}</span>}
-            <button type="button" className="panda-watch-info__action is-primary" onClick={toggleList}>{inList ? <Check size={15} /> : <Plus size={15} />} {inList ? 'Saved to My List' : 'Add to My List'}</button>
-            <button type="button" className="panda-watch-info__action" onClick={shareCurrentPage}><Share2 size={15} /> Share</button>
-          </div>
-          <div className="panda-watch-kicker">{type === 'movie' ? <Film size={12} /> : <Tv size={12} />} {type === 'movie' ? 'MOVIE' : 'TV SERIES'} {type === 'series' && <>· S{season} E{episode}</>}</div>
-          <h1>{title}</h1>
-          {currentEpisode && <p className="panda-watch-episode-title">{currentEpisode.title}</p>}
-          <p>{clean(data?.description) || 'No synopsis is available for this title yet.'}</p>
-        </div>
-        <div className="panda-watch-info__meta">
-          {data?.releaseDate && <span>{String(data.releaseDate).slice(0, 4)}</span>}
-          {data?.rating != null && <span>★ {data.rating}</span>}
-          {(data?.genres || []).slice(0, 4).map((genre: string) => <span key={genre}>{genre}</span>)}
-        </div>
-
       </section>
 
       <section className="panda-watch-similar">
