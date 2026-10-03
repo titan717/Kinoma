@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'wouter';
+import { KinomaLogo } from './ui/KinomaLogo';
 import {
   House,
   Search,
