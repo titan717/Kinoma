@@ -28,6 +28,7 @@ import { SettingsModal } from './components/ui/SettingsModal';
 import { PandaOnboarding } from './components/ui/PandaOnboarding';
 import { PWAInstallPrompt } from './components/ui/PWAInstallPrompt';
 import { trackPageView } from './lib/analytics';
+import { usePWAUpdate } from './lib/usePWAUpdate';
 
 function AnimatedRoutes() {
   const [location] = useLocation();
@@ -142,6 +143,11 @@ class AppErrorBoundary extends Component<{ children: React.ReactNode }, { hasErr
   }
 }
 
+function PWAUpdateBridge() {
+  usePWAUpdate();
+  return null;
+}
+
 function MainAppShell() {
   return <AnimatedRoutes />;
 }
@@ -162,6 +168,7 @@ export default function App() {
           <OptionalFeatureBoundary>
             <PandaOnboarding />
           </OptionalFeatureBoundary>
+          <PWAUpdateBridge />
           <MainAppShell />
           <PWAInstallPrompt />
           <AuthModal />
