@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Copy, Instagram, MessageCircle, Send, X as XIcon } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Check, Copy, Instagram, MessageCircle, Send, X as XIcon } from 'lucide-react';
 
 const SHARE_MESSAGE = `🐼 Hey! You’ve got to check this out! 🍿
 
@@ -7,9 +7,41 @@ I’ve been streaming on panda.fun and thought you’d love it too. Grab your fa
 
 🐾 Watch here: https://www.panda.fun`;
 
+const NOTICE_DISMISSED = 'panda_stream_notice_dismissed';
+
 export function PandaStreamNotice() {
+  const [dismissed, setDismissed] = useState(() => {
+    try { return window.localStorage.getItem(NOTICE_DISMISSED) === 'true'; } catch { return false; }
+  });
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handlePointer = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) setOpen(false);
+    };
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', handlePointer);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handlePointer);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [open]);
+
+  const dismiss = () => {
+    setDismissed(true);
+    try { window.localStorage.setItem(NOTICE_DISMISSED, 'true'); } catch {}
+  };
+
+  const restore = () => {
+    setDismissed(false);
+    try { window.localStorage.removeItem(NOTICE_DISMISSED); } catch {}
+  };
 
   const copyMessage = async () => {
     try {
@@ -17,7 +49,7 @@ export function PandaStreamNotice() {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1800);
     } catch {
-      // Clipboard may be unavailable in restricted browsers.
+      setCopied(false);
     }
   };
 
@@ -30,15 +62,25 @@ export function PandaStreamNotice() {
         await copyMessage();
       }
     } catch {
-      // User cancelled the share sheet.
+      // User cancelled the native share sheet.
     }
   };
 
   const shareUrl = encodeURIComponent('https://www.panda.fun');
   const shareText = encodeURIComponent(SHARE_MESSAGE);
 
+  if (dismissed) {
+    return (
+      <div className="panda-stream-notice__restore-wrap">
+        <button type="button" className="panda-stream-notice__restore" onClick={restore}>
+          <Check size={14} /> Show player notice
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <section className="panda-stream-notice" aria-label="Stream notice and sharing">
+    <section className="panda-stream-notice" aria-label="Panda.fun player notice">
       <div className="panda-stream-notice__panda" aria-hidden="true">
         <span className="panda-stream-notice__ear panda-stream-notice__ear--left" />
         <span className="panda-stream-notice__ear panda-stream-notice__ear--right" />
@@ -56,7 +98,8 @@ export function PandaStreamNotice() {
       <div className="panda-stream-notice__content">
         <div className="panda-stream-notice__caution">
           <span className="panda-stream-notice__icon">⚠️</span>
-          <p><strong>Caution:</strong> The embedded player is heavily loaded with ads. It is strongly recommended to use an ad blocker extension or an ad-blocking browser like Brave to prevent intrusive ads and pop-ups.</p>
+          <p><strong>Player notice:</strong> Playback is provided through EmbedWave. Player behavior, availability, and third-party ads can vary by title.</p>
+          <button type="button" className="panda-stream-notice__dismiss" onClick={dismiss} aria-label="Dismiss player notice"><XIcon size={16} /></button>
         </div>
 
         <div className="panda-stream-notice__share">
@@ -69,7 +112,7 @@ export function PandaStreamNotice() {
           </div>
 
           {open && (
-            <div className="panda-stream-notice__share-menu" role="dialog" aria-label="Share panda.fun">
+            <div ref={menuRef} className="panda-stream-notice__share-menu" role="dialog" aria-label="Share panda.fun">
               <div className="panda-stream-notice__share-menu-head">
                 <strong>🐼 Share the Panda vibe</strong>
                 <button type="button" onClick={() => setOpen(false)} aria-label="Close share menu"><XIcon size={14} /></button>
