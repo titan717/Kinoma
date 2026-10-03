@@ -138,7 +138,8 @@ export function Watch() {
                 src={source.url}
                 title={title + ' player'}
                 className="kinoma-player-video"
-                allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                referrerPolicy="no-referrer"
                 allowFullScreen
                 onLoad={() => kind === 'series' && saveProgress(timestamp, currentEpisode?.duration || 0)}
               />
