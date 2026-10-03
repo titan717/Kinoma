@@ -208,9 +208,33 @@ export function Watch() {
             </div>
             <div className="panda-watch-episodes__list">
               {episodes.map(item => (
-                <button type="button" key={item.number} className={'panda-watch-episode-card ' + (item.number === episode ? 'is-current' : '')} onClick={() => { setEpisode(item.number); setEpisodesOpen(false); setLocation('/watch/' + encodeURIComponent(id + '$season
+                <button
+                  type="button"
+                  key={item.number}
+                  className={'panda-watch-episode-card ' + (item.number === episode ? 'is-current' : '')}
+                  onClick={() => {
+                    setEpisode(item.number);
+                    setEpisodesOpen(false);
+                    setLocation('/watch/' + encodeURIComponent(id + '$season$' + season + '$episode$' + item.number) + '?type=series');
+                  }}
+                >
+                  <span className="panda-watch-episode-thumb">
+                    {item.image ? <img src={item.image} alt="" loading="lazy" /> : <span className="panda-watch-episode-thumb__fallback"><Film size={17} /></span>}
+                    <span className="panda-watch-episode-thumb__number">{String(item.number).padStart(2, '0')}</span>
+                  </span>
+                  <span className="panda-watch-episode-copy">
+                    <strong>{clean(item.title) || 'Episode ' + item.number}</strong>
+                    {item.synopsis && <small>{clean((item as any).synopsis)}</small>}
+                    {item.duration && <em>{item.duration}</em>}
+                  </span>
+                  <span className="panda-watch-episode-play">
+                    {item.number === episode ? <Play size={13} fill="currentColor" /> : <Play size={13} />}
+                  </span>
+                </button>
+              ))}
               {!episodes.length && <div className="panda-watch-empty">No episodes available.</div>}
             </div>
+
             <div className="panda-watch-episodes__nav">
               <button type="button" disabled={!episodes.find(item => item.number === episode - 1)} onClick={() => navigateEpisode(-1)}><ChevronLeft size={15} /> Previous</button>
               <button type="button" disabled={!episodes.find(item => item.number === episode + 1)} onClick={() => navigateEpisode(1)}>Next <ChevronRight size={15} /></button>
