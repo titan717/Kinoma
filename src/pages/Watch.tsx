@@ -45,14 +45,15 @@ export function Watch() {
   useEffect(() => {
     let active = true;
     setLoading(true); setError(''); setSource('');
-    Promise.all([
-      api.getDetails(id),
-      api.getRecommendations(id).catch(() => ({ results: [] as AnimeItem[] })),
-    ]).then(([details, recs]) => {
+    api.getDetails(id).then(details => {
       if (!active) return;
-      setData(details); setRecommendations(recs.results);
+      setData(details);
       setInList(libraryManager.isInWatchlist(id));
       setLoading(false);
+
+      api.getRecommendations(id)
+        .then(recs => active && setRecommendations(recs.results))
+        .catch(() => undefined);
     }).catch(err => {
       if (!active) return;
       setError(err instanceof Error ? err.message : 'Unable to load this title.');
@@ -177,8 +178,9 @@ export function Watch() {
               allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
               allowFullScreen
               referrerPolicy="no-referrer"
+              loading="eager"
             />
-          ) : <div className="panda-watch-player-empty"><Film size={32} /><strong>Playback unavailable</strong><span>The EmbedWave source could not be resolved for this title.</span></div>}
+          ) : <div className="panda-watch-player-empty"><Film size={32} /><strong>Playback unavailable</strong><span>The CineSrc source could not be resolved for this title.</span></div>}
         </div>
 
       <section className="panda-watch-info">
