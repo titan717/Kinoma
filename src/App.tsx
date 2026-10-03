@@ -11,8 +11,6 @@ import { Profile } from './pages/Profile';
 import { Privacy } from './pages/Privacy';
 import { Contact } from './pages/Contact';
 import { Docs } from './pages/Docs';
-
-// Route-level code splitting keeps the initial bundle focused on the landing/home experience.
 import { Home } from './pages/Home';
 const Search = lazy(() => import('./pages/Search').then(m => ({ default: m.Search })));
 const Details = lazy(() => import('./pages/Details').then(m => ({ default: m.Details })));
@@ -26,6 +24,7 @@ import { AuthModal } from './components/ui/AuthModal';
 import { AppearanceProvider } from './lib/AppearanceContext';
 import { SettingsModal } from './components/ui/SettingsModal';
 import { PandaOnboarding } from './components/ui/PandaOnboarding';
+import { PandaIntro } from './components/intro/PandaIntro';
 import { PWAInstallPrompt } from './components/ui/PWAInstallPrompt';
 import { PWAUpdatePrompt } from './components/ui/PWAUpdatePrompt';
 import { trackPageView } from './lib/analytics';
@@ -91,39 +90,18 @@ function AnimatedRoutes() {
   );
 }
 
-class OptionalFeatureBoundary extends Component<
-  { children: React.ReactNode },
-  { hasError: boolean }
-> {
+class OptionalFeatureBoundary extends Component<{ children: React.ReactNode }, { hasError: boolean }> {
   state = { hasError: false };
-
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-  }
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: unknown) {
-    console.error('[Panda.fun] Optional feature error:', error);
-  }
-
-  render() {
-    return this.state.hasError ? null : this.props.children;
-  }
+  constructor(props: { children: React.ReactNode }) { super(props); }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(error: unknown) { console.error('[Panda.fun] Optional feature error:', error); }
+  render() { return this.state.hasError ? null : this.props.children; }
 }
 
 class AppErrorBoundary extends Component<{ children: React.ReactNode }, { hasError: boolean }> {
   state = { hasError: false };
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: unknown) {
-    console.error('[Panda.fun] App render error:', error);
-  }
-
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(error: unknown) { console.error('[Panda.fun] App render error:', error); }
   render() {
     if (!this.state.hasError) return this.props.children;
     return (
@@ -131,53 +109,35 @@ class AppErrorBoundary extends Component<{ children: React.ReactNode }, { hasErr
         <div className="max-w-md">
           <h1 className="text-2xl font-semibold text-white">Panda took a tiny nap.</h1>
           <p className="mt-2 text-sm text-white/60">Something went wrong while loading this screen.</p>
-          <button
-            type="button"
-            className="mt-6 rounded-full border border-white/10 bg-white/10 px-5 py-2.5 text-sm font-medium text-white hover:bg-white/15"
-            onClick={() => window.location.reload()}
-          >
-            Try again
-          </button>
+          <button type="button" className="mt-6 rounded-full border border-white/10 bg-white/10 px-5 py-2.5 text-sm font-medium text-white hover:bg-white/15" onClick={() => window.location.reload()}>Try again</button>
         </div>
       </main>
     );
   }
 }
 
-function PWAUpdateBridge() {
-  usePWAUpdate();
-  return null;
-}
-
-function MainAppShell() {
-  return <AnimatedRoutes />;
-}
+function PWAUpdateBridge() { usePWAUpdate(); return null; }
+function MainAppShell() { return <AnimatedRoutes />; }
 
 export default function App() {
   return (
     <AppErrorBoundary>
-    <SWRConfig
-      value={{
-        provider: localCache.getSwrStorageProvider(),
-        revalidateOnFocus: false,
-        revalidateIfStale: false,
-        dedupingInterval: 30000
-      }}
-    >
-      <AuthProvider>
-        <AppearanceProvider>
-          <OptionalFeatureBoundary>
-            <PandaOnboarding />
-          </OptionalFeatureBoundary>
-          <PWAUpdateBridge />
-          <MainAppShell />
-          <PWAInstallPrompt />
-          <PWAUpdatePrompt />
-          <AuthModal />
-          <SettingsModal />
-        </AppearanceProvider>
-      </AuthProvider>
-    </SWRConfig>
+      <SWRConfig value={{ provider: localCache.getSwrStorageProvider(), revalidateOnFocus: false, revalidateIfStale: false, dedupingInterval: 30000 }}>
+        <AuthProvider>
+          <AppearanceProvider>
+            <PandaIntro />
+            <OptionalFeatureBoundary>
+              <PandaOnboarding />
+            </OptionalFeatureBoundary>
+            <PWAUpdateBridge />
+            <MainAppShell />
+            <PWAInstallPrompt />
+            <PWAUpdatePrompt />
+            <AuthModal />
+            <SettingsModal />
+          </AppearanceProvider>
+        </AuthProvider>
+      </SWRConfig>
     </AppErrorBoundary>
   );
 }
