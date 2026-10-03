@@ -243,7 +243,7 @@ export function Watch() {
             </div>
           </section>
         )}
-      </section>
+      </section
 
       <section className="panda-watch-info">
         <div className="panda-watch-info__copy">
@@ -263,6 +263,8 @@ export function Watch() {
           {(data?.genres || []).slice(0, 4).map((genre: string) => <span key={genre}>{genre}</span>)}
         </div>
       </section>
+
+>
 
       <section className="panda-watch-similar">
         <div className="panda-watch-section-head"><div><span>KEEP EXPLORING</span><h2>More like this</h2></div><small>{similar.length} titles</small></div>
