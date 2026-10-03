@@ -349,3 +349,8 @@
 }
 
 /* Keep the existing hero untouched; these styles only govern the new content shell. */
+
+.panda-home-hover-trailer { position:fixed; z-index:80; right:24px; bottom:24px; width:min(390px,calc(100vw - 32px)); aspect-ratio:16/9; overflow:hidden; border:1px solid rgba(255,255,255,.11); border-radius:18px; background:#08090d; box-shadow:0 26px 70px rgba(0,0,0,.5); }
+.panda-home-hover-trailer iframe { width:100%; height:100%; border:0; display:block; }
+.panda-home-hover-trailer__label { position:absolute; left:10px; bottom:10px; z-index:2; padding:6px 9px; border:1px solid rgba(255,255,255,.09); border-radius:999px; background:rgba(7,8,12,.72); color:rgba(255,255,255,.8); backdrop-filter:blur(12px); font-size:9px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; pointer-events:none; }
+@media(max-width:620px){.panda-home-hover-trailer{right:10px;bottom:10px;width:calc(100vw - 20px);}}
