@@ -225,7 +225,7 @@ export function createPandaSceneRuntime(options: PandaSceneRuntimeOptions): Pand
       realPanda.root.position.x = THREE.MathUtils.lerp(fromX, toX, locomotionProgress);
       // Keep locomotion on one grounded plane; the GLB's feet provide the actual step cycle.
       realPanda.root.position.z = THREE.MathUtils.lerp(realPanda.root.position.z, 0, 0.08);
-      realPanda.root.rotation.y = THREE.MathUtils.lerp(entering ? -0.24 : 0, entering ? 0 : 0.3, eased);
+      realPanda.root.rotation.y = THREE.MathUtils.lerp(entering ? -0.24 : 0, entering ? 0 : 0.3, progress);
       realPanda.root.rotation.z = THREE.MathUtils.lerp(
         realPanda.root.rotation.z,
         walking
