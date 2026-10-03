@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useRoute } from 'wouter';
-import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, Film, ListVideo, Play, Plus, Check, Tv } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, Film, ListVideo, Play, Plus, Check, Share2, Tv } from 'lucide-react';
 import { api } from '../lib/api';
 import { historyUtil } from '../lib/history';
 import { libraryManager } from '../lib/library';
@@ -36,6 +36,7 @@ export function Watch() {
   const [loading, setLoading] = useState(true);
   const [episodesOpen, setEpisodesOpen] = useState(false);
   const [inList, setInList] = useState(false);
+  const [shareMessage, setShareMessage] = useState('');
 
   const type = mediaType(id, queryType, data);
   const title = titleOf(data, id || 'Untitled');
@@ -127,7 +128,32 @@ export function Watch() {
 
   const toggleList = () => setInList(libraryManager.toggleWatchlist({ id, title, image: poster }));
 
-  const similar = useMemo(() => recommendations.slice(0, 8), [recommendations]);
+  const similar = useMemo(() => recommendations.slice(0, 5), [recommendations]);
+
+  const shareTitle = title || 'Panda.fun';
+  const shareCurrentPage = async () => {
+    const url = window.location.href;
+    try {
+      if (typeof navigator.share === 'function') {
+        await navigator.share({
+          title: shareTitle,
+          text: `Watch ${shareTitle} on Panda.fun 🐼`,
+          url,
+        });
+        return;
+      }
+      await navigator.clipboard?.writeText(url);
+      setShareMessage('Link copied');
+      window.setTimeout(() => setShareMessage(''), 1800);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      try {
+        await navigator.clipboard?.writeText(url);
+        setShareMessage('Link copied');
+        window.setTimeout(() => setShareMessage(''), 1800);
+      } catch {}
+    }
+  };
 
   if (loading) {
     return <main className="panda-watch-page"><div className="panda-watch-loading"><span /><p>Preparing your stream…</p></div></main>;
@@ -170,10 +196,105 @@ export function Watch() {
             </div>
             <div className="panda-watch-episodes__list">
               {episodes.map(item => (
-                <button type="button" key={item.number} className={item.number === episode ? 'is-current' : ''} onClick={() => { setEpisode(item.number); setEpisodesOpen(false); setLocation('/watch/' + encodeURIComponent(id + '$season$' + season + '$episode$' + item.number) + '?type=series'); }}>
-                  <span className="panda-watch-episode-number">{String(item.number).padStart(2, '0')}</span>
-                  <span className="panda-watch-episode-copy"><strong>{clean(item.title) || 'Episode ' + item.number}</strong>{item.synopsis && <small>{clean((item as any).synopsis)}</small>}</span>
-                  {item.number === episode && <Play size={14} fill="currentColor" />}
+                <button type="button" key={item.number} className={'panda-watch-episode-card ' + (item.number === episode ? 'is-current' : '')} onClick={() => { setEpisode(item.number); setEpisodesOpen(false); setLocation('/watch/' + encodeURIComponent(id + '$season
+              {!episodes.length && <div className="panda-watch-empty">No episodes available.</div>}
+            </div>
+            <div className="panda-watch-episodes__nav">
+              <button type="button" disabled={!episodes.find(item => item.number === episode - 1)} onClick={() => navigateEpisode(-1)}><ChevronLeft size={15} /> Previous</button>
+              <button type="button" disabled={!episodes.find(item => item.number === episode + 1)} onClick={() => navigateEpisode(1)}>Next <ChevronRight size={15} /></button>
+            </div>
+          </aside>
+        )}
+      </section>
+
+      <section className="panda-watch-info">
+        <div className="panda-watch-info__copy">
+          <div className="panda-watch-info__actions">
+            {shareMessage && <span className="panda-watch-share-feedback" role="status" aria-live="polite">{shareMessage}</span>}
+            <button type="button" className="panda-watch-info__action is-primary" onClick={toggleList}>{inList ? <Check size={15} /> : <Plus size={15} />} {inList ? 'Saved to My List' : 'Add to My List'}</button>
+            <button type="button" className="panda-watch-info__action" onClick={shareCurrentPage}><Share2 size={15} /> Share</button>
+          </div>
+          <div className="panda-watch-kicker">{type === 'movie' ? <Film size={12} /> : <Tv size={12} />} {type === 'movie' ? 'MOVIE' : 'TV SERIES'} {type === 'series' && <>· S{season} E{episode}</>}</div>
+          <h1>{title}</h1>
+          {currentEpisode && <p className="panda-watch-episode-title">{currentEpisode.title}</p>}
+          <p>{clean(data?.description) || 'No synopsis is available for this title yet.'}</p>
+        </div>
+        <div className="panda-watch-info__meta">
+          {data?.releaseDate && <span>{String(data.releaseDate).slice(0, 4)}</span>}
+          {data?.rating != null && <span>★ {data.rating}</span>}
+          {(data?.genres || []).slice(0, 4).map((genre: string) => <span key={genre}>{genre}</span>)}
+        </div>
+      </section>
+
+      <section className="panda-watch-similar">
+        <div className="panda-watch-section-head"><div><span>KEEP EXPLORING</span><h2>More like this</h2></div><small>{similar.length} titles</small></div>
+        <div className="panda-watch-similar-grid">
+          {similar.map(item => <button type="button" key={item.id} onClick={() => setLocation('/details/' + encodeURIComponent(item.id) + '?type=' + (item.contentType === 'movie' ? 'movie' : 'series'))}>
+            <div>{item.image ? <img src={item.image} alt="" loading="lazy" /> : <Film size={25} />}</div>
+            <strong>{titleOf(item, 'Untitled')}</strong>
+            <span>{item.contentType === 'movie' ? 'Movie' : 'Series'}{item.genres?.[0] ? ' · ' + item.genres[0] : ''}</span>
+          </button>)}
+          {!similar.length && <div className="panda-watch-empty">No recommendations available right now.</div>}
+        </div>
+      </section>
+    </main>
+  );
+}
+ + season + '$episode
+              {!episodes.length && <div className="panda-watch-empty">No episodes available.</div>}
+            </div>
+            <div className="panda-watch-episodes__nav">
+              <button type="button" disabled={!episodes.find(item => item.number === episode - 1)} onClick={() => navigateEpisode(-1)}><ChevronLeft size={15} /> Previous</button>
+              <button type="button" disabled={!episodes.find(item => item.number === episode + 1)} onClick={() => navigateEpisode(1)}>Next <ChevronRight size={15} /></button>
+            </div>
+          </aside>
+        )}
+      </section>
+
+      <section className="panda-watch-info">
+        <div className="panda-watch-info__copy">
+          <div className="panda-watch-info__actions">
+            {shareMessage && <span className="panda-watch-share-feedback" role="status" aria-live="polite">{shareMessage}</span>}
+            <button type="button" className="panda-watch-info__action is-primary" onClick={toggleList}>{inList ? <Check size={15} /> : <Plus size={15} />} {inList ? 'Saved to My List' : 'Add to My List'}</button>
+            <button type="button" className="panda-watch-info__action" onClick={shareCurrentPage}><Share2 size={15} /> Share</button>
+          </div>
+          <div className="panda-watch-kicker">{type === 'movie' ? <Film size={12} /> : <Tv size={12} />} {type === 'movie' ? 'MOVIE' : 'TV SERIES'} {type === 'series' && <>· S{season} E{episode}</>}</div>
+          <h1>{title}</h1>
+          {currentEpisode && <p className="panda-watch-episode-title">{currentEpisode.title}</p>}
+          <p>{clean(data?.description) || 'No synopsis is available for this title yet.'}</p>
+        </div>
+        <div className="panda-watch-info__meta">
+          {data?.releaseDate && <span>{String(data.releaseDate).slice(0, 4)}</span>}
+          {data?.rating != null && <span>★ {data.rating}</span>}
+          {(data?.genres || []).slice(0, 4).map((genre: string) => <span key={genre}>{genre}</span>)}
+        </div>
+      </section>
+
+      <section className="panda-watch-similar">
+        <div className="panda-watch-section-head"><div><span>KEEP EXPLORING</span><h2>More like this</h2></div><small>{similar.length} titles</small></div>
+        <div className="panda-watch-similar-grid">
+          {similar.map(item => <button type="button" key={item.id} onClick={() => setLocation('/details/' + encodeURIComponent(item.id) + '?type=' + (item.contentType === 'movie' ? 'movie' : 'series'))}>
+            <div>{item.image ? <img src={item.image} alt="" loading="lazy" /> : <Film size={25} />}</div>
+            <strong>{titleOf(item, 'Untitled')}</strong>
+            <span>{item.contentType === 'movie' ? 'Movie' : 'Series'}{item.genres?.[0] ? ' · ' + item.genres[0] : ''}</span>
+          </button>)}
+          {!similar.length && <div className="panda-watch-empty">No recommendations available right now.</div>}
+        </div>
+      </section>
+    </main>
+  );
+}
+ + item.number) + '?type=series'); }}>
+                  <span className="panda-watch-episode-thumb">
+                    {item.image ? <img src={item.image} alt="" loading="lazy" /> : <span className="panda-watch-episode-thumb__fallback"><Film size={17} /></span>}
+                    <span className="panda-watch-episode-thumb__number">{String(item.number).padStart(2, '0')}</span>
+                  </span>
+                  <span className="panda-watch-episode-copy">
+                    <strong>{clean(item.title) || 'Episode ' + item.number}</strong>
+                    {item.synopsis && <small>{clean((item as any).synopsis)}</small>}
+                    {item.duration && <em>{item.duration}</em>}
+                  </span>
+                  <span className="panda-watch-episode-play">{item.number === episode ? <Play size={13} fill="currentColor" /> : <Play size={13} />}</span>
                 </button>
               ))}
               {!episodes.length && <div className="panda-watch-empty">No episodes available.</div>}
@@ -189,8 +310,9 @@ export function Watch() {
       <section className="panda-watch-info">
         <div className="panda-watch-info__copy">
           <div className="panda-watch-info__actions">
+            {shareMessage && <span className="panda-watch-share-feedback" role="status" aria-live="polite">{shareMessage}</span>}
             <button type="button" className="panda-watch-info__action is-primary" onClick={toggleList}>{inList ? <Check size={15} /> : <Plus size={15} />} {inList ? 'Saved to My List' : 'Add to My List'}</button>
-            <button type="button" className="panda-watch-info__action" onClick={() => navigator.share?.({ title, url: window.location.href }).catch(() => {})}>Share</button>
+            <button type="button" className="panda-watch-info__action" onClick={shareCurrentPage}><Share2 size={15} /> Share</button>
           </div>
           <div className="panda-watch-kicker">{type === 'movie' ? <Film size={12} /> : <Tv size={12} />} {type === 'movie' ? 'MOVIE' : 'TV SERIES'} {type === 'series' && <>· S{season} E{episode}</>}</div>
           <h1>{title}</h1>
