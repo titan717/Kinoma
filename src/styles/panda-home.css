@@ -660,23 +660,23 @@
 
 /* =========================================================
    PANDA.FUN — player experience
-   Cinematic, spacious and responsive. The player is the focus;
-   supporting content stays calm and easy to scan.
+   Warm Panda player surface. The season/episode controls intentionally
+   reuse the Details page's visual language without changing Details.
    ========================================================= */
 
 .panda-watch-page{
-  --watch-bg:#090a0d;
-  --watch-panel:rgba(18,18,22,.82);
-  --watch-line:rgba(255,255,255,.075);
-  --watch-muted:rgba(245,241,232,.55);
-  --watch-soft:rgba(255,255,255,.045);
+  --watch-bg:#0f0d0d;
+  --watch-panel:rgba(27,24,23,.82);
+  --watch-line:rgba(246,242,238,.09);
+  --watch-muted:rgba(222,215,209,.62);
   min-height:100dvh;
   width:100%;
   box-sizing:border-box;
   padding:18px clamp(16px,3vw,44px) 88px;
-  color:#fff;
+  color:#f6f2ee;
   background:
-    radial-gradient(circle at 50% -10%,rgba(190,168,132,.08),transparent 32%),
+    radial-gradient(circle at 15% 0%,rgba(193,147,95,.10),transparent 28%),
+    radial-gradient(circle at 88% 18%,rgba(157,101,85,.07),transparent 24%),
     var(--watch-bg);
 }
 
@@ -689,465 +689,182 @@
   justify-content:space-between;
 }
 .panda-watch-topbar button{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  border:0;
-  background:transparent;
-  color:rgba(255,255,255,.62);
-  padding:7px 0;
-  font-size:11px;
-  font-weight:700;
-  cursor:pointer;
+  display:inline-flex;align-items:center;gap:8px;border:0;background:transparent;
+  color:rgba(246,242,238,.64);padding:7px 0;font-size:11px;font-weight:700;cursor:pointer;
   transition:color .2s ease,transform .2s ease;
 }
 .panda-watch-topbar button:hover{color:#fff;transform:translateX(-2px)}
-.panda-watch-brand{
-  display:flex;
-  align-items:center;
-  gap:7px;
-  color:rgba(255,255,255,.9);
-}
+.panda-watch-brand{display:flex;align-items:center;gap:7px;color:rgba(246,242,238,.92)}
 .panda-watch-brand__mark{font-size:14px}
 .panda-watch-brand strong{font-size:13px;letter-spacing:-.025em}
+.panda-watch-brand__status{font-size:7px;letter-spacing:.12em;color:rgba(246,242,238,.3);font-weight:800}
 
-.panda-watch-stage{
-  width:min(100%,1680px);
-  margin:0 auto;
-  display:block;
-}
+.panda-watch-stage{width:min(100%,1680px);margin:0 auto;display:block}
 .panda-watch-player{
-  position:relative;
-  width:100%;
-  aspect-ratio:16/9;
-  overflow:hidden;
-  border-radius:18px;
-  background:#030405;
-  border:1px solid var(--watch-line);
-  box-shadow:0 28px 90px rgba(0,0,0,.38);
+  position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:18px;
+  background:#030303;border:1px solid var(--watch-line);box-shadow:0 28px 90px rgba(0,0,0,.38);
 }
-.panda-watch-player iframe{
-  display:block;
-  width:100%;
-  height:100%;
-  border:0;
-  background:#000;
-}
+.panda-watch-player iframe{display:block;width:100%;height:100%;border:0;background:#000}
 .panda-watch-player-empty{
-  height:100%;
-  min-height:320px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-  padding:30px;
-  color:rgba(255,255,255,.4);
-  text-align:center;
+  height:100%;min-height:320px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:10px;padding:30px;color:rgba(246,242,238,.4);text-align:center;
 }
-.panda-watch-player-empty strong{color:#fff;font-size:14px}
+.panda-watch-player-empty strong{color:#f6f2ee;font-size:14px}
 .panda-watch-player-empty span{max-width:380px;font-size:11px;line-height:1.65}
 
-.panda-watch-episodes{
-  margin-top:30px;
-  width:100%;
-  border:0;
-  border-radius:0;
-  background:transparent;
-  overflow:visible;
+.panda-watch-player-episodes{
+  margin:34px 0 0;
+  padding:0;
 }
-.panda-watch-episodes__mobile{display:none}
-.panda-watch-episodes__head{
+.panda-watch-player-episodes .kinoma-details-section__heading{
+  margin-bottom:17px;
+}
+.panda-watch-player-episodes .kinoma-details-section__heading span{
+  color:rgba(246,242,238,.36);
+}
+.panda-watch-player-episodes .kinoma-details-section__heading h2{
+  color:#f6f2ee;
+}
+.panda-watch-player-episodes .kinoma-details-section__heading small{
+  color:rgba(246,242,238,.34);
+}
+.panda-watch-player-episodes .kinoma-season-tabs{
   display:flex;
-  align-items:end;
-  justify-content:space-between;
-  gap:20px;
-  margin-bottom:15px;
-  padding:0;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:0 0 18px;
 }
-.panda-watch-episodes__head div{min-width:0}
-.panda-watch-episodes__head span{
-  display:block;
-  color:rgba(255,255,255,.3);
-  font-size:8px;
-  font-weight:800;
-  letter-spacing:.16em;
-  text-transform:uppercase;
-}
-.panda-watch-episodes__head strong{
-  display:block;
-  margin-top:5px;
-  color:#fff;
-  font-size:17px;
-  letter-spacing:-.02em;
-}
-.panda-watch-episodes__head select{
-  min-width:116px;
-  appearance:none;
-  background:rgba(255,255,255,.045);
-  color:rgba(255,255,255,.78);
-  border:1px solid var(--watch-line);
-  border-radius:9px;
-  padding:8px 11px;
+.panda-watch-player-episodes .kinoma-season-tabs button{
+  border:1px solid rgba(246,242,238,.09);
+  background:rgba(246,242,238,.045);
+  color:rgba(246,242,238,.58);
+  border-radius:10px;
+  padding:9px 13px;
   font-size:10px;
-}
-.panda-watch-episodes__list{
-  display:grid;
-  grid-template-columns:repeat(5,minmax(0,1fr));
-  gap:12px;
-  overflow:visible;
-  padding:0;
-}
-.panda-watch-episode-card{
-  position:relative;
-  min-width:0;
-  display:grid;
-  grid-template-columns:104px minmax(0,1fr) 28px;
-  align-items:center;
-  gap:11px;
-  padding:8px;
-  text-align:left;
-  border:1px solid var(--watch-line);
-  border-radius:13px;
-  background:rgba(255,255,255,.025);
-  color:rgba(255,255,255,.65);
+  font-weight:700;
   cursor:pointer;
-  transition:transform .25s cubic-bezier(.16,1,.3,1),background .25s ease,border-color .25s ease,box-shadow .25s ease;
+  transition:background .2s ease,color .2s ease,border-color .2s ease,transform .2s ease;
 }
-.panda-watch-episode-card:hover{
-  transform:translateY(-3px);
-  background:rgba(255,255,255,.05);
-  border-color:rgba(255,255,255,.13);
-  box-shadow:0 14px 32px rgba(0,0,0,.2);
+.panda-watch-player-episodes .kinoma-season-tabs button:hover{
+  color:#fff;background:rgba(246,242,238,.08);border-color:rgba(246,242,238,.14);transform:translateY(-1px);
 }
-.panda-watch-episode-card.is-current{
-  background:rgba(191,171,139,.075);
-  border-color:rgba(216,193,157,.22);
-  color:#fff;
+.panda-watch-player-episodes .kinoma-season-tabs button.is-selected{
+  color:#fffaf6;background:#b84d41;border-color:#b84d41;box-shadow:0 7px 18px rgba(184,77,65,.16);
 }
-.panda-watch-episode-thumb{
+.panda-watch-episode-list{
+  display:grid;
+  gap:10px;
+}
+.panda-watch-player-episodes .kinoma-episode-card{
   position:relative;
-  aspect-ratio:16/9;
+  min-height:88px;
+  background:rgba(27,24,23,.72);
+  border:1px solid rgba(246,242,238,.075);
+  border-radius:14px;
+  transition:transform .25s cubic-bezier(.16,1,.3,1),background .2s ease,border-color .2s ease,box-shadow .25s ease;
+}
+.panda-watch-player-episodes .kinoma-episode-card:hover{
+  transform:translateY(-2px);
+  background:rgba(36,32,31,.86);
+  border-color:rgba(246,242,238,.13);
+  box-shadow:0 14px 34px rgba(0,0,0,.18);
+}
+.panda-watch-player-episodes .kinoma-episode-card.is-current{
+  background:rgba(184,77,65,.10);
+  border-color:rgba(184,77,65,.28);
+}
+.panda-watch-player-episodes .kinoma-episode-art{
+  position:relative;
   overflow:hidden;
-  border-radius:9px;
-  background:#121318;
 }
-.panda-watch-episode-thumb img{
-  width:100%;
-  height:100%;
-  display:block;
-  object-fit:cover;
-  transition:transform .35s ease;
+.panda-watch-player-episodes .kinoma-episode-art img{
+  transition:transform .35s cubic-bezier(.16,1,.3,1),filter .25s ease;
 }
-.panda-watch-episode-card:hover .panda-watch-episode-thumb img{transform:scale(1.045)}
-.panda-watch-episode-thumb__fallback{
-  width:100%;
-  height:100%;
-  display:grid;
-  place-items:center;
-  color:rgba(255,255,255,.28);
+.panda-watch-player-episodes .kinoma-episode-card:hover .kinoma-episode-art img{
+  transform:scale(1.045);filter:saturate(1.04);
 }
-.panda-watch-episode-thumb__number{
-  position:absolute;
-  left:6px;
-  bottom:5px;
-  min-width:20px;
-  padding:3px 5px;
-  border-radius:5px;
-  background:rgba(0,0,0,.65);
-  color:#fff;
-  font-size:8px;
-  font-weight:800;
+.panda-watch-current-indicator{
+  position:absolute;right:7px;bottom:7px;width:26px;height:26px;border-radius:50%;
+  display:grid;place-items:center;background:#f6f2ee;color:#211817;font-style:normal;
+  box-shadow:0 7px 16px rgba(0,0,0,.25);
 }
-.panda-watch-episode-copy{min-width:0}
-.panda-watch-episode-copy strong{
-  display:block;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-  color:#fff;
-  font-size:10px;
-  line-height:1.35;
+.panda-watch-player-episodes .kinoma-episode-copy strong{color:#f6f2ee}
+.panda-watch-player-episodes .kinoma-episode-copy p{color:rgba(222,215,209,.54)}
+.panda-watch-player-episodes .kinoma-episode-copy small{
+  display:block;margin-top:5px;color:rgba(222,215,209,.34);font-size:9px;
 }
-.panda-watch-episode-copy small{
-  display:-webkit-box;
-  margin-top:4px;
-  overflow:hidden;
-  color:rgba(255,255,255,.4);
-  font-size:8px;
-  line-height:1.45;
-  -webkit-box-orient:vertical;
-  -webkit-line-clamp:2;
-}
-.panda-watch-episode-copy em{
-  display:block;
-  margin-top:5px;
-  color:rgba(255,255,255,.3);
-  font-size:8px;
-  font-style:normal;
-}
-.panda-watch-episode-play{
-  width:27px;
-  height:27px;
-  display:grid;
-  place-items:center;
-  border-radius:50%;
-  background:rgba(255,255,255,.06);
-  color:rgba(255,255,255,.45);
-}
-.panda-watch-episode-card.is-current .panda-watch-episode-play{
-  background:rgba(255,255,255,.9);
-  color:#111;
-}
+.panda-watch-player-episodes .kinoma-episode-arrow{color:rgba(246,242,238,.34);transition:transform .2s ease,color .2s ease}
+.panda-watch-player-episodes .kinoma-episode-card:hover .kinoma-episode-arrow{color:#f6f2ee;transform:translateX(2px)}
+
 .panda-watch-episodes__nav{
-  display:flex;
-  justify-content:flex-end;
-  gap:7px;
-  margin-top:12px;
+  display:flex;justify-content:flex-end;gap:7px;margin-top:12px;
 }
 .panda-watch-episodes__nav button{
-  display:inline-flex;
-  align-items:center;
-  gap:4px;
-  border:0;
-  background:transparent;
-  color:rgba(255,255,255,.4);
-  padding:6px;
-  font-size:9px;
-  cursor:pointer;
+  display:inline-flex;align-items:center;gap:4px;border:0;background:transparent;
+  color:rgba(246,242,238,.45);padding:6px;font-size:9px;cursor:pointer;
 }
 .panda-watch-episodes__nav button:hover:not(:disabled){color:#fff}
 .panda-watch-episodes__nav button:disabled{opacity:.2;cursor:default}
 
 .panda-watch-info{
-  position:relative;
-  isolation:isolate;
-  width:min(100%,1680px);
-  min-height:270px;
-  box-sizing:border-box;
-  margin:42px auto 0;
-  padding:34px 38px;
-  display:grid;
-  grid-template-columns:145px minmax(0,1fr);
-  align-items:end;
-  gap:28px;
-  overflow:hidden;
-  border-radius:20px;
-  background:var(--watch-panel);
+  position:relative;isolation:isolate;width:min(100%,1680px);min-height:270px;box-sizing:border-box;
+  margin:42px auto 0;padding:34px 38px;display:grid;grid-template-columns:145px minmax(0,1fr);
+  align-items:end;gap:28px;overflow:hidden;border-radius:20px;background:var(--watch-panel);
   border:1px solid var(--watch-line);
 }
-.panda-watch-info__art{
-  position:absolute;
-  z-index:-2;
-  inset:0;
-  overflow:hidden;
-}
-.panda-watch-info__art img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  opacity:.26;
-  filter:saturate(.7);
-}
+.panda-watch-info__art{position:absolute;z-index:-2;inset:0;overflow:hidden}
+.panda-watch-info__art img{width:100%;height:100%;object-fit:cover;opacity:.26;filter:saturate(.7)}
 .panda-watch-info__art-overlay{
-  position:absolute;
-  inset:0;
-  background:linear-gradient(90deg,rgba(10,10,13,.98) 0%,rgba(10,10,13,.88) 48%,rgba(10,10,13,.72) 100%);
+  position:absolute;inset:0;
+  background:linear-gradient(90deg,rgba(15,13,13,.98) 0%,rgba(15,13,13,.88) 48%,rgba(15,13,13,.72) 100%);
 }
 .panda-watch-info__poster{
-  position:relative;
-  width:145px;
-  aspect-ratio:2/3;
-  overflow:hidden;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.1);
-  box-shadow:0 18px 40px rgba(0,0,0,.35);
+  position:relative;width:145px;aspect-ratio:2/3;overflow:hidden;border-radius:12px;
+  border:1px solid rgba(246,242,238,.1);box-shadow:0 18px 40px rgba(0,0,0,.35);
 }
 .panda-watch-info__poster img{width:100%;height:100%;display:block;object-fit:cover}
 .panda-watch-info__copy{position:relative;min-width:0;max-width:850px}
-.panda-watch-info__actions{
-  position:relative;
-  display:flex;
-  align-items:center;
-  flex-wrap:wrap;
-  gap:8px;
-  margin-bottom:16px;
-}
+.panda-watch-info__actions{position:relative;display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:16px}
 .panda-watch-info__action{
-  display:inline-flex;
-  align-items:center;
-  gap:7px;
-  border:1px solid rgba(255,255,255,.1);
-  background:rgba(255,255,255,.055);
-  color:rgba(255,255,255,.72);
-  border-radius:9px;
-  padding:8px 11px;
-  font-size:10px;
-  font-weight:700;
-  cursor:pointer;
+  display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(246,242,238,.1);
+  background:rgba(246,242,238,.055);color:rgba(246,242,238,.72);border-radius:9px;
+  padding:8px 11px;font-size:10px;font-weight:700;cursor:pointer;
   transition:background .2s ease,border-color .2s ease,color .2s ease,transform .2s ease;
 }
-.panda-watch-info__action:hover{
-  background:rgba(255,255,255,.09);
-  border-color:rgba(255,255,255,.16);
-  color:#fff;
-  transform:translateY(-1px);
-}
-.panda-watch-info__action.is-primary{background:rgba(255,255,255,.9);color:#141414;border-color:transparent}
-.panda-watch-info__action.is-primary:hover{background:#fff}
-.panda-watch-share-feedback{
-  color:rgba(255,255,255,.48);
-  font-size:9px;
-  animation:panda-watch-fade-in .2s ease;
-}
-.panda-watch-kicker{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  color:rgba(255,255,255,.38);
-  font-size:8px;
-  font-weight:800;
-  letter-spacing:.14em;
-}
-.panda-watch-info h1{
-  margin:7px 0 5px;
-  color:#fff;
-  font-size:clamp(27px,4vw,48px);
-  line-height:1.02;
-  letter-spacing:-.045em;
-}
-.panda-watch-episode-title{
-  margin:0;
-  color:rgba(255,255,255,.68);
-  font-size:12px;
-}
-.panda-watch-info__copy>p:not(.panda-watch-episode-title){
-  max-width:760px;
-  margin:12px 0 0;
-  color:var(--watch-muted);
-  font-size:12px;
-  line-height:1.75;
-}
-.panda-watch-info__meta{
-  position:absolute;
-  right:34px;
-  top:32px;
-  max-width:300px;
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:flex-end;
-  gap:7px;
-}
-.panda-watch-info__meta span{
-  color:rgba(255,255,255,.48);
-  font-size:9px;
-}
+.panda-watch-info__action:hover{background:rgba(246,242,238,.09);border-color:rgba(246,242,238,.16);color:#fff;transform:translateY(-1px)}
+.panda-watch-info__action.is-primary{background:#b84d41;color:#fffaf6;border-color:#b84d41}
+.panda-watch-info__action.is-primary:hover{background:#c45a4e}
+.panda-watch-share-feedback{color:rgba(246,242,238,.48);font-size:9px;animation:panda-watch-fade-in .2s ease}
+.panda-watch-kicker{display:flex;align-items:center;gap:6px;color:rgba(246,242,238,.38);font-size:8px;font-weight:800;letter-spacing:.14em}
+.panda-watch-info h1{margin:7px 0 5px;color:#f6f2ee;font-size:clamp(27px,4vw,48px);line-height:1.02;letter-spacing:-.045em}
+.panda-watch-episode-title{margin:0;color:rgba(246,242,238,.68);font-size:12px}
+.panda-watch-info__copy>p:not(.panda-watch-episode-title){max-width:760px;margin:12px 0 0;color:var(--watch-muted);font-size:12px;line-height:1.75}
+.panda-watch-info__meta{position:absolute;right:34px;top:32px;max-width:300px;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:7px}
+.panda-watch-info__meta span{color:rgba(246,242,238,.48);font-size:9px}
 
-.panda-watch-similar{
-  width:min(100%,1680px);
-  box-sizing:border-box;
-  margin:54px auto 0;
-}
-.panda-watch-section-head{
-  display:flex;
-  align-items:end;
-  justify-content:space-between;
-  gap:15px;
-  margin-bottom:17px;
-}
-.panda-watch-section-head span{
-  display:block;
-  color:rgba(255,255,255,.28);
-  font-size:8px;
-  font-weight:800;
-  letter-spacing:.16em;
-}
-.panda-watch-section-head h2{
-  margin:5px 0 0;
-  color:#fff;
-  font-size:22px;
-  letter-spacing:-.035em;
-}
-.panda-watch-section-head small{color:rgba(255,255,255,.25);font-size:9px}
-.panda-watch-similar-grid{
-  display:grid;
-  grid-template-columns:repeat(5,minmax(0,1fr));
-  gap:18px;
-}
-.panda-watch-similar-grid button{
-  min-width:0;
-  padding:0;
-  border:0;
-  background:transparent;
-  color:#fff;
-  text-align:left;
-  cursor:pointer;
-  transition:transform .25s cubic-bezier(.16,1,.3,1);
-}
+.panda-watch-similar{width:min(100%,1680px);box-sizing:border-box;margin:54px auto 0}
+.panda-watch-section-head{display:flex;align-items:end;justify-content:space-between;gap:15px;margin-bottom:17px}
+.panda-watch-section-head span{display:block;color:rgba(246,242,238,.28);font-size:8px;font-weight:800;letter-spacing:.16em}
+.panda-watch-section-head h2{margin:5px 0 0;color:#f6f2ee;font-size:22px;letter-spacing:-.035em}
+.panda-watch-section-head small{color:rgba(246,242,238,.25);font-size:9px}
+.panda-watch-similar-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:18px}
+.panda-watch-similar-grid button{min-width:0;padding:0;border:0;background:transparent;color:#fff;text-align:left;cursor:pointer;transition:transform .25s cubic-bezier(.16,1,.3,1)}
 .panda-watch-similar-grid button:hover{transform:translateY(-5px)}
-.panda-watch-similar-grid button>div{
-  position:relative;
-  aspect-ratio:2/2.92;
-  overflow:hidden;
-  border-radius:14px;
-  background:#111318;
-  border:1px solid var(--watch-line);
-  box-shadow:0 14px 30px rgba(0,0,0,.18);
-}
+.panda-watch-similar-grid button>div{position:relative;aspect-ratio:2/2.92;overflow:hidden;border-radius:14px;background:#181515;border:1px solid var(--watch-line);box-shadow:0 14px 30px rgba(0,0,0,.18)}
 .panda-watch-similar-grid img{width:100%;height:100%;display:block;object-fit:cover;transition:transform .5s cubic-bezier(.16,1,.3,1)}
 .panda-watch-similar-grid button:hover img{transform:scale(1.045)}
-.panda-watch-similar-grid strong{
-  display:block;
-  margin-top:10px;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-  font-size:11px;
-}
-.panda-watch-similar-grid span{
-  display:block;
-  margin-top:4px;
-  color:rgba(255,255,255,.34);
-  font-size:8px;
-}
-.panda-watch-loading{
-  min-height:72vh;
-  display:grid;
-  place-items:center;
-  align-content:center;
-  gap:11px;
-  color:rgba(255,255,255,.36);
-}
-.panda-watch-loading span{
-  width:25px;height:25px;
-  border:2px solid rgba(255,255,255,.1);
-  border-top-color:rgba(255,255,255,.75);
-  border-radius:50%;
-  animation:panda-watch-spin .8s linear infinite;
-}
+.panda-watch-similar-grid strong{display:block;margin-top:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+.panda-watch-similar-grid span{display:block;margin-top:4px;color:rgba(222,215,209,.38);font-size:8px}
+
+.panda-watch-loading{min-height:72vh;display:grid;place-items:center;align-content:center;gap:11px;color:rgba(246,242,238,.36)}
+.panda-watch-loading span{width:25px;height:25px;border:2px solid rgba(246,242,238,.1);border-top-color:rgba(246,242,238,.75);border-radius:50%;animation:panda-watch-spin .8s linear infinite}
 .panda-watch-loading p{font-size:10px}
-.panda-watch-error{
-  width:min(100%,1680px);
-  box-sizing:border-box;
-  margin:0 auto 14px;
-  padding:11px 13px;
-  border:1px solid rgba(226,155,133,.16);
-  border-radius:10px;
-  background:rgba(89,49,39,.16);
-  color:rgba(255,210,195,.78);
-  font-size:10px;
-}
-.panda-watch-empty{
-  padding:22px;
-  color:rgba(255,255,255,.3);
-  font-size:10px;
-  text-align:center;
-}
+.panda-watch-error{width:min(100%,1680px);box-sizing:border-box;margin:0 auto 14px;padding:11px 13px;border:1px solid rgba(226,155,133,.16);border-radius:10px;background:rgba(89,49,39,.16);color:rgba(255,210,195,.78);font-size:10px}
+.panda-watch-empty{padding:22px;color:rgba(246,242,238,.3);font-size:10px;text-align:center}
 @keyframes panda-watch-spin{to{transform:rotate(360deg)}}
 @keyframes panda-watch-fade-in{from{opacity:0;transform:translateY(2px)}to{opacity:1;transform:none}}
 
 @media(max-width:1180px){
-  .panda-watch-episodes__list{grid-template-columns:repeat(3,minmax(0,1fr))}
   .panda-watch-info{grid-template-columns:120px minmax(0,1fr);padding:28px}
   .panda-watch-info__poster{width:120px}
 }
@@ -1156,9 +873,11 @@
   .panda-watch-topbar{margin-bottom:12px}
   .panda-watch-brand{font-size:12px}
   .panda-watch-player{border-radius:12px}
-  .panda-watch-episodes{margin-top:25px}
-  .panda-watch-episodes__list{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .panda-watch-episode-card{grid-template-columns:88px minmax(0,1fr) 25px}
+  .panda-watch-player-episodes{margin-top:27px}
+  .panda-watch-player-episodes .kinoma-season-tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:3px}
+  .panda-watch-player-episodes .kinoma-season-tabs::-webkit-scrollbar{display:none}
+  .panda-watch-player-episodes .kinoma-season-tabs button{flex:0 0 auto}
+  .panda-watch-player-episodes .kinoma-episode-card{min-height:82px}
   .panda-watch-info{grid-template-columns:92px minmax(0,1fr);gap:18px;min-height:0;margin-top:34px;padding:22px}
   .panda-watch-info__poster{width:92px}
   .panda-watch-info__meta{position:static;grid-column:2;justify-content:flex-start;margin-top:8px}
@@ -1169,14 +888,11 @@
   .panda-watch-topbar{min-height:34px}
   .panda-watch-back{font-size:10px!important}
   .panda-watch-brand strong{font-size:12px}
+  .panda-watch-brand__status{display:none}
   .panda-watch-player{border-radius:9px}
-  .panda-watch-episodes{margin-top:22px}
-  .panda-watch-episodes__head{align-items:center}
-  .panda-watch-episodes__head strong{font-size:14px}
-  .panda-watch-episodes__head select{min-width:100px}
-  .panda-watch-episodes__list{grid-template-columns:1fr;gap:9px}
-  .panda-watch-episode-card{grid-template-columns:112px minmax(0,1fr) 26px;padding:7px}
-  .panda-watch-episode-copy small{-webkit-line-clamp:2}
+  .panda-watch-player-episodes{margin-top:22px}
+  .panda-watch-player-episodes .kinoma-details-section__heading h2{font-size:19px}
+  .panda-watch-player-episodes .kinoma-episode-card{grid-template-columns:96px minmax(0,1fr) 18px;gap:10px}
   .panda-watch-info{display:grid;grid-template-columns:72px minmax(0,1fr);gap:14px;padding:18px;border-radius:15px}
   .panda-watch-info__poster{width:72px;border-radius:9px}
   .panda-watch-info h1{font-size:25px}
@@ -1185,7 +901,6 @@
   .panda-watch-info__copy>p:not(.panda-watch-episode-title){font-size:11px;line-height:1.65}
   .panda-watch-info__meta{grid-column:1 / -1}
   .panda-watch-similar-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-  .panda-watch-section-head h2{font-size:19px}
 }
 @media(prefers-reduced-motion:reduce){
   .panda-watch-page *,.panda-watch-page *::before,.panda-watch-page *::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
