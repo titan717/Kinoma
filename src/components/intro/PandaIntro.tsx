@@ -6,14 +6,6 @@ const INTRO_SEEN_KEY = 'panda_intro_seen_v4';
 const INTRO_SHOWN_SESSION_KEY = 'panda_intro_shown_v3';
 const INTRO_DURATION = 5200;
 
-function canReadStorage(storage: Storage) {
-  try {
-    return Boolean(storage);
-  } catch {
-    return false;
-  }
-}
-
 function hasSeenIntro() {
   if (typeof window === 'undefined') return true;
   try {
@@ -28,6 +20,11 @@ function markIntroSeen() {
     window.localStorage.setItem(INTRO_SEEN_KEY, '1');
     window.sessionStorage.setItem(INTRO_SHOWN_SESSION_KEY, '1');
   } catch {}
+}
+
+function completeIntro() {
+  markIntroSeen();
+  window.dispatchEvent(new CustomEvent('panda_intro_complete'));
 }
 
 function createParticles(count: number) {
@@ -54,10 +51,14 @@ export function PandaIntro() {
   const particles = useMemo(() => createParticles(110), []);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || hasSeenIntro()) return;
+    if (typeof window === 'undefined') return;
+
+    if (hasSeenIntro()) {
+      window.setTimeout(completeIntro, 0);
+      return;
+    }
 
     setVisible(true);
-
     const audio = audioRef.current;
     let cancelled = false;
 
@@ -72,16 +73,14 @@ export function PandaIntro() {
     };
 
     const begin = window.setTimeout(startAudio, 80);
-
     finishTimerRef.current = window.setTimeout(() => {
       if (cancelled) return;
       setLeaving(true);
 
       window.setTimeout(() => {
         if (cancelled) return;
-        markIntroSeen();
         setVisible(false);
-        window.dispatchEvent(new CustomEvent('panda_intro_complete'));
+        completeIntro();
       }, 1050);
     }, INTRO_DURATION);
 
@@ -101,9 +100,8 @@ export function PandaIntro() {
       event.preventDefault();
       setLeaving(true);
       window.setTimeout(() => {
-        markIntroSeen();
         setVisible(false);
-        window.dispatchEvent(new CustomEvent('panda_intro_complete'));
+        completeIntro();
       }, 450);
     };
 
@@ -115,11 +113,7 @@ export function PandaIntro() {
 
   return (
     <div className={`panda-intro ${leaving ? 'is-leaving' : ''}`} role="presentation" aria-hidden="true">
-      <audio
-        ref={audioRef}
-        src="/assets/reelaudio-52430_VbuEeMF7.mp3"
-        preload="auto"
-      />
+      <audio ref={audioRef} src="/assets/reelaudio-52430_VbuEeMF7.mp3" preload="auto" />
 
       <div className="panda-intro__backdrop" />
       <div className="panda-intro__fog panda-intro__fog--back" />
