@@ -435,13 +435,30 @@ export const api = {
     const media = mediaFromId(id);
     if (!media) throw new MovieApiError('Playback requires a MovieApi media ID.', 400, 'INVALID_MEDIA_ID');
 
-    const path = media.type === 'movie'
-      ? `/api/v1/movie/${media.id}/play`
-      : `/api/v1/tv/${media.id}/season/${season}/episode/${episode}/play`;
-    const params = media.type === 'tv' && media.provider === 'tmdb' ? { tmdbId: media.id } : undefined;
-    const data = await request<{ source: MovieApiPlaybackSource | null }>(path, params, undefined, 0);
-    if (!data.source?.url) throw new MovieApiError('No playback source is currently available.', 503, 'NO_PLAYBACK_SOURCE');
-    return { url: data.source.url, source: data.source };
+    // CineSrc is the default player server. Its embed routes use TMDB IDs directly,
+    // so playback can start without waiting for MovieApi's provider resolver.
+    let tmdbId = media.id;
+    if (media.provider === 'tvmaze') {
+      const details = await request<MovieApiMedia>(`/api/v1/tv/${media.id}`, undefined, undefined, 300_000);
+      tmdbId = Number(details.ids?.tmdb || 0);
+      if (!tmdbId) throw new MovieApiError('Unable to resolve this title to a TMDB ID for CineSrc playback.', 503, 'TMDB_ID_UNAVAILABLE');
+    }
+
+    const base = media.type === 'movie'
+      ? `https://cinesrc.st/embed/movie/${tmdbId}`
+      : `https://cinesrc.st/embed/tv/${tmdbId}?s=${season}&e=${episode}`;
+    const separator = base.includes('?') ? '&' : '?';
+    const url = `${base}${separator}autoplay=1&autonext=1&continueprompt=false&prioritize=true`;
+    const source: MovieApiPlaybackSource = {
+      id: `cinesrc-${tmdbId}`,
+      provider: 'cinesrc',
+      type: 'embed',
+      url,
+      title: 'CineSrc',
+      quality: '1080',
+      requiresClientPlayback: true,
+    };
+    return { url, source };
   },
 
   async getServers(id: string, episode = 1) {
