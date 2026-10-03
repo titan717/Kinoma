@@ -115,8 +115,10 @@ export function PandaIntro() {
       <div className="panda-intro__mist-field"><span /><span /><span /><span /><span /><span /><span /><span /></div>
       <div className="panda-intro__mark">
         <div className="panda-intro__halo" />
-        <div className="panda-intro__logo"><KinomaLogo size="lg" variant="full" /></div>
-        <span className="panda-intro__wordmark">PANDA.FUN</span>
+        <div className="panda-intro__logo"><KinomaLogo size="lg" variant="mark" /></div>
+        <span className="panda-intro__wordmark" aria-label="PANDA.FUN">
+          <span className="panda-intro__typed">PANDA.FUN</span>
+        </span>
       </div>
       <div className="panda-intro__fog panda-intro__fog--front" />
       <div className="panda-intro__rush" />
