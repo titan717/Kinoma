@@ -27,6 +27,7 @@ import { AppearanceProvider } from './lib/AppearanceContext';
 import { SettingsModal } from './components/ui/SettingsModal';
 import { PandaOnboarding } from './components/ui/PandaOnboarding';
 import { PWAInstallPrompt } from './components/ui/PWAInstallPrompt';
+import { PWAUpdatePrompt } from './components/ui/PWAUpdatePrompt';
 import { trackPageView } from './lib/analytics';
 import { usePWAUpdate } from './lib/usePWAUpdate';
 
@@ -171,6 +172,7 @@ export default function App() {
           <PWAUpdateBridge />
           <MainAppShell />
           <PWAInstallPrompt />
+          <PWAUpdatePrompt />
           <AuthModal />
           <SettingsModal />
         </AppearanceProvider>
