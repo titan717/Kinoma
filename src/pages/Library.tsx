@@ -194,7 +194,7 @@ export function Library() {
         {active === 'continue' ? (
           filtered.length ? (
             <section className="kinoma-library-continue-grid">
-              {(filtered as HistoryItem[]).map(item => {React.createElement(ContinueCard, { key: item.episodeId || item.slug, item, onRemove: () => removeHistory(item.slug), onWatch: celebrateWatch })})}
+              {(filtered as HistoryItem[]).map(item => React.createElement(ContinueCard, { key: item.episodeId || item.slug, item, onRemove: () => removeHistory(item.slug), onWatch: celebrateWatch }))}
             </section>
           ) : <EmptyState tab="continue" onBrowse={browse} />
         ) : filtered.length ? (
