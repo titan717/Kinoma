@@ -8,11 +8,11 @@ import { ModernContinueWatching } from '../components/ui/modern/ModernContinueWa
 import { PandaStreamNotice } from '../components/ui/PandaStreamNotice';
 import '../styles/panda-home.css';
 
-type RailKind = 'trending' | 'upcomingMovies' | 'upcomingTv' | 'popular' | 'tv' | 'movie' | 'airing';
+type RailKind = 'trending' | 'streamingNetflix' | 'streamingDisney' | 'popular' | 'tv' | 'movie' | 'airing';
 
 function KindIcon({ kind }: { kind: RailKind }) {
   if (kind === 'movie') return <Film size={14} strokeWidth={1.9} />;
-  if (kind === 'trending' || kind === 'upcomingMovies' || kind === 'upcomingTv') return <Sparkles size={14} strokeWidth={1.9} />;
+  if (kind === 'trending' || kind === 'streamingNetflix' || kind === 'streamingDisney') return <Sparkles size={14} strokeWidth={1.9} />;
   if (kind === 'airing' || kind === 'tv') return <Tv size={14} strokeWidth={1.9} />;
   return <Sparkles size={14} strokeWidth={1.9} />;
 }
@@ -154,7 +154,7 @@ function PandaRail({
     <section className="panda-home-v2__section" aria-labelledby={`panda-${kind}-heading`}>
       <div className="panda-home-v2__section-head">
         <div className="panda-home-v2__section-title">
-          <span className="panda-home-v2__eyebrow"><KindIcon kind={kind} /> {kind === 'trending' ? 'Right now' : kind === 'upcomingMovies' || kind === 'upcomingTv' ? 'From TMDB' : kind === 'airing' ? 'On today' : 'Panda picks'}</span>
+          <span className="panda-home-v2__eyebrow"><KindIcon kind={kind} /> {kind === 'trending' ? 'Right now' : kind === 'streamingNetflix' || kind === 'streamingDisney' ? 'From TMDB' : kind === 'airing' ? 'On today' : 'Panda picks'}</span>
           <h3 id={`panda-${kind}-heading`}>{title}</h3>
           {subtitle && <p>{subtitle}</p>}
         </div>
@@ -169,8 +169,8 @@ function PandaRail({
 
 export function Home() {
   const [home, setHome] = useState<any>(null);
-  const [upcomingMovies, setUpcomingMovies] = useState<MovieApiMedia[]>([]);
-  const [upcomingTv, setUpcomingTv] = useState<MovieApiMedia[]>([]);
+  const [newOnNetflix, setNewOnNetflix] = useState<MovieApiMedia[]>([]);
+  const [newOnDisneyPlus, setNewOnDisneyPlus] = useState<MovieApiMedia[]>([]);
   const [airing, setAiring] = useState<MovieApiMedia[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [trailer, setTrailer] = useState<any>(null);
@@ -208,9 +208,16 @@ export function Home() {
         if (active) setError(err instanceof MovieApiError ? err.message : 'MovieApi is unavailable right now.');
       });
 
-    api.getAiringToday()
-      .then(data => active && setAiring((data.results || []) as unknown as MovieApiMedia[]))
-      .catch(() => {});
+    Promise.allSettled([
+      api.getNewOnNetflix(),
+      api.getNewOnDisneyPlus(),
+      api.getAiringToday()
+    ]).then(([netflix, disney, today]) => {
+      if (!active) return;
+      if (netflix.status === 'fulfilled') setNewOnNetflix((netflix.value.results || []) as unknown as MovieApiMedia[]);
+      if (disney.status === 'fulfilled') setNewOnDisneyPlus((disney.value.results || []) as unknown as MovieApiMedia[]);
+      if (today.status === 'fulfilled') setAiring((today.value.results || []) as unknown as MovieApiMedia[]);
+    });
 
     return () => { active = false; };
   }, []);
@@ -335,8 +342,8 @@ export function Home() {
             <ModernContinueWatching />
 
             <PandaRail kind="trending" title="Trending now" subtitle="The titles getting attention today." items={trending} onHover={showHoverTrailer} onLeave={hideHoverTrailer} />
-            <PandaRail kind="upcomingMovies" title="Coming soon to movies" subtitle="Upcoming movie releases surfaced from TMDB." items={upcomingMovies} onHover={showHoverTrailer} onLeave={hideHoverTrailer} badge="Upcoming" />
-            <PandaRail kind="upcomingTv" title="Coming soon to TV" subtitle="Upcoming TV releases surfaced from TMDB." items={upcomingTv} onHover={showHoverTrailer} onLeave={hideHoverTrailer} badge="Upcoming" />
+            <PandaRail kind="streamingNetflix" title="New on Netflix" subtitle="Recently added titles surfaced from TMDB." items={newOnNetflix} onHover={showHoverTrailer} onLeave={hideHoverTrailer} badge="Netflix" />
+            <PandaRail kind="streamingDisney" title="New on Disney+" subtitle="Recently added titles surfaced from TMDB." items={newOnDisneyPlus} onHover={showHoverTrailer} onLeave={hideHoverTrailer} badge="Disney+" />
             <PandaRail kind="movie" title="Popular movies" items={popularMovies} onHover={showHoverTrailer} onLeave={hideHoverTrailer} />
             <PandaRail kind="tv" title="Popular TV shows" items={popularTv} onHover={showHoverTrailer} onLeave={hideHoverTrailer} />
             <PandaRail kind="airing" title="Airing today" subtitle="What's moving through today's schedule." items={airing} onHover={showHoverTrailer} onLeave={hideHoverTrailer} />
