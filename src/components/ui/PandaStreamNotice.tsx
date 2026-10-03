@@ -81,6 +81,7 @@ export function PandaStreamNotice() {
 
   return (
     <section className="panda-stream-notice" aria-label="Panda.fun player notice">
+      <div className="panda-stream-notice__bar">
       <div className="panda-stream-notice__panda" aria-hidden="true">
         <span className="panda-stream-notice__ear panda-stream-notice__ear--left" />
         <span className="panda-stream-notice__ear panda-stream-notice__ear--right" />
@@ -97,9 +98,9 @@ export function PandaStreamNotice() {
 
       <div className="panda-stream-notice__content">
         <div className="panda-stream-notice__caution">
-          <span className="panda-stream-notice__icon">⚠️</span>
-          <p><strong>Player notice:</strong> Playback is provided through EmbedWave. Player behavior, availability, and third-party ads can vary by title.</p>
-          <button type="button" className="panda-stream-notice__dismiss" onClick={dismiss} aria-label="Dismiss player notice"><XIcon size={16} /></button>
+          <span className="panda-stream-notice__icon" aria-hidden="true">●</span>
+          <p><strong>Streaming note</strong><span> Playback is provided through EmbedWave. Availability and player behavior can vary by title.</span></p>
+          <button type="button" className="panda-stream-notice__dismiss" onClick={dismiss} aria-label="Dismiss player notice"><XIcon size={15} /></button>
         </div>
 
         <div className="panda-stream-notice__share">
@@ -130,6 +131,7 @@ export function PandaStreamNotice() {
             </div>
           )}
         </div>
+      </div>
       </div>
     </section>
   );
