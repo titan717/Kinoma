@@ -78,6 +78,7 @@ export default defineConfig(() => {
           enabled: true,
           type: 'module',
         },
+        strategies: 'generateSW',
       }),
     ],
     resolve: {
