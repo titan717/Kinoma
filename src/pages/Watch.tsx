@@ -180,7 +180,7 @@ export function Watch() {
               referrerPolicy="no-referrer"
               loading="eager"
             />
-          ) : <div className="panda-watch-player-empty"><Film size={32} /><strong>Playback unavailable</strong><span>The CineSrc source could not be resolved for this title.</span></div>}
+          ) : <div className="panda-watch-player-empty"><Film size={32} /><strong>Playback unavailable</strong><span>The EmbedWave player could not be resolved for this title.</span></div>}
         </div>
 
       <section className="panda-watch-info">
