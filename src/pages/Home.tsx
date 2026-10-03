@@ -40,6 +40,46 @@ function trailerSrc(url: unknown, soundEnabled = true) {
   }
 }
 
+function PandaPoster({ item }: { item: MovieApiMedia }) {
+  const candidates = [item.poster, item.backdrop].filter((value): value is string => typeof value === 'string' && value.length > 0);
+  const [sourceIndex, setSourceIndex] = useState(0);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setSourceIndex(0);
+    setFailed(false);
+  }, [item.id, item.poster, item.backdrop]);
+
+  const src = candidates[sourceIndex];
+
+  if (!src || failed) {
+    return (
+      <div className="panda-content-card__image-fallback" aria-hidden="true">
+        <KinomaLogo size="md" variant="mark" />
+        <span>{item.title}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="panda-content-card__image-wrap">
+      <div className="panda-content-card__image-skeleton" aria-hidden="true" />
+      <img
+        src={src}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        referrerPolicy="no-referrer"
+        onError={() => {
+          if (sourceIndex < candidates.length - 1) setSourceIndex(index => index + 1);
+          else setFailed(true);
+        }}
+        onLoad={event => event.currentTarget.previousElementSibling?.classList.add('is-hidden')}
+      />
+    </div>
+  );
+}
+
 function PandaContentCard({
   item,
   onHover,
@@ -69,17 +109,7 @@ function PandaContentCard({
       onBlur={onLeave}
     >
       <div className="panda-content-card__media">
-        {item.poster || item.backdrop ? (
-          <img
-            src={(item.poster || item.backdrop) as string}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            referrerPolicy="no-referrer"
-          />
-        ) : (
-          <div aria-hidden="true" style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg,#20202a,#0b0b10)' }} />
-        )}
+        <PandaPoster item={item} />
         <div className="panda-content-card__top">
           <span className="panda-content-card__badge">{badge || (item.type === 'movie' ? 'Movie' : 'Series')}</span>
           <span className="panda-content-card__quick" aria-hidden="true"><Plus size={15} /></span>
