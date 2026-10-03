@@ -1377,3 +1377,88 @@
 @media (min-width:2000px){
   .panda-watch-stage,.panda-watch-similar{max-width:1680px}
 }
+
+
+/* Player dark-green theme — final visual override */
+.panda-watch-page{
+  --watch-bg:#07140f;
+  --watch-ink:#edf7f1;
+  --watch-muted:rgba(237,247,241,.58);
+  --watch-faint:rgba(237,247,241,.32);
+  --watch-line:rgba(176,224,198,.11);
+  --watch-red:#176b4a;
+  background:
+    radial-gradient(circle at 16% 8%,rgba(31,122,83,.16),transparent 28%),
+    radial-gradient(circle at 88% 34%,rgba(11,82,57,.16),transparent 30%),
+    #07140f;
+}
+.panda-watch-page::before{
+  background:
+    linear-gradient(90deg,rgba(3,20,13,.42),transparent 45%,rgba(6,38,25,.24)),
+    repeating-linear-gradient(0deg,rgba(210,255,228,.012) 0 1px,transparent 1px 5px);
+}
+.panda-watch-player{background:#030b07}
+.panda-watch-info{
+  background:rgba(8,31,22,.80);
+}
+.panda-watch-info::after{
+  background:linear-gradient(90deg,rgba(8,31,22,.98) 0%,rgba(8,31,22,.92) 40%,rgba(8,31,22,.74) 100%);
+}
+.panda-watch-info__backdrop img{
+  filter:saturate(.72) hue-rotate(35deg);
+}
+.panda-watch-info__visual{background:#0b2118}
+.panda-watch-info__visual span{background:rgba(3,18,12,.76)}
+.panda-watch-info__action{
+  border-color:rgba(176,224,198,.12);
+  background:rgba(176,224,198,.045);
+}
+.panda-watch-info__action.is-primary{
+  background:var(--watch-red);
+  border-color:var(--watch-red);
+  box-shadow:0 8px 20px rgba(23,107,74,.22);
+}
+.panda-watch-info__action.is-primary:hover{background:#20845b}
+.panda-watch-player-episodes .kinoma-season-tabs button{
+  border-color:rgba(176,224,198,.10);
+  background:rgba(176,224,198,.035);
+}
+.panda-watch-player-episodes .kinoma-season-tabs button:hover{
+  background:rgba(176,224,198,.075);
+  border-color:rgba(176,224,198,.17);
+}
+.panda-watch-player-episodes .kinoma-season-tabs button.is-selected{
+  background:var(--watch-red);
+  border-color:var(--watch-red);
+  box-shadow:0 8px 22px rgba(23,107,74,.22);
+}
+.panda-watch-player-episodes .kinoma-episode-card{
+  border-color:rgba(176,224,198,.075);
+  background:rgba(8,29,21,.68);
+}
+.panda-watch-player-episodes .kinoma-episode-card:hover{
+  background:rgba(13,48,34,.82);
+  border-color:rgba(176,224,198,.15);
+}
+.panda-watch-player-episodes .kinoma-episode-card.is-current{
+  background:rgba(23,107,74,.13);
+  border-color:rgba(23,107,74,.38);
+}
+.panda-watch-similar-grid button>div{
+  border-color:rgba(176,224,198,.075);
+}
+.panda-watch-error{
+  background:rgba(54,35,28,.22);
+  border-color:rgba(176,224,198,.12);
+}
+/* Keep the live indicator cinematic, but shift it into the green palette. */
+.panda-watch-brand__status{
+  border-color:rgba(176,224,198,.16);
+  background:rgba(23,107,74,.16);
+  color:#eaf8f0;
+  box-shadow:0 7px 18px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.06);
+}
+.panda-watch-brand__status::before{
+  background:#9fe0be;
+  box-shadow:0 0 0 3px rgba(159,224,190,.10),0 0 12px rgba(159,224,190,.35);
+}
