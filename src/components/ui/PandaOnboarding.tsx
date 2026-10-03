@@ -141,6 +141,12 @@ export function PandaOnboarding() {
 
   const reducedMotion = typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  const canContinue = useMemo(() => {
+    if (step === 1) return state.name.trim().length > 0;
+    if (step === 2) return state.genres.length >= 3;
+    return true;
+  }, [step, state]);
+
   const goNext = useCallback(() => {
     if (!canContinue || step >= 5) return;
     setDirection('forward');
@@ -190,12 +196,6 @@ export function PandaOnboarding() {
     update(key, !state[key]);
     setSceneEvent('playback-toggle');
   };
-
-  const canContinue = useMemo(() => {
-    if (step === 1) return state.name.trim().length > 0;
-    if (step === 2) return state.genres.length >= 3;
-    return true;
-  }, [step, state]);
 
   useEffect(() => {
     if (!visible || typeof window === 'undefined') return;
