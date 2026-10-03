@@ -322,6 +322,16 @@ export const api = {
     return { results: data.results.map(toAnimeItem) };
   },
 
+  async getNewOnNetflix() {
+    const data = await request<MovieApiPage>('/api/v1/streaming/netflix', { region: 'US' }, undefined, 300_000);
+    return { results: data.results.map(toAnimeItem) };
+  },
+
+  async getNewOnDisneyPlus() {
+    const data = await request<MovieApiPage>('/api/v1/streaming/disney-plus', { region: 'US' }, undefined, 300_000);
+    return { results: data.results.map(toAnimeItem) };
+  },
+
   async getAiringSchedule() {
     const data = await request<any>('/api/v1/airing/today', { country: 'US' }, undefined, 300_000);
     const results = (data.episodes || []).map((episode: any) => episode.show).filter(Boolean).map(toAnimeItem);
