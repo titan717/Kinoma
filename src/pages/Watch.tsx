@@ -130,25 +130,33 @@ export function Watch() {
   const similar = useMemo(() => recommendations.slice(0, 5), [recommendations]);
 
   const shareTitle = title || 'Panda.fun';
+  const shareText = type === 'movie'
+    ? `Watch ${shareTitle} on Panda.fun 🐼\\n\\n${window.location.href}`
+    : `Watch ${shareTitle} on Panda.fun 🐼\\nSeason ${season} • Episode ${episode}${currentEpisode?.title ? ` — ${currentEpisode.title}` : ''}\\n\\n${window.location.href}`;
+
   const shareCurrentPage = async () => {
     const url = window.location.href;
+    const copyText = type === 'movie'
+      ? `Watch ${shareTitle} on Panda.fun 🐼\\n\\n${url}`
+      : `Watch ${shareTitle} on Panda.fun 🐼\\nSeason ${season} • Episode ${episode}${currentEpisode?.title ? ` — ${currentEpisode.title}` : ''}\\n\\n${url}`;
+
     try {
       if (typeof navigator.share === 'function') {
         await navigator.share({
           title: shareTitle,
-          text: `Watch ${shareTitle} on Panda.fun 🐼`,
+          text: shareText,
           url,
         });
         return;
       }
-      await navigator.clipboard?.writeText(url);
-      setShareMessage('Link copied');
+      await navigator.clipboard?.writeText(copyText);
+      setShareMessage('Share text copied');
       window.setTimeout(() => setShareMessage(''), 1800);
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
       try {
-        await navigator.clipboard?.writeText(url);
-        setShareMessage('Link copied');
+        await navigator.clipboard?.writeText(copyText);
+        setShareMessage('Share text copied');
         window.setTimeout(() => setShareMessage(''), 1800);
       } catch {}
     }
