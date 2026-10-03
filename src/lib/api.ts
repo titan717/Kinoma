@@ -324,12 +324,12 @@ export const api = {
 
   async getNewOnNetflix() {
     const data = await request<MovieApiPage>('/api/v1/streaming/netflix', { region: 'US' }, undefined, 300_000);
-    return { results: data.results.map(toAnimeItem) };
+    return { results: data.results };
   },
 
   async getNewOnDisneyPlus() {
     const data = await request<MovieApiPage>('/api/v1/streaming/disney-plus', { region: 'US' }, undefined, 300_000);
-    return { results: data.results.map(toAnimeItem) };
+    return { results: data.results };
   },
 
   async getAiringSchedule() {
