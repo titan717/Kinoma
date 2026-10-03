@@ -439,17 +439,23 @@ export const api = {
     // server inside EmbedWave, rather than replacing the embedder with a direct
     // CineSrc iframe.
     let tmdbId = media.id;
+    let originalLanguage = '';
     if (media.provider === 'tvmaze') {
       const details = await request<MovieApiMedia>(`/api/v1/tv/${media.id}`, undefined, undefined, 300_000);
       tmdbId = Number(details.ids?.tmdb || 0);
+      originalLanguage = String(details.language || '').trim();
       if (!tmdbId) throw new MovieApiError('Unable to resolve this title to a TMDB ID for EmbedWave playback.', 503, 'TMDB_ID_UNAVAILABLE');
+    } else {
+      const details = await request<MovieApiMedia>(`/api/v1/tmdb/${media.type === 'movie' ? 'movie' : 'tv'}/${media.id}`, undefined, undefined, 300_000);
+      originalLanguage = String(details.language || '').trim();
     }
 
     const base = media.type === 'movie'
       ? `https://embedwave.cc/embed/movie/${tmdbId}`
       : `https://embedwave.cc/embed/tv/${tmdbId}/${season}/${episode}`;
     const separator = base.includes('?') ? '&' : '?';
-    const url = `${base}${separator}autoplay=1&nobrand=1&server=cinesrc`;
+    const language = originalLanguage ? `&lang=${encodeURIComponent(originalLanguage)}` : '';
+    const url = `${base}${separator}autoplay=1&nobrand=1&server=cinesrc${language}`;
     const source: MovieApiPlaybackSource = {
       id: `embedwave-cinesrc-${tmdbId}`,
       provider: 'embedwave',
