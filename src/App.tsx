@@ -26,6 +26,7 @@ import { AuthModal } from './components/ui/AuthModal';
 import { AppearanceProvider } from './lib/AppearanceContext';
 import { SettingsModal } from './components/ui/SettingsModal';
 import { PandaOnboarding } from './components/ui/PandaOnboarding';
+import { PWAInstallPrompt } from './components/ui/PWAInstallPrompt';
 import { trackPageView } from './lib/analytics';
 
 function AnimatedRoutes() {
@@ -162,6 +163,7 @@ export default function App() {
             <PandaOnboarding />
           </OptionalFeatureBoundary>
           <MainAppShell />
+          <PWAInstallPrompt />
           <AuthModal />
           <SettingsModal />
         </AppearanceProvider>
