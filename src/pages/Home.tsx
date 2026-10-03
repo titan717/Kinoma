@@ -156,7 +156,7 @@ function PandaRail({
       </div>
       <div className="panda-home-v2__rail">
         {items.slice(0, 8).map((item, index) => (
-          <PandaContentCard key={`${kind}-${item.id}-${index}`} item={item} onHover={onHover} onLeave={onLeave} badge={badge} />
+          {React.createElement(PandaContentCard, { key: `${kind}-${item.id}-${index}`, item, onHover, onLeave, badge })}
         ))}
       </div>
     </section>
